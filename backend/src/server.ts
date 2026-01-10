@@ -9,6 +9,12 @@ import morgan from 'morgan'
 import dotenv from 'dotenv'
 import { PrismaClient } from '@prisma/client'
 
+// Routes
+import categoriesRoutes from './routes/categories.routes'
+import productsRoutes from './routes/products.routes'
+import ordersRoutes from './routes/orders.routes'
+import usersRoutes from './routes/users.routes'
+
 // Environment variables yuklash
 dotenv.config()
 
@@ -63,37 +69,20 @@ app.get('/health', (req: Request, res: Response) => {
 })
 
 // ============================================
-// TEST ENDPOINT - Products
+// API ROUTES
 // ============================================
 
-// Barcha mahsulotlarni olish
-app.get('/api/products', async (req: Request, res: Response) => {
-	try {
-		// Database'dan barcha productlarni olish
-		const products = await prisma.product.findMany({
-			include: {
-				category: true, // Category ma'lumotini ham qo'shish
-			},
-			where: {
-				isActive: true, // Faqat active mahsulotlar
-			},
-		})
+// Categories
+app.use('/api/categories', categoriesRoutes)
 
-		// Response
-		res.status(200).json({
-			success: true,
-			count: products.length,
-			data: products,
-		})
-	} catch (error) {
-		console.error('Error fetching products:', error)
-		res.status(500).json({
-			success: false,
-			message: 'Server error',
-			error: error instanceof Error ? error.message : 'Unknown error',
-		})
-	}
-})
+// Products
+app.use('/api/products', productsRoutes)
+
+// Orders
+app.use('/api/orders', ordersRoutes)
+
+// Users
+app.use('/api/users', usersRoutes)
 
 // ============================================
 // 404 HANDLER
