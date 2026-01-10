@@ -111,7 +111,7 @@ export const getOrderById = async (req: Request, res: Response) => {
 		})
 	} catch (error) {
 		console.error('Error fetching order:', error)
-		res.status(500).json({
+		return res.status(500).json({
 			success: false,
 			message: 'Server error',
 			error: error instanceof Error ? error.message : 'Unknown error',
@@ -230,7 +230,7 @@ export const createOrder = async (req: Request, res: Response) => {
 		})
 	} catch (error) {
 		console.error('Error creating order:', error)
-		res.status(500).json({
+		return res.status(500).json({
 			success: false,
 			message: 'Server error',
 			error: error instanceof Error ? error.message : 'Unknown error',
@@ -278,7 +278,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 		})
 	} catch (error) {
 		console.error('Error updating order status:', error)
-		res.status(500).json({
+		return res.status(500).json({
 			success: false,
 			message: 'Server error',
 			error: error instanceof Error ? error.message : 'Unknown error',
@@ -321,7 +321,7 @@ export const deleteOrder = async (req: Request, res: Response) => {
 		})
 	} catch (error) {
 		console.error('Error deleting order:', error)
-		res.status(500).json({
+		return res.status(500).json({
 			success: false,
 			message: 'Server error',
 			error: error instanceof Error ? error.message : 'Unknown error',

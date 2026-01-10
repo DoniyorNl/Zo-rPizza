@@ -61,7 +61,7 @@ export const createUser = async (req: Request, res: Response) => {
 		})
 	} catch (error) {
 		console.error('Error creating user:', error)
-		res.status(500).json({
+		return res.status(500).json({
 			success: false,
 			message: 'Server error',
 			error: error instanceof Error ? error.message : 'Unknown error',
@@ -100,7 +100,7 @@ export const getUserById = async (req: Request, res: Response) => {
 		})
 	} catch (error) {
 		console.error('Error fetching user:', error)
-		res.status(500).json({
+		return res.status(500).json({
 			success: false,
 			message: 'Server error',
 			error: error instanceof Error ? error.message : 'Unknown error',
@@ -150,7 +150,7 @@ export const updateUser = async (req: Request, res: Response) => {
 		})
 	} catch (error) {
 		console.error('Error updating user:', error)
-		res.status(500).json({
+		return res.status(500).json({
 			success: false,
 			message: 'Server error',
 			error: error instanceof Error ? error.message : 'Unknown error',
