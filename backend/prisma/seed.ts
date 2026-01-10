@@ -23,8 +23,7 @@ async function main() {
 		},
 	})
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	const drinkCategory = await prisma.category.upsert({
+	void (await prisma.category.upsert({
 		where: { name: 'Ichimliklar' },
 		update: {},
 		create: {
@@ -33,7 +32,7 @@ async function main() {
 			imageUrl: 'https://images.unsplash.com/photo-1437418747212-8d9709afab22',
 			isActive: true,
 		},
-	})
+	}))
 
 	console.log('✅ Kategoriyalar yaratildi')
 
@@ -135,8 +134,7 @@ async function main() {
 		},
 	})
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	const vegetarian = await prisma.product.upsert({
+	void (await prisma.product.upsert({
 		where: { id: 'vegetarian-1' },
 		update: {},
 		create: {
@@ -149,10 +147,9 @@ async function main() {
 			categoryId: pizzaCategory.id,
 			isActive: true,
 		},
-	})
+	}))
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	const fourCheese = await prisma.product.upsert({
+	void (await prisma.product.upsert({
 		where: { id: 'four-cheese-1' },
 		update: {},
 		create: {
@@ -165,7 +162,7 @@ async function main() {
 			categoryId: pizzaCategory.id,
 			isActive: true,
 		},
-	})
+	}))
 
 	console.log('✅ Mahsulotlar yaratildi')
 
