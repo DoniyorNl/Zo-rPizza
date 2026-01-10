@@ -60,7 +60,7 @@ app.use(express.urlencoded({ extended: true }))
 // ============================================
 
 // Server ishlab turganini tekshirish
-app.get('/health', (req: Request, res: Response) => {
+app.get('/health', (_req: Request, res: Response) => {
 	res.status(200).json({
 		success: true,
 		message: '🍕 Zor Pizza Backend is running!',
@@ -89,7 +89,7 @@ app.use('/api/users', usersRoutes)
 // ============================================
 
 // Topilmagan route'lar uchun
-app.use((req: Request, res: Response) => {
+app.use((_req: Request, res: Response) => {
 	res.status(404).json({
 		success: false,
 		message: 'Route not found',

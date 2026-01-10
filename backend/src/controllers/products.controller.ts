@@ -77,7 +77,7 @@ export const getProductById = async (req: Request, res: Response) => {
 		})
 	} catch (error) {
 		console.error('Error fetching product:', error)
-		res.status(500).json({
+		return res.status(500).json({
 			success: false,
 			message: 'Server error',
 			error: error instanceof Error ? error.message : 'Unknown error',
@@ -131,7 +131,7 @@ export const createProduct = async (req: Request, res: Response) => {
 		})
 	} catch (error) {
 		console.error('Error creating product:', error)
-		res.status(500).json({
+		return res.status(500).json({
 			success: false,
 			message: 'Server error',
 			error: error instanceof Error ? error.message : 'Unknown error',
@@ -194,7 +194,7 @@ export const updateProduct = async (req: Request, res: Response) => {
 		})
 	} catch (error) {
 		console.error('Error updating product:', error)
-		res.status(500).json({
+		return res.status(500).json({
 			success: false,
 			message: 'Server error',
 			error: error instanceof Error ? error.message : 'Unknown error',
@@ -246,7 +246,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
 		})
 	} catch (error) {
 		console.error('Error deleting product:', error)
-		res.status(500).json({
+		return res.status(500).json({
 			success: false,
 			message: 'Server error',
 			error: error instanceof Error ? error.message : 'Unknown error',

@@ -5,7 +5,7 @@ import { Request, Response } from 'express'
 import { prisma } from '../server'
 
 // GET /api/categories - Barcha kategoriyalar
-export const getAllCategories = async (req: Request, res: Response) => {
+export const getAllCategories = async (_req: Request, res: Response) => {
 	try {
 		const categories = await prisma.category.findMany({
 			where: { isActive: true },
@@ -59,7 +59,7 @@ export const getCategoryById = async (req: Request, res: Response) => {
 		})
 	} catch (error) {
 		console.error('Error fetching category:', error)
-		res.status(500).json({
+		return res.status(500).json({
 			success: false,
 			message: 'Server error',
 			error: error instanceof Error ? error.message : 'Unknown error',
@@ -107,7 +107,7 @@ export const createCategory = async (req: Request, res: Response) => {
 		})
 	} catch (error) {
 		console.error('Error creating category:', error)
-		res.status(500).json({
+		return res.status(500).json({
 			success: false,
 			message: 'Server error',
 			error: error instanceof Error ? error.message : 'Unknown error',
@@ -150,7 +150,7 @@ export const updateCategory = async (req: Request, res: Response) => {
 		})
 	} catch (error) {
 		console.error('Error updating category:', error)
-		res.status(500).json({
+		return res.status(500).json({
 			success: false,
 			message: 'Server error',
 			error: error instanceof Error ? error.message : 'Unknown error',
@@ -204,7 +204,7 @@ export const deleteCategory = async (req: Request, res: Response) => {
 		})
 	} catch (error) {
 		console.error('Error deleting category:', error)
-		res.status(500).json({
+		return res.status(500).json({
 			success: false,
 			message: 'Server error',
 			error: error instanceof Error ? error.message : 'Unknown error',

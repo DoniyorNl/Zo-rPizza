@@ -23,6 +23,7 @@ async function main() {
 		},
 	})
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const drinkCategory = await prisma.category.upsert({
 		where: { name: 'Ichimliklar' },
 		update: {},
@@ -134,6 +135,7 @@ async function main() {
 		},
 	})
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const vegetarian = await prisma.product.upsert({
 		where: { id: 'vegetarian-1' },
 		update: {},
@@ -149,6 +151,7 @@ async function main() {
 		},
 	})
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const fourCheese = await prisma.product.upsert({
 		where: { id: 'four-cheese-1' },
 		update: {},
