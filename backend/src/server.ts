@@ -21,7 +21,7 @@ dotenv.config()
 
 // Express app yaratish
 const app: Express = express()
-const PORT = process.env.PORT || 5000
+const PORT = process.env.PORT || 5001
 
 // Prisma Client
 export const prisma = new PrismaClient()
@@ -31,47 +31,36 @@ export const prisma = new PrismaClient()
 // ============================================
 
 // CORS - Frontend'dan so'rov qabul qilish uchun
-// CORS - Frontend'dan so'rov qabul qilish uchun
-const allowedOrigins = [
-	'http://localhost:3000',
-	'https://zo-r-pizza.vercel.app',
-	'https://zo-r-pizza-git-main-doniyors-projects-7a4457b6.vercel.app',
-	'https://zo-r-pizza-55644cqeb-doniyors-projects-7a4457b6.vercel.app',
-	process.env.FRONTEND_URL,
-].filter(Boolean)
-
 app.use(
 	cors({
 		origin: (origin, callback) => {
 			// Allow requests with no origin (mobile apps, Postman, etc.)
-			if (!origin) return callback(null, true)
-
-			if (allowedOrigins.includes(origin)) {
-				callback(null, true)
-			} else {
-				console.log('❌ CORS blocked origin:', origin) // ← Debug uchun
-				callback(new Error('Not allowed by CORS'))
+			if (!origin) {
+				return callback(null, true)
 			}
+
+			// Allow localhost
+			if (origin.includes('localhost')) {
+				return callback(null, true)
+			}
+
+			// Allow all Vercel domains
+			if (origin.includes('vercel.app')) {
+				return callback(null, true)
+			}
+
+			// Allow production frontend from env
+			if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) {
+				return callback(null, true)
+			}
+
+			// Block everything else
+			console.log('❌ CORS blocked origin:', origin)
+			callback(new Error('Not allowed by CORS'))
 		},
 		credentials: true,
 		methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 		allowedHeaders: ['Content-Type', 'Authorization', 'x-user-id'],
-	}),
-)
-
-app.use(
-	cors({
-		origin: (origin, callback) => {
-			// Allow requests with no origin (mobile apps, Postman, etc.)
-			if (!origin) return callback(null, true)
-
-			if (allowedOrigins.includes(origin)) {
-				callback(null, true)
-			} else {
-				callback(new Error('Not allowed by CORS'))
-			}
-		},
-		credentials: true,
 	}),
 )
 
@@ -103,6 +92,23 @@ app.get('/health', (_req: Request, res: Response) => {
 		success: true,
 		message: '🍕 Zor Pizza Backend is running!',
 		timestamp: new Date().toISOString(),
+		environment: process.env.NODE_ENV || 'development',
+	})
+})
+
+// Root endpoint
+app.get('/', (_req: Request, res: Response) => {
+	res.status(200).json({
+		success: true,
+		message: '🍕 Zor Pizza API',
+		version: '1.0.0',
+		endpoints: {
+			health: '/health',
+			categories: '/api/categories',
+			products: '/api/products',
+			orders: '/api/orders',
+			users: '/api/users',
+		},
 	})
 })
 
@@ -135,6 +141,19 @@ app.use((_req: Request, res: Response) => {
 })
 
 // ============================================
+// ERROR HANDLER
+// ============================================
+
+app.use((err: any, _req: Request, res: Response, _next: any) => {
+	console.error('❌ Error:', err)
+	res.status(err.status || 500).json({
+		success: false,
+		message: err.message || 'Internal server error',
+		...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+	})
+})
+
+// ============================================
 // SERVER START
 // ============================================
 
@@ -143,19 +162,23 @@ const startServer = async () => {
 	try {
 		const port = Number(PORT)
 
-		// Serverni Railway uchun to‘g‘ri bind qilish
-		app.listen(port, '0.0.0.0', async () => {
-			console.log(`🚀 Server running on port ${port}`)
-			console.log(`📍 Health check: /health`)
-			console.log(`📍 Products API: /api/products`)
+		// Database connection tekshirish
+		try {
+			await prisma.$connect()
+			console.log('✅ Database connected successfully')
+		} catch (dbError) {
+			console.error('❌ Database connection failed:', dbError)
+			console.log('⚠️ Starting server without database...')
+		}
 
-			// Database connection server ishga tushgandan keyin
-			try {
-				await prisma.$connect()
-				console.log('✅ Database connected successfully')
-			} catch (dbError) {
-				console.error('❌ Database connection failed:', dbError)
-			}
+		// Serverni Railway uchun to'g'ri bind qilish
+		app.listen(port, '0.0.0.0', () => {
+			console.log('🚀 ========================================')
+			console.log(`🚀 Server running on port ${port}`)
+			console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`)
+			console.log(`📍 Health check: http://localhost:${port}/health`)
+			console.log(`📍 API Base: http://localhost:${port}/api`)
+			console.log('🚀 ========================================')
 		})
 	} catch (error) {
 		console.error('❌ Failed to start server:', error)
@@ -169,6 +192,12 @@ startServer()
 // Graceful shutdown
 process.on('SIGINT', async () => {
 	console.log('\n👋 Shutting down gracefully...')
+	await prisma.$disconnect()
+	process.exit(0)
+})
+
+process.on('SIGTERM', async () => {
+	console.log('\n👋 SIGTERM received, shutting down gracefully...')
 	await prisma.$disconnect()
 	process.exit(0)
 })
