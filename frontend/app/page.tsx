@@ -1,14 +1,17 @@
 // app/page.tsx
 // 🍕 ZOR PIZZA - HOME PAGE
-
 'use client'
 
 import { useEffect, useState } from 'react'
 import axios from 'axios'
-import { ProductCard } from '@/components/products/ProductCard'
 import { Header } from '@/components/layout/Header'
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { useCartStore } from '@/store/cartStore'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
+import { Clock, Plus, ChefHat } from 'lucide-react'
 
 interface Product {
 	id: string
@@ -17,17 +20,14 @@ interface Product {
 	price: number
 	imageUrl: string
 	prepTime: number
-	category: {
-		name: string
-	}
+	difficulty?: string
+	calories?: number
 }
 
-export default function Home() {
+export default function HomePage() {
 	const [products, setProducts] = useState<Product[]>([])
 	const [loading, setLoading] = useState(true)
-	const [error, setError] = useState('')
-
-	const addItem = useCartStore(state => state.addItem)
+	const { addItem } = useCartStore()
 	const router = useRouter()
 
 	useEffect(() => {
@@ -35,9 +35,8 @@ export default function Home() {
 			try {
 				const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/products`)
 				setProducts(response.data.data)
-			} catch (err) {
-				setError("Mahsulotlarni yuklab bo'lmadi")
-				console.error(err)
+			} catch (error) {
+				console.error('Error fetching products:', error)
 			} finally {
 				setLoading(false)
 			}
@@ -46,67 +45,113 @@ export default function Home() {
 		fetchProducts()
 	}, [])
 
-	const handleAddToCart = (id: string) => {
-		const product = products.find(p => p.id === id)
-		if (product) {
-			addItem({
-				id: product.id,
-				name: product.name,
-				price: product.price,
-				imageUrl: product.imageUrl,
-			})
-			// Cart page'ga yo'naltirish (ixtiyoriy)
-			// router.push('/cart');
-		}
+	const handleAddToCart = (product: Product, e: React.MouseEvent) => {
+		e.stopPropagation()
+		addItem({
+			id: product.id,
+			name: product.name,
+			price: product.price,
+			imageUrl: product.imageUrl,
+		})
+	}
+
+	const handleViewDetails = (productId: string) => {
+		router.push(`/products/${productId}`)
 	}
 
 	if (loading) {
 		return (
-			<div className='min-h-screen flex items-center justify-center'>
-				<div className='text-2xl'>Yuklanmoqda...</div>
-			</div>
-		)
-	}
-
-	if (error) {
-		return (
-			<div className='min-h-screen flex items-center justify-center'>
-				<div className='text-2xl text-red-500'>{error}</div>
-			</div>
+			<main className='min-h-screen bg-gradient-to-b from-orange-50 to-white'>
+				<Header />
+				<div className='container mx-auto px-4 py-12'>
+					<div className='text-center text-2xl'>Yuklanmoqda...</div>
+				</div>
+			</main>
 		)
 	}
 
 	return (
 		<main className='min-h-screen bg-gradient-to-b from-orange-50 to-white'>
-			{/* Header */}
 			<Header />
 
-			{/* Products */}
-			<div className='container mx-auto px-4 py-12'>
-				<h2 className='text-4xl font-bold mb-8'>Bizning Menyu</h2>
+			{/* Hero Section */}
+			<section className='container mx-auto px-4 py-12'>
+				<div className='text-center mb-12'>
+					<h1 className='text-4xl md:text-5xl font-bold text-gray-900 mb-4'>🍕 Zor Pizza</h1>
+				</div>
 
-				<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8'>
+				{/* Products Grid - 4 per row */}
+				<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
 					{products.map(product => (
-						<ProductCard
+						<Card
 							key={product.id}
-							id={product.id}
-							name={product.name}
-							description={product.description}
-							price={product.price}
-							imageUrl={product.imageUrl}
-							prepTime={product.prepTime}
-							categoryName={product.category.name}
-							onAddToCart={handleAddToCart}
-						/>
+							className='group cursor-pointer hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 overflow-hidden'
+							onClick={() => handleViewDetails(product.id)}
+						>
+							{/* Image */}
+							<div className='relative h-48 overflow-hidden bg-gray-100'>
+								<Image
+									src={product.imageUrl}
+									alt={product.name}
+									fill
+									className='object-cover group-hover:scale-110 transition-transform duration-300'
+									sizes='(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw'
+								/>
+
+								{/* Badges */}
+								<div className='absolute top-3 left-3 flex gap-2'>
+									{product.difficulty && (
+										<Badge className='bg-white/90 text-gray-800 border-0'>
+											<ChefHat className='w-3 h-3 mr-1' />
+											{product.difficulty}
+										</Badge>
+									)}
+								</div>
+
+								{product.calories && (
+									<Badge className='absolute top-3 right-3 bg-orange-600 border-0'>
+										{product.calories} kkal
+									</Badge>
+								)}
+							</div>
+
+							{/* Content */}
+							<CardHeader className='pb-3'>
+								<h3 className='font-bold text-lg line-clamp-1'>{product.name}</h3>
+								<p className='text-sm text-gray-600 line-clamp-2 mt-1'>{product.description}</p>
+							</CardHeader>
+
+							<CardContent className='pb-3'>
+								<div className='flex items-center gap-2 text-sm text-gray-500'>
+									<Clock className='w-4 h-4' />
+									<span>{product.prepTime} daqiqa</span>
+								</div>
+							</CardContent>
+
+							{/* Footer */}
+							<CardFooter className='flex items-center justify-between pt-3 border-t'>
+								<div className='text-2xl font-bold text-orange-600'>
+									{product.price.toLocaleString()} so'm
+								</div>
+								<Button
+									size='sm'
+									onClick={e => handleAddToCart(product, e)}
+									className='bg-orange-600 hover:bg-orange-700'
+								>
+									<Plus className='w-4 h-4 mr-1' />
+									Qo'shish
+								</Button>
+							</CardFooter>
+						</Card>
 					))}
 				</div>
 
 				{products.length === 0 && (
 					<div className='text-center py-12'>
-						<p className='text-2xl text-gray-500'>Hozircha mahsulot yo'q</p>
+						<p className='text-xl text-gray-600'>Hozircha mahsulotlar yo'q</p>
 					</div>
 				)}
-			</div>
+			</section>
 		</main>
 	)
 }
