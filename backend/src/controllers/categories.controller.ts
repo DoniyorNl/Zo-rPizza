@@ -53,7 +53,7 @@ export const getCategoryById = async (req: Request, res: Response) => {
 			})
 		}
 
-		res.status(200).json({
+		return res.status(200).json({
 			success: true,
 			data: category,
 		})
@@ -100,7 +100,7 @@ export const createCategory = async (req: Request, res: Response) => {
 			},
 		})
 
-		res.status(201).json({
+		return res.status(201).json({
 			success: true,
 			message: 'Category created successfully',
 			data: category,
@@ -143,7 +143,7 @@ export const updateCategory = async (req: Request, res: Response) => {
 			},
 		})
 
-		res.status(200).json({
+		return res.status(200).json({
 			success: true,
 			message: 'Category updated successfully',
 			data: category,
@@ -198,7 +198,7 @@ export const deleteCategory = async (req: Request, res: Response) => {
 			where: { id },
 		})
 
-		res.status(200).json({
+		return res.status(200).json({
 			success: true,
 			message: 'Category deleted successfully',
 		})

@@ -105,7 +105,7 @@ export const getOrderById = async (req: Request, res: Response) => {
 			})
 		}
 
-		res.status(200).json({
+		return res.status(200).json({
 			success: true,
 			data: order,
 		})
@@ -223,7 +223,7 @@ export const createOrder = async (req: Request, res: Response) => {
 			},
 		})
 
-		res.status(201).json({
+		return res.status(201).json({
 			success: true,
 			message: 'Order created successfully',
 			data: order,
@@ -271,7 +271,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 			},
 		})
 
-		res.status(200).json({
+		return res.status(200).json({
 			success: true,
 			message: 'Order status updated',
 			data: order,
@@ -315,7 +315,7 @@ export const deleteOrder = async (req: Request, res: Response) => {
 			where: { id },
 		})
 
-		res.status(200).json({
+		return res.status(200).json({
 			success: true,
 			message: 'Order deleted successfully',
 		})
