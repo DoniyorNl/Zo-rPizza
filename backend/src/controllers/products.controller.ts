@@ -16,7 +16,7 @@ export const getAllProducts = async (req: Request, res: Response) => {
 			},
 			include: {
 				category: true,
-				ingredients: {
+				ingredientsRel: {
 					include: {
 						ingredient: true,
 					},
@@ -49,7 +49,7 @@ export const getProductById = async (req: Request, res: Response) => {
 			where: { id },
 			include: {
 				category: true,
-				ingredients: {
+				ingredientsRel: {
 					include: {
 						ingredient: true,
 					},
@@ -71,9 +71,46 @@ export const getProductById = async (req: Request, res: Response) => {
 			})
 		}
 
+		// JSON maydonlarni to'g'ri formatlash
+		let ingredients = null
+		if (product.ingredients) {
+			try {
+				// Agar string bo'lsa, parse qilish
+				ingredients = typeof product.ingredients === 'string' 
+					? JSON.parse(product.ingredients) 
+					: product.ingredients
+			} catch (e) {
+				console.error('Error parsing ingredients:', e)
+				ingredients = null
+			}
+		}
+
+		let cookingSteps = null
+		if (product.cookingSteps) {
+			try {
+				// Agar string bo'lsa, parse qilish
+				cookingSteps = typeof product.cookingSteps === 'string' 
+					? JSON.parse(product.cookingSteps) 
+					: product.cookingSteps
+			} catch (e) {
+				console.error('Error parsing cookingSteps:', e)
+				cookingSteps = null
+			}
+		}
+
+		// Ma'lumotlarni to'g'ri formatda qaytarish
+		const formattedProduct = {
+			...product,
+			ingredients: ingredients,
+			cookingSteps: cookingSteps,
+			// images va allergens allaqachon array formatida
+			images: product.images || [],
+			allergens: product.allergens || [],
+		}
+
 		return res.status(200).json({
 			success: true,
-			data: product,
+			data: formattedProduct,
 		})
 	} catch (error) {
 		console.error('Error fetching product:', error)
@@ -88,7 +125,29 @@ export const getProductById = async (req: Request, res: Response) => {
 // POST /api/products - Yangi mahsulot
 export const createProduct = async (req: Request, res: Response) => {
 	try {
-		const { name, description, price, imageUrl, prepTime, categoryId } = req.body
+		const {
+			name,
+			description,
+			price,
+			imageUrl,
+			prepTime,
+			categoryId,
+			// Qo'shimcha maydonlar
+			ingredients,
+			recipe,
+			cookingTemp,
+			cookingTime,
+			cookingSteps,
+			calories,
+			protein,
+			carbs,
+			fat,
+			difficulty,
+			servings,
+			allergens,
+			images,
+			isActive,
+		} = req.body
 
 		// Validation
 		if (!name || !price || !categoryId) {
@@ -110,6 +169,21 @@ export const createProduct = async (req: Request, res: Response) => {
 			})
 		}
 
+		// JSON maydonlarni to'g'ri formatlash
+		let formattedIngredients = null
+		if (ingredients) {
+			formattedIngredients = typeof ingredients === 'string' 
+				? JSON.parse(ingredients) 
+				: ingredients
+		}
+
+		let formattedCookingSteps = null
+		if (cookingSteps) {
+			formattedCookingSteps = typeof cookingSteps === 'string' 
+				? JSON.parse(cookingSteps) 
+				: cookingSteps
+		}
+
 		const product = await prisma.product.create({
 			data: {
 				name,
@@ -118,6 +192,21 @@ export const createProduct = async (req: Request, res: Response) => {
 				imageUrl,
 				prepTime: parseInt(prepTime) || 15,
 				categoryId,
+				// Qo'shimcha maydonlar
+				ingredients: formattedIngredients,
+				recipe,
+				cookingTemp: cookingTemp ? parseInt(cookingTemp) : null,
+				cookingTime: cookingTime ? parseInt(cookingTime) : null,
+				cookingSteps: formattedCookingSteps,
+				calories: calories ? parseInt(calories) : null,
+				protein: protein ? parseFloat(protein) : null,
+				carbs: carbs ? parseFloat(carbs) : null,
+				fat: fat ? parseFloat(fat) : null,
+				difficulty,
+				servings: servings ? parseInt(servings) : null,
+				allergens: allergens || [],
+				images: images || [],
+				isActive: isActive !== undefined ? isActive : true,
 			},
 			include: {
 				category: true,

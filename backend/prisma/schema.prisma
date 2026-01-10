@@ -1,5 +1,5 @@
 // 🍕 ZOR PIZZA - DATABASE SCHEMA
-// Bu fayl database strukturasini belgilaydi
+// Prisma schema, updated with new Product fields and minor improvements
 
 generator client {
   provider = "prisma-client-js"
@@ -28,16 +28,16 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("users") // Database'da "users" table nomi
+  @@map("users")
 }
 
 enum UserRole {
-  CUSTOMER  // Oddiy mijoz
-  ADMIN     // Administrator
+  CUSTOMER
+  ADMIN
 }
 
 // ============================================
-// CATEGORY MODEL - Kategoriyalar (Pizza, Ichimlik...)
+// CATEGORY MODEL - Kategoriyalar
 // ============================================
 model Category {
   id          String    @id @default(uuid())
@@ -46,7 +46,6 @@ model Category {
   imageUrl    String?
   isActive    Boolean   @default(true)
   
-  // Relationships
   products    Product[]
   
   createdAt   DateTime  @default(now())
@@ -56,24 +55,38 @@ model Category {
 }
 
 // ============================================
-// PRODUCT MODEL - Mahsulotlar (Pitsalar)
+// PRODUCT MODEL - Mahsulotlar
 // ============================================
 model Product {
   id          String   @id @default(uuid())
   name        String
   description String
-  price       Float    // Narx (so'm)
+  price       Float
   imageUrl    String?
-  prepTime    Int      // Tayyorlanish vaqti (daqiqa)
+  prepTime    Int
   isActive    Boolean  @default(true)
   
-  // Relationships
   categoryId  String
   category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   
-  ingredients ProductIngredient[]
-  orderItems  OrderItem[]
-  reviews     Review[]
+  // ✅ New detailed fields
+  ingredients Json?     // [{name: "Un", amount: "500g", icon: "🌾"}, ...]
+  recipe      String?   @db.Text
+  cookingTemp Int?      // °C
+  cookingTime Int?      // daqiqa
+  cookingSteps Json?    // [{step: 1, title: "...", description: "..."}, ...]
+  calories    Int?      
+  protein     Float?    
+  carbs       Float?    
+  fat         Float?    
+  difficulty  String?   
+  servings    Int?      
+  allergens   String[]  
+  images      String[]  
+  
+  ingredientsRel ProductIngredient[]
+  orderItems    OrderItem[]
+  reviews       Review[]
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -82,17 +95,16 @@ model Product {
 }
 
 // ============================================
-// INGREDIENT MODEL - Ingredientlar
+// INGREDIENT MODEL
 // ============================================
 model Ingredient {
   id          String   @id @default(uuid())
   name        String   @unique
-  unit        String   // kg, litr, dona
-  costPerUnit Float    // Birlik narxi
-  stockQty    Float    // Omborda miqdor
-  minStock    Float    @default(10) // Minimal stock (ogohlantirish uchun)
+  unit        String   
+  costPerUnit Float    
+  stockQty    Float    
+  minStock    Float    @default(10)
   
-  // Relationships
   products    ProductIngredient[]
   
   createdAt   DateTime @default(now())
@@ -102,49 +114,40 @@ model Ingredient {
 }
 
 // ============================================
-// PRODUCT-INGREDIENT RELATION - Ko'pdan-ko'pga bog'lanish
+// PRODUCT-INGREDIENT RELATION
 // ============================================
 model ProductIngredient {
   id           String     @id @default(uuid())
-  
   productId    String
   product      Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
   ingredientId String
   ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
-  
-  quantity     Float      // Kerakli miqdor
-  
-  @@unique([productId, ingredientId]) // Bir mahsulotda bir ingredient faqat bir marta
+  quantity     Float
+
+  @@unique([productId, ingredientId])
   @@map("product_ingredients")
 }
 
 // ============================================
-// ORDER MODEL - Buyurtmalar
+// ORDER MODEL
 // ============================================
 model Order {
   id              String      @id @default(uuid())
-  orderNumber     String      @unique // rgba(2, 2, 57, 1), rgba(2, 2, 56, 1)... (user-friendly)
-  
-  // Customer info
+  orderNumber     String      @unique
   userId          String
   user            User        @relation(fields: [userId], references: [id])
   
-  // Order details
   status          OrderStatus @default(PENDING)
   totalPrice      Float
   paymentMethod   PaymentMethod
   paymentStatus   PaymentStatus @default(PENDING)
   
-  // Delivery info
   deliveryAddress String
   deliveryPhone   String
-  deliveryLat     Float?      // GPS koordinata
+  deliveryLat     Float?
   deliveryLng     Float?
+  estimatedTime   Int?
   
-  estimatedTime   Int?        // Taxminiy yetkazish vaqti (daqiqa)
-  
-  // Relationships
   items           OrderItem[]
   reviews         Review[]
   
@@ -155,61 +158,59 @@ model Order {
 }
 
 enum OrderStatus {
-  PENDING       // Kutilmoqda
-  CONFIRMED     // Tasdiqlangan
-  PREPARING     // Tayyorlanmoqda
-  READY         // Tayyor
-  DELIVERING    // Yetkazilmoqda
-  DELIVERED     // Yetkazildi
-  CANCELLED     // Bekor qilindi
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  DELIVERING
+  DELIVERED
+  CANCELLED
 }
 
 enum PaymentMethod {
-  CASH          // Naqd pul
-  CARD          // Karta (Stripe)
+  CASH
+  CARD
 }
 
 enum PaymentStatus {
-  PENDING       // Kutilmoqda
-  PAID          // To'langan
-  FAILED        // Xatolik
-  REFUNDED      // Qaytarilgan
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
 }
 
 // ============================================
-// ORDER ITEM MODEL - Buyurtma elementlari
+// ORDER ITEM MODEL
 // ============================================
 model OrderItem {
-  id        String  @id @default(uuid())
-  
+  id        String   @id @default(uuid())
   orderId   String
-  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId String
-  product   Product @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
   
-  quantity  Int     // Nechta
-  price     Float   // O'sha paytdagi narx (tarih uchun)
-  
+  createdAt DateTime @default(now())
+
   @@map("order_items")
 }
 
 // ============================================
-// REVIEW MODEL - Fikr-mulohazalar
+// REVIEW MODEL
 // ============================================
 model Review {
   id        String   @id @default(uuid())
-  
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   
-  orderId   String   @unique // Har bir buyurtma uchun faqat 1 ta review
+  orderId   String   @unique
   order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   
-  productId String?  // Ixtiyoriy - muayyan mahsulot uchun review
+  productId String?
   product   Product? @relation(fields: [productId], references: [id])
   
-  rating    Int      // 1-5 yulduz
+  rating    Int
   comment   String?
   
   createdAt DateTime @default(now())
