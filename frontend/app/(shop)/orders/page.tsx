@@ -50,7 +50,7 @@ export default function OrdersPage() {
 
 		const fetchOrders = async () => {
 			try {
-				const response = await axios.get(`http://localhost:5001/api/orders/user/${user.uid}`)
+				const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/orders/user/${user.uid}`)
 				setOrders(response.data.data)
 			} catch (err: any) {
 				setError(err.response?.data?.message || "Buyurtmalarni yuklab bo'lmadi")

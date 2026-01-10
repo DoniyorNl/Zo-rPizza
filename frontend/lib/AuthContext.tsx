@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 		// Backend'ga user ma'lumotlarini yuborish
 		try {
-			await axios.post('http://localhost:5001/api/users', {
+			await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
 				firebaseUid: userCredential.user.uid,
 				email: userCredential.user.email,
 				name: email.split('@')[0], // Default name

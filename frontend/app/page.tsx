@@ -33,7 +33,7 @@ export default function Home() {
 	useEffect(() => {
 		const fetchProducts = async () => {
 			try {
-				const response = await axios.get('http://localhost:5001/api/products')
+				const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/products`)
 				setProducts(response.data.data)
 			} catch (err) {
 				setError("Mahsulotlarni yuklab bo'lmadi")

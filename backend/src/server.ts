@@ -30,9 +30,25 @@ export const prisma = new PrismaClient()
 // ============================================
 
 // CORS - Frontend'dan so'rov qabul qilish uchun
+const allowedOrigins = [
+	'http://localhost:3000',
+	'https://zo-r-pizza.vercel.app',
+	'https://zo-rpizza-production.up.railway.app',
+	process.env.FRONTEND_URL,
+].filter(Boolean)
+
 app.use(
 	cors({
-		origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+		origin: (origin, callback) => {
+			// Allow requests with no origin (mobile apps, Postman, etc.)
+			if (!origin) return callback(null, true)
+
+			if (allowedOrigins.includes(origin)) {
+				callback(null, true)
+			} else {
+				callback(new Error('Not allowed by CORS'))
+			}
+		},
 		credentials: true,
 	}),
 )
@@ -103,16 +119,21 @@ app.use((_req: Request, res: Response) => {
 // Serverni ishga tushirish
 const startServer = async () => {
 	try {
-		// Database connection tekshirish
-		await prisma.$connect()
-		console.log('✅ Database connected successfully')
+		const port = Number(PORT)
 
-		// Server listen
-		app.listen(PORT, () => {
-			console.log(`🚀 Server running on http://localhost:${PORT}`)
-			console.log(`🍕 Zor Pizza Backend is ready!`)
-			console.log(`📍 Health check: http://localhost:${PORT}/health`)
-			console.log(`📍 Products API: http://localhost:${PORT}/api/products`)
+		// Serverni Railway uchun to‘g‘ri bind qilish
+		app.listen(port, '0.0.0.0', async () => {
+			console.log(`🚀 Server running on port ${port}`)
+			console.log(`📍 Health check: /health`)
+			console.log(`📍 Products API: /api/products`)
+
+			// Database connection server ishga tushgandan keyin
+			try {
+				await prisma.$connect()
+				console.log('✅ Database connected successfully')
+			} catch (dbError) {
+				console.error('❌ Database connection failed:', dbError)
+			}
 		})
 	} catch (error) {
 		console.error('❌ Failed to start server:', error)
