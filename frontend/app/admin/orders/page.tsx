@@ -40,7 +40,7 @@ export default function AdminOrdersPage() {
 
 		const fetchOrders = async () => {
 			try {
-				const response = await axios.get('http://localhost:5001/api/orders/admin/all', {
+				const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/orders/admin/all`, {
 					headers: {
 						'x-user-id': user.uid,
 					},

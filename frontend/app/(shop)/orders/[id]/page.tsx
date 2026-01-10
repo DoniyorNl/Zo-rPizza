@@ -57,7 +57,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
 
 		const fetchOrder = async () => {
 			try {
-				const response = await axios.get(`http://localhost:5001/api/orders/${id}`)
+				const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/orders/${id}`)
 				setOrder(response.data.data)
 			} catch (err: any) {
 				setError(err.response?.data?.message || 'Buyurtma topilmadi')

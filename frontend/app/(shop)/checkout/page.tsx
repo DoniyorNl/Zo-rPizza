@@ -62,7 +62,7 @@ export default function CheckoutPage() {
 				deliveryPhone,
 			}
 
-			const response = await axios.post('http://localhost:5001/api/orders', orderData)
+			const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/orders`, orderData)
 
 			// Muvaffaqiyatli - cart tozalash
 			clearCart()
