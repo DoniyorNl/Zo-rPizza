@@ -1,18 +1,18 @@
 // 🍕 ZOR PIZZA - BACKEND SERVER
 // Bu fayl serverni ishga tushiradi
 
-import express, { Express, Request, Response } from 'express'
-import cors from 'cors'
-import helmet from 'helmet'
-import rateLimit from 'express-rate-limit'
-import morgan from 'morgan'
-import dotenv from 'dotenv'
 import { PrismaClient } from '@prisma/client'
+import cors from 'cors'
+import dotenv from 'dotenv'
+import express, { Express, Request, Response } from 'express'
+import rateLimit from 'express-rate-limit'
+import helmet from 'helmet'
+import morgan from 'morgan'
 
 // Routes
 import categoriesRoutes from './routes/categories.routes'
-import productsRoutes from './routes/products.routes'
 import ordersRoutes from './routes/orders.routes'
+import productsRoutes from './routes/products.routes'
 import usersRoutes from './routes/users.routes'
 
 // Environment variables yuklash

@@ -1,6 +1,6 @@
 // backend/src/middleware/admin.middleware.ts
 import prisma from '@/lib/prisma'
-import { Request, Response, NextFunction } from 'express'
+import { NextFunction, Request, Response } from 'express'
 
 export const adminOnly = async (req: Request, res: Response, next: NextFunction) => {
 	try {
