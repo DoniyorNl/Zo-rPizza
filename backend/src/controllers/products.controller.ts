@@ -71,7 +71,7 @@ export const getProductById = async (req: Request, res: Response) => {
 			})
 		}
 
-		res.status(200).json({
+		return res.status(200).json({
 			success: true,
 			data: product,
 		})
@@ -124,7 +124,7 @@ export const createProduct = async (req: Request, res: Response) => {
 			},
 		})
 
-		res.status(201).json({
+		return res.status(201).json({
 			success: true,
 			message: 'Product created successfully',
 			data: product,
@@ -187,7 +187,7 @@ export const updateProduct = async (req: Request, res: Response) => {
 			},
 		})
 
-		res.status(200).json({
+		return res.status(200).json({
 			success: true,
 			message: 'Product updated successfully',
 			data: product,
@@ -240,7 +240,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
 			where: { id },
 		})
 
-		res.status(200).json({
+		return res.status(200).json({
 			success: true,
 			message: 'Product deleted successfully',
 		})
