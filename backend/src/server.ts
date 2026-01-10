@@ -1,5 +1,6 @@
 // 🍕 ZOR PIZZA - BACKEND SERVER
 // Bu fayl serverni ishga tushiradi
+// backend/src/server.ts
 
 import { PrismaClient } from '@prisma/client'
 import cors from 'cors'
@@ -30,12 +31,33 @@ export const prisma = new PrismaClient()
 // ============================================
 
 // CORS - Frontend'dan so'rov qabul qilish uchun
+// CORS - Frontend'dan so'rov qabul qilish uchun
 const allowedOrigins = [
 	'http://localhost:3000',
 	'https://zo-r-pizza.vercel.app',
-	'https://zo-rpizza-production.up.railway.app',
+	'https://zo-r-pizza-git-main-doniyors-projects-7a4457b6.vercel.app',
+	'https://zo-r-pizza-55644cqeb-doniyors-projects-7a4457b6.vercel.app',
 	process.env.FRONTEND_URL,
 ].filter(Boolean)
+
+app.use(
+	cors({
+		origin: (origin, callback) => {
+			// Allow requests with no origin (mobile apps, Postman, etc.)
+			if (!origin) return callback(null, true)
+
+			if (allowedOrigins.includes(origin)) {
+				callback(null, true)
+			} else {
+				console.log('❌ CORS blocked origin:', origin) // ← Debug uchun
+				callback(new Error('Not allowed by CORS'))
+			}
+		},
+		credentials: true,
+		methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+		allowedHeaders: ['Content-Type', 'Authorization', 'x-user-id'],
+	}),
+)
 
 app.use(
 	cors({
