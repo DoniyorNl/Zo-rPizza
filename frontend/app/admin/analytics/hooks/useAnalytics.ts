@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react'
 import axios from 'axios'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
 	AnalyticsOverview,
+	CategoryStats,
+	DateRange,
+	RecentOrder,
 	RevenueData,
 	TopProduct,
-	CategoryStats,
-	RecentOrder,
-	DateRange,
 } from '../types/analytics.types'
 
 export function useAnalytics(dateRange: DateRange) {
@@ -17,14 +17,29 @@ export function useAnalytics(dateRange: DateRange) {
 	const [categoryStats, setCategoryStats] = useState<CategoryStats[]>([])
 	const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([])
 
-	const fetchAnalytics = async () => {
+	const inFlightRef = useRef(false)
+	const lastKeyRef = useRef<string | null>(null)
+
+	const params = useMemo(
+		() => ({
+			startDate: dateRange.startDate.toISOString(),
+			endDate: dateRange.endDate.toISOString(),
+		}),
+		[dateRange.startDate, dateRange.endDate],
+	)
+
+	const paramsKey = useMemo(
+		() => `${params.startDate}|${params.endDate}`,
+		[params.startDate, params.endDate],
+	)
+
+	const fetchAnalytics = useCallback(async () => {
+		if (inFlightRef.current && lastKeyRef.current === paramsKey) return
+		inFlightRef.current = true
+		lastKeyRef.current = paramsKey
+
 		setLoading(true)
 		try {
-			const params = {
-				startDate: dateRange.startDate.toISOString(),
-				endDate: dateRange.endDate.toISOString(),
-			}
-
 			const [overviewRes, revenueRes, productsRes, categoriesRes, ordersRes] = await Promise.all([
 				axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/analytics/overview`, { params }),
 				axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/analytics/revenue`, { params }),
@@ -42,12 +57,13 @@ export function useAnalytics(dateRange: DateRange) {
 			console.error('Error fetching analytics:', error)
 		} finally {
 			setLoading(false)
+			inFlightRef.current = false
 		}
-	}
+	}, [params, paramsKey])
 
 	useEffect(() => {
 		fetchAnalytics()
-	}, [dateRange])
+	}, [fetchAnalytics, paramsKey])
 
 	return {
 		loading,
