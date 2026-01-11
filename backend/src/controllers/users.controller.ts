@@ -1,8 +1,8 @@
 // backend/src/controllers/users.controller.ts
 
-import { Request, Response } from 'express'
-import { prisma } from '../server'
 import { Prisma } from '@prisma/client'
+import { Request, Response } from 'express'
+import prisma from '../lib/prisma'
 
 // ==========================================
 // HELPER FUNCTIONS

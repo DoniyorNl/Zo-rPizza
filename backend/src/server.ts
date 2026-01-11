@@ -1,27 +1,26 @@
 // 🍕 ZOR PIZZA - BACKEND SERVER (Optimized Version)
 // backend/src/server.ts
 
-import { PrismaClient } from '@prisma/client'
 import cors from 'cors'
 import dotenv from 'dotenv'
-import express, { Express, Request, Response, NextFunction } from 'express'
+import express, { Express, NextFunction, Request, Response } from 'express'
 import rateLimit from 'express-rate-limit'
 import helmet from 'helmet'
 import morgan from 'morgan'
+import prisma from './lib/prisma'
 
 // Route'larni tepada import qilamiz
+import analyticsRoutes from './routes/analytics.routes'
 import categoriesRoutes from './routes/categories.routes'
 import ordersRoutes from './routes/orders.routes'
 import productsRoutes from './routes/products.routes'
 import usersRoutes from './routes/users.routes'
-import analyticsRoutes from './routes/analytics.routes'
 
 // Environment variables yuklash
 dotenv.config()
 
 const app: Express = express()
 const PORT = process.env.PORT || 5001
-export const prisma = new PrismaClient()
 
 // ============================================
 // MIDDLEWARE & SECURITY

@@ -2,7 +2,7 @@
 // 🍕 CATEGORIES CONTROLLER
 
 import { Request, Response } from 'express'
-import { prisma } from '../server'
+import prisma from '../lib/prisma'
 
 // GET /api/categories - Barcha kategoriyalar
 export const getAllCategories = async (_req: Request, res: Response) => {

@@ -2,17 +2,39 @@
 // 📊 ANALYTICS CONTROLLER
 
 import { Request, Response } from 'express'
-import { prisma } from '../server'
+import prisma from '../lib/prisma'
+
+const parseDateRange = (startDate: unknown, endDate: unknown) => {
+	const start = typeof startDate === 'string' && startDate.length > 0 ? new Date(startDate) : null
+	const end = typeof endDate === 'string' && endDate.length > 0 ? new Date(endDate) : null
+
+	const defaultStart = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+	const defaultEnd = new Date()
+
+	const resolvedStart = start ?? defaultStart
+	const resolvedEnd = end ?? defaultEnd
+
+	if (Number.isNaN(resolvedStart.getTime()) || Number.isNaN(resolvedEnd.getTime())) {
+		return { ok: false as const, error: 'Invalid startDate or endDate' }
+	}
+
+	if (resolvedStart > resolvedEnd) {
+		return { ok: false as const, error: 'startDate must be before endDate' }
+	}
+
+	return { ok: true as const, start: resolvedStart, end: resolvedEnd }
+}
 
 // GET /api/analytics/overview - Umumiy statistika
 export const getOverview = async (req: Request, res: Response) => {
 	try {
 		const { startDate, endDate } = req.query
 
-		const start = startDate
-			? new Date(startDate as string)
-			: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-		const end = endDate ? new Date(endDate as string) : new Date()
+		const parsed = parseDateRange(startDate, endDate)
+		if (!parsed.ok) {
+			return res.status(400).json({ success: false, message: parsed.error })
+		}
+		const { start, end } = parsed
 
 		const [
 			totalOrders,
@@ -104,10 +126,11 @@ export const getRevenueData = async (req: Request, res: Response) => {
 	try {
 		const { startDate, endDate } = req.query
 
-		const start = startDate
-			? new Date(startDate as string)
-			: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-		const end = endDate ? new Date(endDate as string) : new Date()
+		const parsed = parseDateRange(startDate, endDate)
+		if (!parsed.ok) {
+			return res.status(400).json({ success: false, message: parsed.error })
+		}
+		const { start, end } = parsed
 
 		const orders = await prisma.order.findMany({
 			where: {
@@ -159,19 +182,32 @@ export const getTopProducts = async (req: Request, res: Response) => {
 	try {
 		const { startDate, endDate, limit = '10' } = req.query
 
-		const start = startDate
-			? new Date(startDate as string)
-			: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-		const end = endDate ? new Date(endDate as string) : new Date()
+		const parsed = parseDateRange(startDate, endDate)
+		if (!parsed.ok) {
+			return res.status(400).json({ success: false, message: parsed.error })
+		}
+		const { start, end } = parsed
+
+		const limitNumber = Math.max(1, Math.min(100, Number.parseInt(String(limit), 10) || 10))
+
+		const orders = await prisma.order.findMany({
+			where: {
+				createdAt: { gte: start, lte: end },
+				status: { in: ['DELIVERED'] },
+			},
+			select: { id: true },
+		})
+
+		const orderIds = orders.map(o => o.id)
+		if (orderIds.length === 0) {
+			return res.status(200).json({ success: true, data: [] })
+		}
 
 		const topProducts = await prisma.orderItem.groupBy({
 			by: ['productId'],
 			where: {
 				productId: { not: null },
-				order: {
-					createdAt: { gte: start, lte: end },
-					status: { in: ['DELIVERED'] },
-				},
+				orderId: { in: orderIds },
 			},
 			_sum: {
 				quantity: true,
@@ -182,7 +218,7 @@ export const getTopProducts = async (req: Request, res: Response) => {
 					quantity: 'desc',
 				},
 			},
-			take: parseInt(limit as string),
+			take: limitNumber,
 		})
 
 		// Get product details
@@ -236,19 +272,30 @@ export const getCategoryStats = async (req: Request, res: Response) => {
 	try {
 		const { startDate, endDate } = req.query
 
-		const start = startDate
-			? new Date(startDate as string)
-			: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-		const end = endDate ? new Date(endDate as string) : new Date()
+		const parsed = parseDateRange(startDate, endDate)
+		if (!parsed.ok) {
+			return res.status(400).json({ success: false, message: parsed.error })
+		}
+		const { start, end } = parsed
+
+		const orders = await prisma.order.findMany({
+			where: {
+				createdAt: { gte: start, lte: end },
+				status: { in: ['DELIVERED'] },
+			},
+			select: { id: true },
+		})
+
+		const orderIds = orders.map(o => o.id)
+		if (orderIds.length === 0) {
+			return res.status(200).json({ success: true, data: [] })
+		}
 
 		const categoryStats = await prisma.orderItem.groupBy({
 			by: ['productId'],
 			where: {
 				productId: { not: null },
-				order: {
-					createdAt: { gte: start, lte: end },
-					status: { in: ['DELIVERED'] },
-				},
+				orderId: { in: orderIds },
 			},
 			_sum: {
 				quantity: true,

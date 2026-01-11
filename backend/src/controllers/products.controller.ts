@@ -2,7 +2,7 @@
 // 🍕 PRODUCTS CONTROLLER
 
 import { Request, Response } from 'express'
-import { prisma } from '../server'
+import prisma from '../lib/prisma'
 
 // GET /api/products - Barcha mahsulotlar
 export const getAllProducts = async (req: Request, res: Response) => {
