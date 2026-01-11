@@ -1,60 +1,49 @@
-// 🍕 ZOR PIZZA - BACKEND SERVER
-// Bu fayl serverni ishga tushiradi
+// 🍕 ZOR PIZZA - BACKEND SERVER (Optimized Version)
 // backend/src/server.ts
 
 import { PrismaClient } from '@prisma/client'
 import cors from 'cors'
 import dotenv from 'dotenv'
-import express, { Express, Request, Response } from 'express'
+import express, { Express, Request, Response, NextFunction } from 'express'
 import rateLimit from 'express-rate-limit'
 import helmet from 'helmet'
 import morgan from 'morgan'
 
-// Routes
+// Route'larni tepada import qilamiz
 import categoriesRoutes from './routes/categories.routes'
 import ordersRoutes from './routes/orders.routes'
 import productsRoutes from './routes/products.routes'
 import usersRoutes from './routes/users.routes'
+import analyticsRoutes from './routes/analytics.routes'
 
 // Environment variables yuklash
 dotenv.config()
 
-// Express app yaratish
 const app: Express = express()
 const PORT = process.env.PORT || 5001
-
-// Prisma Client
 export const prisma = new PrismaClient()
 
 // ============================================
-// MIDDLEWARE
+// MIDDLEWARE & SECURITY
 // ============================================
 
-// CORS - Frontend'dan so'rov qabul qilish uchun
+// 1. Helmet - HTTP xavfsizligi
+app.use(helmet())
+
+// 2. CORS - Xavfsiz whitelist bilan
+const allowedOrigins = [
+	process.env.FRONTEND_URL,
+	'http://localhost:3000',
+	'http://localhost:5173', // Vite default port
+]
+
 app.use(
 	cors({
 		origin: (origin, callback) => {
-			// Allow requests with no origin (mobile apps, Postman, etc.)
-			if (!origin) {
+			// Brauzerdan bo'lmagan so'rovlar (Postman kabi) yoki whitelist'dagi domenlar
+			if (!origin || allowedOrigins.some(domain => domain && origin.startsWith(domain))) {
 				return callback(null, true)
 			}
-
-			// Allow localhost
-			if (origin.includes('localhost')) {
-				return callback(null, true)
-			}
-
-			// Allow all Vercel domains
-			if (origin.includes('vercel.app')) {
-				return callback(null, true)
-			}
-
-			// Allow production frontend from env
-			if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) {
-				return callback(null, true)
-			}
-
-			// Block everything else
 			console.log('❌ CORS blocked origin:', origin)
 			callback(new Error('Not allowed by CORS'))
 		},
@@ -64,140 +53,121 @@ app.use(
 	}),
 )
 
-// Helmet - HTTP headers xavfsizligi
-app.use(helmet())
-
-// Rate Limiting - DDoS himoyasi (100 request/15 min)
-const limiter = rateLimit({
-	windowMs: 15 * 60 * 1000, // 15 daqiqa
-	max: 100, // Maksimal 100 request
-	message: 'Too many requests, please try again later.',
+// 3. Rate Limiting (Tartibga solingan)
+// Analytics uchun alohida, yuqoriroq limit
+const analyticsLimiter = rateLimit({
+	windowMs: 1 * 60 * 1000,
+	max: 500,
+	message: { success: false, message: 'Analytics limit exceeded' },
 })
-app.use('/api/', limiter)
 
-// Morgan - HTTP request logger
+// Umumiy API uchun limit
+const generalLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000,
+	max: 1000,
+	message: { success: false, message: 'Too many requests, try again later' },
+})
+
+// 4. Boshqa standart middleware'lar
 app.use(morgan('dev'))
-
-// JSON parser - Request body'ni parse qilish
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
+app.use(express.json({ limit: '10kb' })) // Body hajmini cheklash (Xavfsizlik uchun)
+app.use(express.urlencoded({ extended: true, limit: '10kb' }))
 
 // ============================================
-// HEALTH CHECK ENDPOINT
+// ROUTES
 // ============================================
 
-// Server ishlab turganini tekshirish
+// Health check (Hech qanday limitlarsiz)
 app.get('/health', (_req: Request, res: Response) => {
 	res.status(200).json({
 		success: true,
-		message: '🍕 Zor Pizza Backend is running!',
+		status: 'up',
 		timestamp: new Date().toISOString(),
-		environment: process.env.NODE_ENV || 'development',
 	})
 })
+
+// API Route'lari
+app.use('/api/analytics', analyticsLimiter, analyticsRoutes) // Maxsus limit
+app.use('/api/categories', generalLimiter, categoriesRoutes)
+app.use('/api/products', generalLimiter, productsRoutes)
+app.use('/api/orders', generalLimiter, ordersRoutes)
+app.use('/api/users', generalLimiter, usersRoutes)
 
 // Root endpoint
 app.get('/', (_req: Request, res: Response) => {
 	res.status(200).json({
 		success: true,
-		message: '🍕 Zor Pizza API',
-		version: '1.0.0',
-		endpoints: {
-			health: '/health',
-			categories: '/api/categories',
-			products: '/api/products',
-			orders: '/api/orders',
-			users: '/api/users',
-		},
+		message: '🍕 Zor Pizza API v1.0.0',
+		documentation: '/health',
 	})
 })
 
 // ============================================
-// API ROUTES
+// ERROR HANDLING
 // ============================================
 
-// Categories
-app.use('/api/categories', categoriesRoutes)
-
-// Products
-app.use('/api/products', productsRoutes)
-
-// Orders
-app.use('/api/orders', ordersRoutes)
-
-// Users
-app.use('/api/users', usersRoutes)
-
-// ============================================
-// 404 HANDLER
-// ============================================
-
-// Topilmagan route'lar uchun
+// 404 Handler
 app.use((_req: Request, res: Response) => {
-	res.status(404).json({
-		success: false,
-		message: 'Route not found',
-	})
+	res.status(404).json({ success: false, message: 'Route topilmadi' })
 })
 
-// ============================================
-// ERROR HANDLER
-// ============================================
+// Global Error Handler (TypeScript bilan boyitilgan)
+interface AppError extends Error {
+	status?: number
+}
 
-app.use((err: any, _req: Request, res: Response, _next: any) => {
-	console.error('❌ Error:', err)
-	res.status(err.status || 500).json({
+app.use((err: AppError, _req: Request, res: Response, _next: NextFunction) => {
+	const statusCode = err.status || 500
+	const message = err.message || 'Ichki server xatosi'
+
+	console.error(`[ERROR] ${new Date().toISOString()}:`, err)
+
+	res.status(statusCode).json({
 		success: false,
-		message: err.message || 'Internal server error',
+		message: message,
 		...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
 	})
 })
 
 // ============================================
-// SERVER START
+// SERVER LUNCHER
 // ============================================
 
-// Serverni ishga tushirish
 const startServer = async () => {
 	try {
-		const port = Number(PORT)
+		// DB connection
+		await prisma.$connect()
+		console.log('✅ Database connected')
 
-		// Database connection tekshirish
-		try {
-			await prisma.$connect()
-			console.log('✅ Database connected successfully')
-		} catch (dbError) {
-			console.error('❌ Database connection failed:', dbError)
-			console.log('⚠️ Starting server without database...')
-		}
+		const server = app.listen(Number(PORT), '0.0.0.0', () => {
+			console.log(`
+      🚀 Server muvaffaqiyatli ishga tushdi!
+      📍 Port: ${PORT}
+      📍 Mode: ${process.env.NODE_ENV || 'development'}
+      🍕 API Base: http://localhost:${PORT}/api
+      `)
+		})
 
-		// Serverni Railway uchun to'g'ri bind qilish
-		app.listen(port, '0.0.0.0', () => {
-			console.log('🚀 ========================================')
-			console.log(`🚀 Server running on port ${port}`)
-			console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`)
-			console.log(`📍 Health check: http://localhost:${port}/health`)
-			console.log(`📍 API Base: http://localhost:${port}/api`)
-			console.log('🚀 ========================================')
+		// Kutilmagan xatoliklarni ushlash (Process level)
+		process.on('unhandledRejection', err => {
+			console.log('❌ UNHANDLED REJECTION! Shutting down...')
+			console.error(err)
+			server.close(() => process.exit(1))
 		})
 	} catch (error) {
-		console.error('❌ Failed to start server:', error)
+		console.error('❌ Serverni boshlashda xatolik:', error)
 		process.exit(1)
 	}
 }
 
-// Serverni ishga tushirish
 startServer()
 
-// Graceful shutdown
-process.on('SIGINT', async () => {
-	console.log('\n👋 Shutting down gracefully...')
+// Graceful Shutdown (Bazani toza yopish)
+const shutdown = async (signal: string) => {
+	console.log(`\n👋 ${signal} qabul qilindi. Yopilmoqda...`)
 	await prisma.$disconnect()
 	process.exit(0)
-})
+}
 
-process.on('SIGTERM', async () => {
-	console.log('\n👋 SIGTERM received, shutting down gracefully...')
-	await prisma.$disconnect()
-	process.exit(0)
-})
+process.on('SIGINT', () => shutdown('SIGINT'))
+process.on('SIGTERM', () => shutdown('SIGTERM'))
