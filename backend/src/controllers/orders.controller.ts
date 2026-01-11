@@ -2,12 +2,25 @@
 // 🍕 ORDERS CONTROLLER
 
 import { Request, Response } from 'express'
-import { prisma } from '../server'
+import prisma from '../lib/prisma'
+
+const getQueryString = (value: unknown): string | undefined => {
+	if (typeof value === 'string') return value
+	if (Array.isArray(value) && typeof value[0] === 'string') return value[0]
+	return undefined
+}
+
+const getParamString = (value: unknown): string | undefined => {
+	if (typeof value === 'string') return value
+	if (Array.isArray(value) && typeof value[0] === 'string') return value[0]
+	return undefined
+}
 
 // GET /api/orders - Barcha buyurtmalar (Admin)
 export const getAllOrders = async (req: Request, res: Response) => {
 	try {
-		const { status, paymentStatus } = req.query
+		const status = getQueryString(req.query.status)
+		const paymentStatus = getQueryString(req.query.paymentStatus)
 
 		const orders = await prisma.order.findMany({
 			where: {
@@ -45,7 +58,10 @@ export const getAllOrders = async (req: Request, res: Response) => {
 // GET /api/orders/user/:userId - User buyurtmalari
 export const getUserOrders = async (req: Request, res: Response) => {
 	try {
-		const { userId } = req.params
+		const userId = getParamString((req.params as any).userId)
+		if (!userId) {
+			return res.status(400).json({ success: false, message: 'Invalid userId' })
+		}
 
 		const orders = await prisma.order.findMany({
 			where: { userId },
@@ -59,14 +75,14 @@ export const getUserOrders = async (req: Request, res: Response) => {
 			orderBy: { createdAt: 'desc' },
 		})
 
-		res.status(200).json({
+		return res.status(200).json({
 			success: true,
 			count: orders.length,
 			data: orders,
 		})
 	} catch (error) {
 		console.error('Error fetching user orders:', error)
-		res.status(500).json({
+		return res.status(500).json({
 			success: false,
 			message: 'Server error',
 			error: error instanceof Error ? error.message : 'Unknown error',
@@ -77,7 +93,10 @@ export const getUserOrders = async (req: Request, res: Response) => {
 // GET /api/orders/:id - Bitta buyurtma
 export const getOrderById = async (req: Request, res: Response) => {
 	try {
-		const { id } = req.params
+		const id = getParamString((req.params as any).id)
+		if (!id) {
+			return res.status(400).json({ success: false, message: 'Invalid id' })
+		}
 
 		const order = await prisma.order.findUnique({
 			where: { id },
@@ -241,7 +260,10 @@ export const createOrder = async (req: Request, res: Response) => {
 // PATCH /api/orders/:id/status - Status yangilash
 export const updateOrderStatus = async (req: Request, res: Response) => {
 	try {
-		const { id } = req.params
+		const id = getParamString((req.params as any).id)
+		if (!id) {
+			return res.status(400).json({ success: false, message: 'Invalid id' })
+		}
 		const { status, paymentStatus } = req.body
 
 		// Buyurtma mavjudligini tekshirish
@@ -289,7 +311,10 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 // DELETE /api/orders/:id - Buyurtma o'chirish (faqat PENDING)
 export const deleteOrder = async (req: Request, res: Response) => {
 	try {
-		const { id } = req.params
+		const id = getParamString((req.params as any).id)
+		if (!id) {
+			return res.status(400).json({ success: false, message: 'Invalid id' })
+		}
 
 		const existing = await prisma.order.findUnique({
 			where: { id },
