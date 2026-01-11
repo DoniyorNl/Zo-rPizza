@@ -167,6 +167,7 @@ export const getTopProducts = async (req: Request, res: Response) => {
 		const topProducts = await prisma.orderItem.groupBy({
 			by: ['productId'],
 			where: {
+				productId: { not: null },
 				order: {
 					createdAt: { gte: start, lte: end },
 					status: { in: ['DELIVERED'] },
@@ -187,10 +188,17 @@ export const getTopProducts = async (req: Request, res: Response) => {
 		// Get product details
 		const productsWithDetails = await Promise.all(
 			topProducts.map(async item => {
-				const product = await prisma.product.findUnique({
-					where: { id: item.productId || '' },
-					include: { category: true },
-				})
+				let product = null
+				try {
+					if (item.productId) {
+						product = await prisma.product.findUnique({
+							where: { id: item.productId },
+							include: { category: true },
+						})
+					}
+				} catch (e) {
+					product = null
+				}
 
 				const totalSold =
 					typeof item._sum.quantity === 'number' && isFinite(item._sum.quantity)
@@ -236,6 +244,7 @@ export const getCategoryStats = async (req: Request, res: Response) => {
 		const categoryStats = await prisma.orderItem.groupBy({
 			by: ['productId'],
 			where: {
+				productId: { not: null },
 				order: {
 					createdAt: { gte: start, lte: end },
 					status: { in: ['DELIVERED'] },
@@ -251,34 +260,40 @@ export const getCategoryStats = async (req: Request, res: Response) => {
 		const categorySummary: any = {}
 
 		for (const item of categoryStats) {
-			const product = await prisma.product.findUnique({
-				where: { id: item.productId || '' },
-				include: { category: true },
-			})
-
-			if (product) {
-				const catId = product.categoryId
-				const catName = product.category.name
-
-				if (!categorySummary[catId]) {
-					categorySummary[catId] = {
-						categoryId: catId,
-						categoryName: catName,
-						totalOrders: 0,
-						revenue: 0,
-					}
+			let product = null
+			try {
+				if (item.productId) {
+					product = await prisma.product.findUnique({
+						where: { id: item.productId },
+						include: { category: true },
+					})
 				}
-
-				const quantity =
-					typeof item._sum.quantity === 'number' && isFinite(item._sum.quantity)
-						? item._sum.quantity
-						: 0
-				const price =
-					typeof item._sum.price === 'number' && isFinite(item._sum.price) ? item._sum.price : 0
-
-				categorySummary[catId].totalOrders += quantity
-				categorySummary[catId].revenue += price
+			} catch (e) {
+				product = null
 			}
+
+			// fallback for missing product/category
+			const catId = product?.categoryId || 'Unknown'
+			const catName = product?.category?.name || 'Unknown'
+
+			if (!categorySummary[catId]) {
+				categorySummary[catId] = {
+					categoryId: catId,
+					categoryName: catName,
+					totalOrders: 0,
+					revenue: 0,
+				}
+			}
+
+			const quantity =
+				typeof item._sum.quantity === 'number' && isFinite(item._sum.quantity)
+					? item._sum.quantity
+					: 0
+			const price =
+				typeof item._sum.price === 'number' && isFinite(item._sum.price) ? item._sum.price : 0
+
+			categorySummary[catId].totalOrders += quantity
+			categorySummary[catId].revenue += price
 		}
 
 		// Calculate percentages
