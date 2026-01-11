@@ -7,6 +7,7 @@ import {
 	getAllProducts,
 	getProductById,
 	updateProduct,
+	restoreProduct,
 } from '@/controllers/products.controller'
 import { Router } from 'express'
 
@@ -18,13 +19,16 @@ router.get('/', getAllProducts)
 // GET /api/products/:id - Bitta mahsulot
 router.get('/:id', getProductById)
 
-// POST /api/products - Yangi mahsulot
+// POST /api/products - Yangi mahsulot (Admin)
 router.post('/', createProduct)
 
-// PUT /api/products/:id - Mahsulot yangilash
+// PUT /api/products/:id - Mahsulot yangilash (Admin)
 router.put('/:id', updateProduct)
 
-// DELETE /api/products/:id - Mahsulot o'chirish
+// DELETE /api/products/:id - Mahsulot yashirish / Soft delete (Admin)
 router.delete('/:id', deleteProduct)
+
+// PATCH /api/products/:id/restore - Mahsulotni qayta faollashtirish (Admin)
+router.patch('/:id/restore', restoreProduct)
 
 export default router
