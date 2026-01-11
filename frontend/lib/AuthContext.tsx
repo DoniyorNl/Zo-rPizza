@@ -1,5 +1,9 @@
-// frontend/lib/AuthContext.tsx
-// 🔐 AUTH CONTEXT
+// =====================================
+// 📁 FILE PATH: frontend/lib/AuthContext.tsx
+// 🔐 AUTH CONTEXT - FIXED VERSION
+// 🎯 PURPOSE: Firebase authentication with localStorage persistence
+// 📝 UPDATED: 2025-01-11
+// =====================================
 
 'use client'
 
@@ -36,6 +40,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const signup = async (email: string, password: string) => {
 		const userCredential = await createUserWithEmailAndPassword(auth, email, password)
 
+		// ✅ YANGI: localStorage'ga saqlash
+		localStorage.setItem(
+			'firebaseUser',
+			JSON.stringify({
+				uid: userCredential.user.uid,
+				email: userCredential.user.email,
+			}),
+		)
+
 		// Backend'ga user ma'lumotlarini yuborish
 		try {
 			await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
@@ -50,19 +63,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 	// Login
 	const login = async (email: string, password: string) => {
-		await signInWithEmailAndPassword(auth, email, password)
+		const userCredential = await signInWithEmailAndPassword(auth, email, password)
+
+		// ✅ YANGI: localStorage'ga saqlash
+		localStorage.setItem(
+			'firebaseUser',
+			JSON.stringify({
+				uid: userCredential.user.uid,
+				email: userCredential.user.email,
+			}),
+		)
+
+		console.log('✅ User logged in and saved to localStorage:', userCredential.user.uid)
 	}
 
 	// Logout
 	const logout = async () => {
 		await signOut(auth)
+
+		// ✅ YANGI: localStorage'dan o'chirish
+		localStorage.removeItem('firebaseUser')
+		console.log('✅ User logged out and removed from localStorage')
 	}
 
 	// Listen to auth changes
 	useEffect(() => {
-		const unsubscribe = onAuthStateChanged(auth, user => {
-			setUser(user)
+		const unsubscribe = onAuthStateChanged(auth, currentUser => {
+			setUser(currentUser)
 			setLoading(false)
+
+			// ✅ YANGI: Auth state o'zgarganda localStorage'ni yangilash
+			if (currentUser) {
+				localStorage.setItem(
+					'firebaseUser',
+					JSON.stringify({
+						uid: currentUser.uid,
+						email: currentUser.email,
+					}),
+				)
+			} else {
+				localStorage.removeItem('firebaseUser')
+			}
 		})
 
 		return unsubscribe
