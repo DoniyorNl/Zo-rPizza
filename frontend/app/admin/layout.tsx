@@ -1,10 +1,10 @@
 // frontend/app/admin/layout.tsx
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
 	const { user } = useAuth()
@@ -30,6 +30,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 					<nav className='space-y-2'>
 						<Link href='/admin' className='block py-2 px-4 rounded hover:bg-gray-800 transition'>
 							📊 Dashboard
+						</Link>
+						<Link
+							href='/admin/products'
+							className='block py-2 px-4 rounded hover:bg-gray-800 transition'
+						>
+							🍕 Mahsulotlar
 						</Link>
 						<Link
 							href='/admin/orders'

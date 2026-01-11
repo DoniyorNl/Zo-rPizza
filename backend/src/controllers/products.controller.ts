@@ -44,9 +44,10 @@ export const getAllProducts = async (req: Request, res: Response) => {
 export const getProductById = async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params
+		const productId = Array.isArray(id) ? id[0] : id
 
 		const product = await prisma.product.findUnique({
-			where: { id },
+			where: { id: productId },
 			include: {
 				category: true,
 				ingredientsRel: {
@@ -75,10 +76,10 @@ export const getProductById = async (req: Request, res: Response) => {
 		let ingredients = null
 		if (product.ingredients) {
 			try {
-				// Agar string bo'lsa, parse qilish
-				ingredients = typeof product.ingredients === 'string' 
-					? JSON.parse(product.ingredients) 
-					: product.ingredients
+				ingredients =
+					typeof product.ingredients === 'string'
+						? JSON.parse(product.ingredients)
+						: product.ingredients
 			} catch (e) {
 				console.error('Error parsing ingredients:', e)
 				ingredients = null
@@ -88,10 +89,10 @@ export const getProductById = async (req: Request, res: Response) => {
 		let cookingSteps = null
 		if (product.cookingSteps) {
 			try {
-				// Agar string bo'lsa, parse qilish
-				cookingSteps = typeof product.cookingSteps === 'string' 
-					? JSON.parse(product.cookingSteps) 
-					: product.cookingSteps
+				cookingSteps =
+					typeof product.cookingSteps === 'string'
+						? JSON.parse(product.cookingSteps)
+						: product.cookingSteps
 			} catch (e) {
 				console.error('Error parsing cookingSteps:', e)
 				cookingSteps = null
@@ -103,7 +104,6 @@ export const getProductById = async (req: Request, res: Response) => {
 			...product,
 			ingredients: ingredients,
 			cookingSteps: cookingSteps,
-			// images va allergens allaqachon array formatida
 			images: product.images || [],
 			allergens: product.allergens || [],
 		}
@@ -132,7 +132,6 @@ export const createProduct = async (req: Request, res: Response) => {
 			imageUrl,
 			prepTime,
 			categoryId,
-			// Qo'shimcha maydonlar
 			ingredients,
 			recipe,
 			cookingTemp,
@@ -172,16 +171,13 @@ export const createProduct = async (req: Request, res: Response) => {
 		// JSON maydonlarni to'g'ri formatlash
 		let formattedIngredients = null
 		if (ingredients) {
-			formattedIngredients = typeof ingredients === 'string' 
-				? JSON.parse(ingredients) 
-				: ingredients
+			formattedIngredients = typeof ingredients === 'string' ? JSON.parse(ingredients) : ingredients
 		}
 
 		let formattedCookingSteps = null
 		if (cookingSteps) {
-			formattedCookingSteps = typeof cookingSteps === 'string' 
-				? JSON.parse(cookingSteps) 
-				: cookingSteps
+			formattedCookingSteps =
+				typeof cookingSteps === 'string' ? JSON.parse(cookingSteps) : cookingSteps
 		}
 
 		const product = await prisma.product.create({
@@ -192,7 +188,6 @@ export const createProduct = async (req: Request, res: Response) => {
 				imageUrl,
 				prepTime: parseInt(prepTime) || 15,
 				categoryId,
-				// Qo'shimcha maydonlar
 				ingredients: formattedIngredients,
 				recipe,
 				cookingTemp: cookingTemp ? parseInt(cookingTemp) : null,
@@ -232,11 +227,12 @@ export const createProduct = async (req: Request, res: Response) => {
 export const updateProduct = async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params
+		const productId = Array.isArray(id) ? id[0] : id
 		const { name, description, price, imageUrl, prepTime, categoryId, isActive } = req.body
 
 		// Mahsulot mavjudligini tekshirish
 		const existing = await prisma.product.findUnique({
-			where: { id },
+			where: { id: productId },
 		})
 
 		if (!existing) {
@@ -261,7 +257,7 @@ export const updateProduct = async (req: Request, res: Response) => {
 		}
 
 		const product = await prisma.product.update({
-			where: { id },
+			where: { id: productId },
 			data: {
 				...(name && { name }),
 				...(description && { description }),
@@ -291,17 +287,15 @@ export const updateProduct = async (req: Request, res: Response) => {
 	}
 }
 
-// DELETE /api/products/:id - Mahsulot o'chirish
+// DELETE /api/products/:id - Mahsulotni yashirish (Soft Delete)
 export const deleteProduct = async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params
+		const productId = Array.isArray(id) ? id[0] : id
 
 		// Mahsulot mavjudligini tekshirish
 		const existing = await prisma.product.findUnique({
-			where: { id },
-			include: {
-				orderItems: true,
-			},
+			where: { id: productId },
 		})
 
 		if (!existing) {
@@ -311,30 +305,71 @@ export const deleteProduct = async (req: Request, res: Response) => {
 			})
 		}
 
-		// Buyurtmalarda ishlatilganmi? Soft delete
-		if (existing.orderItems.length > 0) {
-			await prisma.product.update({
-				where: { id },
-				data: { isActive: false },
-			})
-
-			return res.status(200).json({
-				success: true,
-				message: 'Product deactivated (used in orders)',
-			})
-		}
-
-		// Ishlatilmagan - to'liq o'chirish
-		await prisma.product.delete({
-			where: { id },
+		// Soft delete: faqat isActive ni false qilish
+		const product = await prisma.product.update({
+			where: { id: productId },
+			data: {
+				isActive: false,
+				updatedAt: new Date(), // O'chirilgan vaqtni qayd qilish
+			},
 		})
 
 		return res.status(200).json({
 			success: true,
-			message: 'Product deleted successfully',
+			message: 'Product deactivated successfully (hidden from menu)',
+			data: product,
 		})
 	} catch (error) {
-		console.error('Error deleting product:', error)
+		console.error('Error deactivating product:', error)
+		return res.status(500).json({
+			success: false,
+			message: 'Server error',
+			error: error instanceof Error ? error.message : 'Unknown error',
+		})
+	}
+}
+
+// PATCH /api/products/:id/restore - Mahsulotni qayta faollashtirish
+export const restoreProduct = async (req: Request, res: Response) => {
+	try {
+		const { id } = req.params
+		const productId = Array.isArray(id) ? id[0] : id
+
+		// Mahsulot mavjudligini tekshirish
+		const existing = await prisma.product.findUnique({
+			where: { id: productId },
+		})
+
+		if (!existing) {
+			return res.status(404).json({
+				success: false,
+				message: 'Product not found',
+			})
+		}
+
+		if (existing.isActive) {
+			return res.status(400).json({
+				success: false,
+				message: 'Product is already active',
+			})
+		}
+
+		// Mahsulotni qayta faollashtirish
+		const product = await prisma.product.update({
+			where: { id: productId },
+			data: {
+				isActive: true,
+				updatedAt: new Date(),
+			},
+		})
+
+		return res.status(200).json({
+			success: true,
+			message: 'Product restored successfully',
+			data: product,
+		})
+	} catch (error) {
+		console.error('Error restoring product:', error)
 		return res.status(500).json({
 			success: false,
 			message: 'Server error',

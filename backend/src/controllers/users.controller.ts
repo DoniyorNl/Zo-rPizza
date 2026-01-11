@@ -73,9 +73,10 @@ export const createUser = async (req: Request, res: Response) => {
 export const getUserById = async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params
+		const userId = Array.isArray(id) ? id[0] : id
 
 		const user = await prisma.user.findUnique({
-			where: { id },
+			where: { id: userId },
 			select: {
 				id: true,
 				email: true,
@@ -112,11 +113,12 @@ export const getUserById = async (req: Request, res: Response) => {
 export const updateUser = async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params
+		const userId = Array.isArray(id) ? id[0] : id
 		const { name, phone } = req.body
 
 		// User mavjudligini tekshirish
 		const existing = await prisma.user.findUnique({
-			where: { id },
+			where: { id: userId },
 		})
 
 		if (!existing) {
@@ -128,7 +130,7 @@ export const updateUser = async (req: Request, res: Response) => {
 
 		// Yangilash
 		const user = await prisma.user.update({
-			where: { id },
+			where: { id: userId },
 			data: {
 				...(name && { name }),
 				...(phone && { phone }),

@@ -11,7 +11,7 @@ export const getAllCategories = async (_req: Request, res: Response) => {
 			where: { isActive: true },
 			include: {
 				_count: {
-					select: { products: true }, // Har bir kategoriyada nechta mahsulot bor
+					select: { products: true },
 				},
 			},
 			orderBy: { name: 'asc' },
@@ -36,9 +36,10 @@ export const getAllCategories = async (_req: Request, res: Response) => {
 export const getCategoryById = async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params
+		const categoryId = Array.isArray(id) ? id[0] : id
 
 		const category = await prisma.category.findUnique({
-			where: { id },
+			where: { id: categoryId },
 			include: {
 				products: {
 					where: { isActive: true },
@@ -119,11 +120,12 @@ export const createCategory = async (req: Request, res: Response) => {
 export const updateCategory = async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params
+		const categoryId = Array.isArray(id) ? id[0] : id
 		const { name, description, imageUrl, isActive } = req.body
 
 		// Kategoriya bormi?
 		const existing = await prisma.category.findUnique({
-			where: { id },
+			where: { id: categoryId },
 		})
 
 		if (!existing) {
@@ -134,7 +136,7 @@ export const updateCategory = async (req: Request, res: Response) => {
 		}
 
 		const category = await prisma.category.update({
-			where: { id },
+			where: { id: categoryId },
 			data: {
 				name,
 				description,
@@ -158,14 +160,15 @@ export const updateCategory = async (req: Request, res: Response) => {
 	}
 }
 
-// DELETE /api/categories/:id - Kategoriya o'chirish
+// DELETE /api/categories/:id - Kategoriya o'chirish (Soft Delete)
 export const deleteCategory = async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params
+		const categoryId = Array.isArray(id) ? id[0] : id
 
 		// Kategoriya bormi?
 		const existing = await prisma.category.findUnique({
-			where: { id },
+			where: { id: categoryId },
 			include: {
 				_count: {
 					select: { products: true },
@@ -180,30 +183,74 @@ export const deleteCategory = async (req: Request, res: Response) => {
 			})
 		}
 
-		// Mahsulot bormi? Soft delete qilamiz
-		if (existing._count.products > 0) {
-			await prisma.category.update({
-				where: { id },
-				data: { isActive: false },
-			})
-
-			return res.status(200).json({
-				success: true,
-				message: 'Category deactivated (has products)',
-			})
-		}
-
-		// Mahsulot yo'q - to'liq o'chiramiz
-		await prisma.category.delete({
-			where: { id },
+		// Mahsulot bor yoki yo'qligidan qat'i nazar, faqat soft delete
+		const category = await prisma.category.update({
+			where: { id: categoryId },
+			data: {
+				isActive: false,
+				updatedAt: new Date(),
+			},
 		})
 
 		return res.status(200).json({
 			success: true,
-			message: 'Category deleted successfully',
+			message:
+				existing._count.products > 0
+					? `Category deactivated (contains ${existing._count.products} products)`
+					: 'Category deactivated successfully',
+			data: category,
 		})
 	} catch (error) {
 		console.error('Error deleting category:', error)
+		return res.status(500).json({
+			success: false,
+			message: 'Server error',
+			error: error instanceof Error ? error.message : 'Unknown error',
+		})
+	}
+}
+
+// PATCH /api/categories/:id/restore - Kategoriyani qayta faollashtirish
+export const restoreCategory = async (req: Request, res: Response) => {
+	try {
+		const { id } = req.params
+		const categoryId = Array.isArray(id) ? id[0] : id
+
+		// Kategoriya bormi?
+		const existing = await prisma.category.findUnique({
+			where: { id: categoryId },
+		})
+
+		if (!existing) {
+			return res.status(404).json({
+				success: false,
+				message: 'Category not found',
+			})
+		}
+
+		if (existing.isActive) {
+			return res.status(400).json({
+				success: false,
+				message: 'Category is already active',
+			})
+		}
+
+		// Kategoriyani qayta faollashtirish
+		const category = await prisma.category.update({
+			where: { id: categoryId },
+			data: {
+				isActive: true,
+				updatedAt: new Date(),
+			},
+		})
+
+		return res.status(200).json({
+			success: true,
+			message: 'Category restored successfully',
+			data: category,
+		})
+	} catch (error) {
+		console.error('Error restoring category:', error)
 		return res.status(500).json({
 			success: false,
 			message: 'Server error',
