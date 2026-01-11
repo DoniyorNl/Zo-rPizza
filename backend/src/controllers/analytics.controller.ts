@@ -71,25 +71,25 @@ export const getOverview = async (req: Request, res: Response) => {
 			}),
 		])
 
+		const revenueRaw = totalRevenue._sum?.totalPrice
+		const revenue = typeof revenueRaw === 'number' && isFinite(revenueRaw) ? revenueRaw : 0
+		const averageOrderValue = totalOrders > 0 && isFinite(revenue) ? revenue / totalOrders : 0
+		const safeAverageOrderValue =
+			isFinite(averageOrderValue) && !isNaN(averageOrderValue) ? averageOrderValue : 0
 
-			   const revenueRaw = totalRevenue._sum?.totalPrice
-			   const revenue = typeof revenueRaw === 'number' && isFinite(revenueRaw) ? revenueRaw : 0
-			   const averageOrderValue = totalOrders > 0 && isFinite(revenue) ? revenue / totalOrders : 0
-			   const safeAverageOrderValue = isFinite(averageOrderValue) && !isNaN(averageOrderValue) ? averageOrderValue : 0
-
-		       return res.status(200).json({
-			       success: true,
-			       data: {
-				       totalRevenue: revenue,
-				       totalOrders: totalOrders ?? 0,
-				       totalCustomers: totalCustomers ?? 0,
-				       activeProducts: activeProducts ?? 0,
-				       averageOrderValue: safeAverageOrderValue,
-				       pendingOrders: pendingOrders ?? 0,
-				       completedOrders: completedOrders ?? 0,
-				       cancelledOrders: cancelledOrders ?? 0,
-			       },
-		       })
+		return res.status(200).json({
+			success: true,
+			data: {
+				totalRevenue: revenue,
+				totalOrders: totalOrders ?? 0,
+				totalCustomers: totalCustomers ?? 0,
+				activeProducts: activeProducts ?? 0,
+				averageOrderValue: safeAverageOrderValue,
+				pendingOrders: pendingOrders ?? 0,
+				completedOrders: completedOrders ?? 0,
+				cancelledOrders: cancelledOrders ?? 0,
+			},
+		})
 	} catch (error) {
 		console.error('Error fetching analytics overview:', error)
 		return res.status(500).json({
@@ -123,16 +123,17 @@ export const getRevenueData = async (req: Request, res: Response) => {
 
 		// Group by date
 
-		       const revenueByDate = orders.reduce((acc: any, order) => {
-			       const date = order.createdAt.toISOString().split('T')[0]
-			       if (!acc[date]) {
-				       acc[date] = { revenue: 0, orders: 0 }
-			       }
-			       const price = typeof order.totalPrice === 'number' && isFinite(order.totalPrice) ? order.totalPrice : 0
-			       acc[date].revenue += price
-			       acc[date].orders += 1
-			       return acc
-		       }, {})
+		const revenueByDate = orders.reduce((acc: any, order) => {
+			const date = order.createdAt.toISOString().split('T')[0]
+			if (!acc[date]) {
+				acc[date] = { revenue: 0, orders: 0 }
+			}
+			const price =
+				typeof order.totalPrice === 'number' && isFinite(order.totalPrice) ? order.totalPrice : 0
+			acc[date].revenue += price
+			acc[date].orders += 1
+			return acc
+		}, {})
 
 		const data = Object.entries(revenueByDate).map(([date, stats]: [string, any]) => ({
 			date,
@@ -184,26 +185,30 @@ export const getTopProducts = async (req: Request, res: Response) => {
 		})
 
 		// Get product details
-		       const productsWithDetails = await Promise.all(
-			       topProducts.map(async item => {
-				       const product = await prisma.product.findUnique({
-					       where: { id: item.productId || '' },
-					       include: { category: true },
-				       })
+		const productsWithDetails = await Promise.all(
+			topProducts.map(async item => {
+				const product = await prisma.product.findUnique({
+					where: { id: item.productId || '' },
+					include: { category: true },
+				})
 
-				       const totalSold = typeof item._sum.quantity === 'number' && isFinite(item._sum.quantity) ? item._sum.quantity : 0
-				       const revenue = typeof item._sum.price === 'number' && isFinite(item._sum.price) ? item._sum.price : 0
+				const totalSold =
+					typeof item._sum.quantity === 'number' && isFinite(item._sum.quantity)
+						? item._sum.quantity
+						: 0
+				const revenue =
+					typeof item._sum.price === 'number' && isFinite(item._sum.price) ? item._sum.price : 0
 
-				       return {
-					       id: item.productId,
-					       name: product?.name || 'Unknown',
-					       category: product?.category?.name || 'Unknown',
-					       totalSold,
-					       revenue,
-					       imageUrl: product?.imageUrl || null,
-				       }
-			       }),
-		       )
+				return {
+					id: item.productId,
+					name: product?.name || 'Unknown',
+					category: product?.category?.name || 'Unknown',
+					totalSold,
+					revenue,
+					imageUrl: product?.imageUrl || null,
+				}
+			}),
+		)
 
 		return res.status(200).json({
 			success: true,
@@ -245,50 +250,51 @@ export const getCategoryStats = async (req: Request, res: Response) => {
 		// Get category info
 		const categorySummary: any = {}
 
-		       for (const item of categoryStats) {
-			       const product = await prisma.product.findUnique({
-				       where: { id: item.productId || '' },
-				       include: { category: true },
-			       })
+		for (const item of categoryStats) {
+			const product = await prisma.product.findUnique({
+				where: { id: item.productId || '' },
+				include: { category: true },
+			})
 
-			       if (product) {
-				       const catId = product.categoryId
-				       const catName = product.category.name
+			if (product) {
+				const catId = product.categoryId
+				const catName = product.category.name
 
-				       if (!categorySummary[catId]) {
-					       categorySummary[catId] = {
-						       categoryId: catId,
-						       categoryName: catName,
-						       totalOrders: 0,
-						       revenue: 0,
-					       }
-				       }
+				if (!categorySummary[catId]) {
+					categorySummary[catId] = {
+						categoryId: catId,
+						categoryName: catName,
+						totalOrders: 0,
+						revenue: 0,
+					}
+				}
 
-				       const quantity = typeof item._sum.quantity === 'number' && isFinite(item._sum.quantity) ? item._sum.quantity : 0
-				       const price = typeof item._sum.price === 'number' && isFinite(item._sum.price) ? item._sum.price : 0
+				const quantity =
+					typeof item._sum.quantity === 'number' && isFinite(item._sum.quantity)
+						? item._sum.quantity
+						: 0
+				const price =
+					typeof item._sum.price === 'number' && isFinite(item._sum.price) ? item._sum.price : 0
 
-				       categorySummary[catId].totalOrders += quantity
-				       categorySummary[catId].revenue += price
-			       }
-		       }
+				categorySummary[catId].totalOrders += quantity
+				categorySummary[catId].revenue += price
+			}
+		}
 
 		// Calculate percentages
 
-		       const totalRevenue = Object.values(categorySummary).reduce(
-			       (sum: number, cat: any) => {
-				       const revenue = typeof cat.revenue === 'number' && isFinite(cat.revenue) ? cat.revenue : 0
-				       return sum + revenue
-			       },
-			       0,
-		       )
+		const totalRevenue = Object.values(categorySummary).reduce((sum: number, cat: any) => {
+			const revenue = typeof cat.revenue === 'number' && isFinite(cat.revenue) ? cat.revenue : 0
+			return sum + revenue
+		}, 0)
 
-		       const data = Object.values(categorySummary).map((cat: any) => {
-			       const revenue = typeof cat.revenue === 'number' && isFinite(cat.revenue) ? cat.revenue : 0
-			       return {
-				       ...cat,
-				       percentage: totalRevenue > 0 ? (revenue / totalRevenue) * 100 : 0,
-			       }
-		       })
+		const data = Object.values(categorySummary).map((cat: any) => {
+			const revenue = typeof cat.revenue === 'number' && isFinite(cat.revenue) ? cat.revenue : 0
+			return {
+				...cat,
+				percentage: totalRevenue > 0 ? (revenue / totalRevenue) * 100 : 0,
+			}
+		})
 
 		return res.status(200).json({
 			success: true,
