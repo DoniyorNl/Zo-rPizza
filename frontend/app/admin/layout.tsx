@@ -3,12 +3,13 @@
 
 import { useAuth } from '@/lib/AuthContext'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
 	const { user } = useAuth()
 	const router = useRouter()
+	const pathname = usePathname()
 
 	useEffect(() => {
 		if (!user) {
@@ -20,6 +21,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 		return null
 	}
 
+	// Active link checker
+	const isActive = (path: string) => {
+		if (path === '/admin') {
+			return pathname === '/admin'
+		}
+		return pathname.startsWith(path)
+	}
+
 	return (
 		<div className='min-h-screen bg-gray-100'>
 			<div className='flex'>
@@ -28,21 +37,69 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 					<h2 className='text-2xl font-bold mb-8'>🍕 Admin Panel</h2>
 
 					<nav className='space-y-2'>
-						<Link href='/admin' className='block py-2 px-4 rounded hover:bg-gray-800 transition'>
+						{/* Dashboard - Main Admin Page */}
+						<Link
+							href='/admin'
+							className={`block py-2 px-4 rounded transition ${
+								isActive('/admin') && pathname === '/admin'
+									? 'bg-orange-600'
+									: 'hover:bg-gray-800'
+							}`}
+						>
 							📊 Dashboard
 						</Link>
+
+						{/* Products */}
 						<Link
 							href='/admin/products'
-							className='block py-2 px-4 rounded hover:bg-gray-800 transition'
+							className={`block py-2 px-4 rounded transition ${
+								isActive('/admin/products') ? 'bg-orange-600' : 'hover:bg-gray-800'
+							}`}
 						>
 							🍕 Mahsulotlar
 						</Link>
+
+						{/* Orders */}
 						<Link
 							href='/admin/orders'
-							className='block py-2 px-4 rounded hover:bg-gray-800 transition'
+							className={`block py-2 px-4 rounded transition ${
+								isActive('/admin/orders') ? 'bg-orange-600' : 'hover:bg-gray-800'
+							}`}
 						>
 							📦 Buyurtmalar
 						</Link>
+
+						{/* Categories */}
+						<Link
+							href='/admin/categories'
+							className={`block py-2 px-4 rounded transition ${
+								isActive('/admin/categories') ? 'bg-orange-600' : 'hover:bg-gray-800'
+							}`}
+						>
+							📁 Kategoriyalar
+						</Link>
+
+						{/* Users/Customers */}
+						<Link
+							href='/admin/users'
+							className={`block py-2 px-4 rounded transition ${
+								isActive('/admin/users') ? 'bg-orange-600' : 'hover:bg-gray-800'
+							}`}
+						>
+							👥 Foydalanuvchilar
+						</Link>
+
+						{/* Analytics */}
+						<Link
+							href='/admin/analytics'
+							className={`block py-2 px-4 rounded transition ${
+								isActive('/admin/analytics') ? 'bg-orange-600' : 'hover:bg-gray-800'
+							}`}
+						>
+							📈 Statistika
+						</Link>
+
+						{/* Back to Site */}
 						<Link
 							href='/'
 							className='block py-2 px-4 rounded hover:bg-gray-800 transition mt-8 border-t border-gray-700 pt-4'
