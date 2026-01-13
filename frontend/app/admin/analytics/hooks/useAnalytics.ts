@@ -40,7 +40,7 @@ export function useAnalytics(dateRange: DateRange) {
 
 		setLoading(true)
 		try {
-			const [overviewRes, revenueRes, productsRes, categoriesRes, ordersRes] = await Promise.all([
+			const results = await Promise.allSettled([
 				axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/analytics/overview`, { params }),
 				axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/analytics/revenue`, { params }),
 				axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/analytics/top-products`, { params }),
@@ -48,11 +48,13 @@ export function useAnalytics(dateRange: DateRange) {
 				axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/analytics/recent-orders`),
 			])
 
-			setOverview(overviewRes.data.data)
-			setRevenueData(revenueRes.data.data)
-			setTopProducts(productsRes.data.data)
-			setCategoryStats(categoriesRes.data.data)
-			setRecentOrders(ordersRes.data.data)
+			const [overviewRes, revenueRes, productsRes, categoriesRes, ordersRes] = results
+
+			if (overviewRes.status === 'fulfilled') setOverview(overviewRes.value.data.data)
+			if (revenueRes.status === 'fulfilled') setRevenueData(revenueRes.value.data.data)
+			if (productsRes.status === 'fulfilled') setTopProducts(productsRes.value.data.data)
+			if (categoriesRes.status === 'fulfilled') setCategoryStats(categoriesRes.value.data.data)
+			if (ordersRes.status === 'fulfilled') setRecentOrders(ordersRes.value.data.data)
 		} catch (error) {
 			console.error('Error fetching analytics:', error)
 		} finally {

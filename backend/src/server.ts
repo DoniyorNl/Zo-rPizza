@@ -2,7 +2,7 @@
 // backend/src/server.ts
 
 import cors from 'cors'
-import dotenv from 'dotenv'
+import 'dotenv/config'
 import express, { Express, NextFunction, Request, Response } from 'express'
 import rateLimit from 'express-rate-limit'
 import helmet from 'helmet'
@@ -15,9 +15,6 @@ import categoriesRoutes from './routes/categories.routes'
 import ordersRoutes from './routes/orders.routes'
 import productsRoutes from './routes/products.routes'
 import usersRoutes from './routes/users.routes'
-
-// Environment variables yuklash
-dotenv.config()
 
 const app: Express = express()
 const PORT = process.env.PORT || 5001
@@ -155,6 +152,9 @@ const startServer = async () => {
 		})
 	} catch (error) {
 		console.error('❌ Serverni boshlashda xatolik:', error)
+		try {
+			await prisma.$disconnect()
+		} catch (_e) {}
 		process.exit(1)
 	}
 }
@@ -170,3 +170,9 @@ const shutdown = async (signal: string) => {
 
 process.on('SIGINT', () => shutdown('SIGINT'))
 process.on('SIGTERM', () => shutdown('SIGTERM'))
+
+process.on('beforeExit', async () => {
+	try {
+		await prisma.$disconnect()
+	} catch (_e) {}
+})
