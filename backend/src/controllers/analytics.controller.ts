@@ -190,24 +190,14 @@ export const getTopProducts = async (req: Request, res: Response) => {
 
 		const limitNumber = Math.max(1, Math.min(100, Number.parseInt(String(limit), 10) || 10))
 
-		const orders = await prisma.order.findMany({
-			where: {
-				createdAt: { gte: start, lte: end },
-				status: { in: ['DELIVERED'] },
-			},
-			select: { id: true },
-		})
-
-		const orderIds = orders.map(o => o.id)
-		if (orderIds.length === 0) {
-			return res.status(200).json({ success: true, data: [] })
-		}
-
 		const topProducts = await prisma.orderItem.groupBy({
 			by: ['productId'],
 			where: {
 				productId: { not: null },
-				orderId: { in: orderIds },
+				order: {
+					createdAt: { gte: start, lte: end },
+					status: { in: ['DELIVERED'] },
+				},
 			},
 			_sum: {
 				quantity: true,
@@ -221,38 +211,36 @@ export const getTopProducts = async (req: Request, res: Response) => {
 			take: limitNumber,
 		})
 
-		// Get product details
-		const productsWithDetails = await Promise.all(
-			topProducts.map(async item => {
-				let product = null
-				try {
-					if (item.productId) {
-						product = await prisma.product.findUnique({
-							where: { id: item.productId },
-							include: { category: true },
-						})
-					}
-				} catch (e) {
-					product = null
-				}
+		const productIds = topProducts.map(p => p.productId).filter((id): id is string => Boolean(id))
+		if (productIds.length === 0) {
+			return res.status(200).json({ success: true, data: [] })
+		}
 
-				const totalSold =
-					typeof item._sum.quantity === 'number' && isFinite(item._sum.quantity)
-						? item._sum.quantity
-						: 0
-				const revenue =
-					typeof item._sum.price === 'number' && isFinite(item._sum.price) ? item._sum.price : 0
+		const products = await prisma.product.findMany({
+			where: { id: { in: productIds } },
+			include: { category: true },
+		})
+		const productById = new Map(products.map(p => [p.id, p]))
 
-				return {
-					id: item.productId,
-					name: product?.name || 'Unknown',
-					category: product?.category?.name || 'Unknown',
-					totalSold,
-					revenue,
-					imageUrl: product?.imageUrl || null,
-				}
-			}),
-		)
+		const productsWithDetails = topProducts.map(item => {
+			const product = item.productId ? productById.get(item.productId) : null
+
+			const totalSold =
+				typeof item._sum.quantity === 'number' && isFinite(item._sum.quantity)
+					? item._sum.quantity
+					: 0
+			const revenue =
+				typeof item._sum.price === 'number' && isFinite(item._sum.price) ? item._sum.price : 0
+
+			return {
+				id: item.productId,
+				name: product?.name || 'Unknown',
+				category: product?.category?.name || 'Unknown',
+				totalSold,
+				revenue,
+				imageUrl: product?.imageUrl || null,
+			}
+		})
 
 		return res.status(200).json({
 			success: true,
@@ -278,24 +266,14 @@ export const getCategoryStats = async (req: Request, res: Response) => {
 		}
 		const { start, end } = parsed
 
-		const orders = await prisma.order.findMany({
-			where: {
-				createdAt: { gte: start, lte: end },
-				status: { in: ['DELIVERED'] },
-			},
-			select: { id: true },
-		})
-
-		const orderIds = orders.map(o => o.id)
-		if (orderIds.length === 0) {
-			return res.status(200).json({ success: true, data: [] })
-		}
-
 		const categoryStats = await prisma.orderItem.groupBy({
 			by: ['productId'],
 			where: {
 				productId: { not: null },
-				orderId: { in: orderIds },
+				order: {
+					createdAt: { gte: start, lte: end },
+					status: { in: ['DELIVERED'] },
+				},
 			},
 			_sum: {
 				quantity: true,
@@ -303,21 +281,22 @@ export const getCategoryStats = async (req: Request, res: Response) => {
 			},
 		})
 
+		const productIds = categoryStats.map(s => s.productId).filter((id): id is string => Boolean(id))
+		if (productIds.length === 0) {
+			return res.status(200).json({ success: true, data: [] })
+		}
+
+		const products = await prisma.product.findMany({
+			where: { id: { in: productIds } },
+			include: { category: true },
+		})
+		const productById = new Map(products.map(p => [p.id, p]))
+
 		// Get category info
 		const categorySummary: any = {}
 
 		for (const item of categoryStats) {
-			let product = null
-			try {
-				if (item.productId) {
-					product = await prisma.product.findUnique({
-						where: { id: item.productId },
-						include: { category: true },
-					})
-				}
-			} catch (e) {
-				product = null
-			}
+			const product = item.productId ? productById.get(item.productId) : null
 
 			// fallback for missing product/category
 			const catId = product?.categoryId || 'Unknown'
