@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useAnalytics } from './hooks/useAnalytics'
 import { StatsCards } from './components/StatsCards'
 import { RevenueChart } from './components/RevenueChart'
@@ -13,7 +13,7 @@ import { TimeRange } from './types/analytics.types'
 
 export default function AdminAnalyticsPage() {
 	const [selectedRange, setSelectedRange] = useState<TimeRange>('30d')
-	const dateRange = getDateRangePreset(selectedRange)
+	const dateRange = useMemo(() => getDateRangePreset(selectedRange), [selectedRange])
 
 	const { loading, overview, revenueData, topProducts, categoryStats, recentOrders } =
 		useAnalytics(dateRange)
