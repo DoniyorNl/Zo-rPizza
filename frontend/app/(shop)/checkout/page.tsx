@@ -54,7 +54,9 @@ export default function CheckoutPage() {
 			const orderData = {
 				userId: user.uid,
 				items: items.map(item => ({
-					productId: item.id,
+					productId: item.productId,
+					variationId: item.variationId,
+					size: item.size,
 					quantity: item.quantity,
 				})),
 				paymentMethod,

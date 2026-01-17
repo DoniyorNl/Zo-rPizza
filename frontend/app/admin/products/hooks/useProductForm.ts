@@ -5,11 +5,12 @@ import { Product, ProductFormData, Category } from '../types/product.types'
 const initialFormData: ProductFormData = {
 	name: '',
 	description: '',
-	price: '',
+	basePrice: '',
 	imageUrl: '',
 	prepTime: '15',
 	categoryId: '',
 	isActive: true,
+	variations: [],
 	ingredients: [],
 	recipe: '',
 	cookingTemp: '',
@@ -64,11 +65,20 @@ export function useProductForm(product: Product | null) {
 			setFormData({
 				name: fullProduct.name,
 				description: fullProduct.description,
-				price: fullProduct.price.toString(),
+				basePrice: fullProduct.basePrice?.toString() || '',
 				imageUrl: fullProduct.imageUrl || '',
 				prepTime: fullProduct.prepTime.toString(),
 				categoryId: fullProduct.categoryId,
 				isActive: fullProduct.isActive,
+				variations: Array.isArray(fullProduct.variations)
+					? fullProduct.variations.map((variation: any) => ({
+							size: variation.size,
+							price: variation.price?.toString() || '',
+							diameter: variation.diameter?.toString() || '',
+							slices: variation.slices?.toString() || '',
+							weight: variation.weight?.toString() || '',
+						}))
+					: [],
 				ingredients: parseJson(fullProduct.ingredients) || [],
 				recipe: fullProduct.recipe || '',
 				cookingTemp: fullProduct.cookingTemp?.toString() || '',
@@ -95,11 +105,23 @@ export function useProductForm(product: Product | null) {
 			const data: any = {
 				name: formData.name,
 				description: formData.description,
-				price: parseFloat(formData.price),
+				basePrice: parseFloat(formData.basePrice),
 				prepTime: parseInt(formData.prepTime),
 				categoryId: formData.categoryId,
 				imageUrl: formData.imageUrl || null,
 				isActive: formData.isActive,
+			}
+
+			if (formData.variations.length > 0) {
+				data.variations = formData.variations.map(variation => ({
+					size: variation.size,
+					price: parseFloat(variation.price),
+					diameter: variation.diameter ? parseInt(variation.diameter) : undefined,
+					slices: variation.slices ? parseInt(variation.slices) : undefined,
+					weight: variation.weight ? parseInt(variation.weight) : undefined,
+				}))
+			} else {
+				data.variations = []
 			}
 
 			// Add optional fields

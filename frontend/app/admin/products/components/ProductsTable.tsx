@@ -78,7 +78,22 @@ export function ProductsTable({ products, filterStatus, onEdit, onDelete, onRest
 											<Badge variant='outline'>{product.category.name}</Badge>
 										</td>
 										<td className='p-4 font-semibold text-orange-600'>
-											{product.price.toLocaleString()} so'm
+											{(() => {
+												const variationPrices =
+													product.variations?.map(variation => variation.price) || []
+												const minPrice =
+													variationPrices.length > 0
+														? Math.min(...variationPrices)
+														: product.basePrice
+												return (
+													<div>
+														<div>{minPrice.toLocaleString()} so&apos;m</div>
+														{variationPrices.length > 1 && (
+															<div className='text-xs text-gray-500'>dan boshlab</div>
+														)}
+													</div>
+												)
+											})()}
 										</td>
 										<td className='p-4 text-gray-600'>{product.prepTime} daq</td>
 										<td className='p-4'>
