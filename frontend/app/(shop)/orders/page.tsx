@@ -98,6 +98,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 				size: size,
 				price: item.price,
 				imageUrl: item.product.imageUrl,
+				addedToppingIds: [],
+				removedToppingIds: [],
 			})
 		})
 
