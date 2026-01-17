@@ -1,5 +1,5 @@
-// 🍕 ZOR PIZZA - DATABASE SEED
-// Bu fayl test ma'lumotlarni database'ga qo'shadi
+// backend/prisma/seed.ts
+// 🍕 ZOR PIZZA - DATABASE SEED with Variations
 
 import { PrismaClient } from '@prisma/client'
 
@@ -101,9 +101,10 @@ async function main() {
 	console.log('✅ Ingredientlar yaratildi')
 
 	// ============================================
-	// 3. MAHSULOTLAR (PITSALAR)
+	// 3. MAHSULOTLAR (PITSALAR) with VARIATIONS
 	// ============================================
 
+	// 1. Margarita
 	const margarita = await prisma.product.upsert({
 		where: { id: 'margarita-1' },
 		update: {},
@@ -111,14 +112,49 @@ async function main() {
 			id: 'margarita-1',
 			name: 'Margarita',
 			description: 'Klassik italyan pitsasi - mozzarella, pomidor sousi, rayhon',
-			price: 45000,
+			basePrice: 45000, // ✅ NEW
 			imageUrl: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002',
 			prepTime: 15,
 			categoryId: pizzaCategory.id,
 			isActive: true,
+			ingredients: [
+				{ name: 'Pizza xamiri', amount: '300g', icon: '🌾' },
+				{ name: 'Mozzarella pishloq', amount: '200g', icon: '🧀' },
+				{ name: 'Pomidor sousi', amount: '100ml', icon: '🍅' },
+				{ name: 'Rayhon', amount: '10g', icon: '🌿' },
+			],
+			recipe: 'Klassik Margherita pitsasi - italyan oshpazligining ajoyib namunasi. Yumshoq xamir, yangi pomidor sousi va eruvchan mozzarella.',
+			cookingTemp: 220,
+			cookingTime: 15,
+			cookingSteps: [
+				{ step: 1, title: 'Xamirni yoyish', description: 'Pizza xamirini yumaloq shaklda yoying' },
+				{ step: 2, title: 'Sous surish', description: 'Pomidor sousini xamir ustiga teng taqsimlang' },
+				{ step: 3, title: 'Pishirish', description: '220°C da 15 daqiqa pishiring' },
+			],
+			calories: 320,
+			protein: 18.5,
+			carbs: 28.0,
+			fat: 15.2,
+			difficulty: 'Oson',
+			servings: 2,
+			allergens: ['Sut', 'Gluten'],
+			images: [
+				'https://images.unsplash.com/photo-1574071318508-1cdbab80d002',
+				'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38',
+			],
+			// ✅ NEW: Variations
+			variations: {
+				create: [
+					{ size: 'Small', price: 35000, diameter: 25, slices: 6, weight: 400 },
+					{ size: 'Medium', price: 45000, diameter: 30, slices: 8, weight: 550 },
+					{ size: 'Large', price: 55000, diameter: 35, slices: 10, weight: 700 },
+					{ size: 'XL', price: 65000, diameter: 40, slices: 12, weight: 900 },
+				],
+			},
 		},
 	})
 
+	// 2. Pepperoni
 	const pepperoni = await prisma.product.upsert({
 		where: { id: 'pepperoni-1' },
 		update: {},
@@ -126,14 +162,46 @@ async function main() {
 			id: 'pepperoni-1',
 			name: 'Pepperoni',
 			description: 'Mazali pepperoni kolbasa va mozzarella pishloq',
-			price: 55000,
+			basePrice: 55000,
 			imageUrl: 'https://images.unsplash.com/photo-1628840042765-356cda07504e',
 			prepTime: 18,
 			categoryId: pizzaCategory.id,
 			isActive: true,
+			ingredients: [
+				{ name: 'Pizza xamiri', amount: '300g', icon: '🌾' },
+				{ name: 'Pomidor sousi', amount: '100ml', icon: '🍅' },
+				{ name: 'Mozzarella pishloq', amount: '150g', icon: '🧀' },
+				{ name: 'Pepperoni', amount: '100g', icon: '🍖' },
+			],
+			recipe: 'Amerika\'ning eng mashhur pitsasi. Achchiq pepperoni va eruvchan pishloq - ajoyib kombinatsiya!',
+			cookingTemp: 220,
+			cookingTime: 16,
+			cookingSteps: [
+				{ step: 1, title: 'Xamir tayyorlash', description: 'Xamirni kerakli o\'lchamda yoying' },
+				{ step: 2, title: 'Asosiy qatlamlar', description: 'Sous va pishloq qo\'shing' },
+				{ step: 3, title: 'Pepperoni', description: 'Pepperoni bo\'laklarini joylashtiring' },
+				{ step: 4, title: 'Pishirish', description: '220°C da 14-16 daqiqa' },
+			],
+			calories: 380,
+			protein: 22.0,
+			carbs: 32.0,
+			fat: 18.5,
+			difficulty: 'Oson',
+			servings: 2,
+			allergens: ['Sut', 'Gluten'],
+			images: ['https://images.unsplash.com/photo-1628840042765-356cda07504e'],
+			variations: {
+				create: [
+					{ size: 'Small', price: 45000, diameter: 25, slices: 6, weight: 450 },
+					{ size: 'Medium', price: 55000, diameter: 30, slices: 8, weight: 600 },
+					{ size: 'Large', price: 65000, diameter: 35, slices: 10, weight: 750 },
+					{ size: 'XL', price: 75000, diameter: 40, slices: 12, weight: 950 },
+				],
+			},
 		},
 	})
 
+	// 3. Vegetarian
 	void (await prisma.product.upsert({
 		where: { id: 'vegetarian-1' },
 		update: {},
@@ -141,14 +209,41 @@ async function main() {
 			id: 'vegetarian-1',
 			name: 'Vegetarian',
 			description: "Sabzavotli pitsa - pomidor, zaytun, qo'ziqorin, qalampir",
-			price: 48000,
+			basePrice: 48000,
 			imageUrl: 'https://images.unsplash.com/photo-1571407970349-bc81e7e96d47',
 			prepTime: 16,
 			categoryId: pizzaCategory.id,
 			isActive: true,
+			ingredients: [
+				{ name: 'Pizza xamiri', amount: '300g', icon: '🌾' },
+				{ name: 'Pomidor sousi', amount: '100ml', icon: '🍅' },
+				{ name: 'Mozzarella', amount: '150g', icon: '🧀' },
+				{ name: 'Pomidor', amount: '100g', icon: '🍅' },
+				{ name: 'Zaytun', amount: '50g', icon: '🫒' },
+				{ name: "Qo'ziqorin", amount: '80g', icon: '🍄' },
+			],
+			recipe: 'Sog\'lom va mazali vegetarian pitsa - faqat yangi sabzavotlar!',
+			cookingTemp: 220,
+			cookingTime: 15,
+			calories: 280,
+			protein: 14.0,
+			carbs: 30.0,
+			fat: 12.0,
+			difficulty: 'Oson',
+			servings: 2,
+			allergens: ['Sut', 'Gluten'],
+			variations: {
+				create: [
+					{ size: 'Small', price: 38000, diameter: 25, slices: 6 },
+					{ size: 'Medium', price: 48000, diameter: 30, slices: 8 },
+					{ size: 'Large', price: 58000, diameter: 35, slices: 10 },
+					{ size: 'XL', price: 68000, diameter: 40, slices: 12 },
+				],
+			},
 		},
 	}))
 
+	// 4. Four Cheese
 	void (await prisma.product.upsert({
 		where: { id: 'four-cheese-1' },
 		update: {},
@@ -156,7 +251,7 @@ async function main() {
 			id: 'four-cheese-1',
 			name: "To'rt xil pishloq",
 			description: 'Mozzarella, parmesan, gorgonzola, ricotta',
-			price: 62000,
+			basePrice: 62000,
 			imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38',
 			prepTime: 17,
 			categoryId: pizzaCategory.id,
@@ -172,21 +267,9 @@ async function main() {
 			cookingTemp: 220,
 			cookingTime: 15,
 			cookingSteps: [
-				{
-					step: 1,
-					title: 'Xamirni yoyish',
-					description: 'Pizza xamirini yumaloq shaklda yoying',
-				},
-				{
-					step: 2,
-					title: 'Pishloqlarni qo\'shish',
-					description: 'Barcha pishloqlarni teng taqsimlang',
-				},
-				{
-					step: 3,
-					title: 'Pishirish',
-					description: '220°C da 15 daqiqa pishiring',
-				},
+				{ step: 1, title: 'Xamirni yoyish', description: 'Pizza xamirini yumaloq shaklda yoying' },
+				{ step: 2, title: 'Pishloqlarni qo\'shish', description: 'Barcha pishloqlarni teng taqsimlang' },
+				{ step: 3, title: 'Pishirish', description: '220°C da 15 daqiqa pishiring' },
 			],
 			calories: 320,
 			protein: 18.5,
@@ -199,10 +282,18 @@ async function main() {
 				'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38',
 				'https://images.unsplash.com/photo-1574071318508-1cdbab80d002',
 			],
+			variations: {
+				create: [
+					{ size: 'Small', price: 52000, diameter: 25, slices: 6 },
+					{ size: 'Medium', price: 62000, diameter: 30, slices: 8 },
+					{ size: 'Large', price: 72000, diameter: 35, slices: 10 },
+					{ size: 'XL', price: 82000, diameter: 40, slices: 12 },
+				],
+			},
 		},
 	}))
 
-	// BBQ Chicken Pizza
+	// 5. BBQ Chicken
 	void (await prisma.product.upsert({
 		where: { id: 'bbq-chicken-1' },
 		update: {},
@@ -210,7 +301,7 @@ async function main() {
 			id: 'bbq-chicken-1',
 			name: 'BBQ Tovuq Pitsasi',
 			description: 'BBQ sousi, pishgan tovuq, qizil piyoz, mozzarella pishloq',
-			price: 65000,
+			basePrice: 65000,
 			imageUrl: 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3',
 			prepTime: 20,
 			categoryId: pizzaCategory.id,
@@ -223,30 +314,14 @@ async function main() {
 				{ name: 'Qizil piyoz', amount: '50g', icon: '🧅' },
 				{ name: 'Rayhon', amount: '10g', icon: '🌿' },
 			],
-			recipe: 'Pizza xamirini yoyib, ustiga BBQ sousini surkang. Pishgan tovuq go\'shtini qo\'shib, ustiga mozzarella pishloq va qizil piyoz qo\'ying. 230°C da 18 daqiqa pishiring. Tayyor bo\'lganda rayhon bilan bezang.',
+			recipe: 'Pizza xamirini yoyib, ustiga BBQ sousini surkang. Pishgan tovuq go\'shtini qo\'shib, ustiga mozzarella pishloq va qizil piyoz qo\'ying. 230°C da 18 daqiqa pishiring.',
 			cookingTemp: 230,
 			cookingTime: 18,
 			cookingSteps: [
-				{
-					step: 1,
-					title: 'Xamirni yoyish va sous surish',
-					description: 'Pizza xamirini yoyib, ustiga BBQ sousini teng taqsimlang',
-				},
-				{
-					step: 2,
-					title: 'Tovuq go\'shtini qo\'shish',
-					description: 'Pishgan tovuq go\'shtini kichik bo\'laklarga bo\'lib, pitsa ustiga qo\'ying',
-				},
-				{
-					step: 3,
-					title: 'Pishloq va piyoz',
-					description: 'Mozzarella pishloq va qizil piyozni qo\'shing',
-				},
-				{
-					step: 4,
-					title: 'Pishirish',
-					description: '230°C da 18 daqiqa pishiring. Tayyor bo\'lganda rayhon bilan bezang',
-				},
+				{ step: 1, title: 'Xamir va sous', description: 'Xamirni yoyib, BBQ sousini surkang' },
+				{ step: 2, title: 'Tovuq', description: 'Pishgan tovuqni qo\'shing' },
+				{ step: 3, title: 'Pishloq va piyoz', description: 'Mozzarella va piyoz qo\'shing' },
+				{ step: 4, title: 'Pishirish', description: '230°C da 18 daqiqa' },
 			],
 			calories: 380,
 			protein: 22.0,
@@ -259,10 +334,18 @@ async function main() {
 				'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3',
 				'https://images.unsplash.com/photo-1628840042765-356cda07504e',
 			],
+			variations: {
+				create: [
+					{ size: 'Small', price: 55000, diameter: 25, slices: 6 },
+					{ size: 'Medium', price: 65000, diameter: 30, slices: 8 },
+					{ size: 'Large', price: 75000, diameter: 35, slices: 10 },
+					{ size: 'XL', price: 85000, diameter: 40, slices: 12 },
+				],
+			},
 		},
 	}))
 
-	// Hawaiian Pizza
+	// 6. Hawaiian
 	void (await prisma.product.upsert({
 		where: { id: 'hawaiian-1' },
 		update: {},
@@ -270,7 +353,7 @@ async function main() {
 			id: 'hawaiian-1',
 			name: 'Gavayi Pitsasi',
 			description: 'Ananas, vetchina, mozzarella pishloq - shirin va tuzli kombinatsiya',
-			price: 58000,
+			basePrice: 58000,
 			imageUrl: 'https://images.unsplash.com/photo-1571997478779-2adcbbe9ab2f',
 			prepTime: 16,
 			categoryId: pizzaCategory.id,
@@ -283,30 +366,14 @@ async function main() {
 				{ name: 'Mozzarella pishloq', amount: '180g', icon: '🧀' },
 				{ name: 'Qalampir', amount: '30g', icon: '🌶️' },
 			],
-			recipe: 'Pizza xamirini yoyib, pomidor sousini surkang. Vetchina va ananas bo\'laklarini qo\'shib, ustiga mozzarella pishloq qo\'ying. 220°C da 16 daqiqa pishiring. Qalampir bilan bezang.',
+			recipe: 'Pizza xamirini yoyib, pomidor sousini surkang. Vetchina va ananas bo\'laklarini qo\'shib, ustiga mozzarella pishloq qo\'ying. 220°C da 16 daqiqa pishiring.',
 			cookingTemp: 220,
 			cookingTime: 16,
 			cookingSteps: [
-				{
-					step: 1,
-					title: 'Xamirni yoyish',
-					description: 'Pizza xamirini yumaloq shaklda yoying va pomidor sousini surkang',
-				},
-				{
-					step: 2,
-					title: 'Vetchina va ananas',
-					description: 'Vetchina va ananas bo\'laklarini pitsa ustiga teng taqsimlang',
-				},
-				{
-					step: 3,
-					title: 'Pishloq qo\'shish',
-					description: 'Mozzarella pishloqni ustiga qo\'ying',
-				},
-				{
-					step: 4,
-					title: 'Pishirish va bezash',
-					description: '220°C da 16 daqiqa pishiring. Tayyor bo\'lganda qalampir bilan bezang',
-				},
+				{ step: 1, title: 'Xamir va sous', description: 'Xamirni yoyib, pomidor sousini surkang' },
+				{ step: 2, title: 'Vetchina va ananas', description: 'Vetchina va ananas qo\'shing' },
+				{ step: 3, title: 'Pishloq', description: 'Mozzarella qo\'shing' },
+				{ step: 4, title: 'Pishirish', description: '220°C da 16 daqiqa' },
 			],
 			calories: 350,
 			protein: 16.0,
@@ -319,10 +386,18 @@ async function main() {
 				'https://images.unsplash.com/photo-1571997478779-2adcbbe9ab2f',
 				'https://images.unsplash.com/photo-1574071318508-1cdbab80d002',
 			],
+			variations: {
+				create: [
+					{ size: 'Small', price: 48000, diameter: 25, slices: 6 },
+					{ size: 'Medium', price: 58000, diameter: 30, slices: 8 },
+					{ size: 'Large', price: 68000, diameter: 35, slices: 10 },
+					{ size: 'XL', price: 78000, diameter: 40, slices: 12 },
+				],
+			},
 		},
 	}))
 
-	// Meat Lovers Pizza
+	// 7. Meat Lovers
 	void (await prisma.product.upsert({
 		where: { id: 'meat-lovers-1' },
 		update: {},
@@ -330,7 +405,7 @@ async function main() {
 			id: 'meat-lovers-1',
 			name: 'Go\'shtli Pitsa',
 			description: 'Pepperoni, vetchina, kolbasa, mol go\'shti, mozzarella - go\'sht sevuvchilar uchun',
-			price: 75000,
+			basePrice: 75000,
 			imageUrl: 'https://images.unsplash.com/photo-1513104890138-7c749659a591',
 			prepTime: 22,
 			categoryId: pizzaCategory.id,
@@ -345,30 +420,14 @@ async function main() {
 				{ name: 'Mozzarella pishloq', amount: '200g', icon: '🧀' },
 				{ name: 'Qalampir', amount: '20g', icon: '🌶️' },
 			],
-			recipe: 'Pizza xamirini yoyib, pomidor sousini surkang. Barcha go\'sht turlarini (pepperoni, vetchina, kolbasa, mol go\'shti) pitsa ustiga qo\'ying. Mozzarella pishloqni qo\'shib, 235°C da 20 daqiqa pishiring. Qalampir bilan bezang.',
+			recipe: 'Pizza xamirini yoyib, pomidor sousini surkang. Barcha go\'sht turlarini pitsa ustiga qo\'ying. Mozzarella pishloqni qo\'shib, 235°C da 20 daqiqa pishiring.',
 			cookingTemp: 235,
 			cookingTime: 20,
 			cookingSteps: [
-				{
-					step: 1,
-					title: 'Xamirni yoyish va sous',
-					description: 'Pizza xamirini yoyib, pomidor sousini teng taqsimlang',
-				},
-				{
-					step: 2,
-					title: 'Go\'shtlarni qo\'shish',
-					description: 'Pepperoni, vetchina, kolbasa va mol go\'shtini pitsa ustiga teng taqsimlang',
-				},
-				{
-					step: 3,
-					title: 'Pishloq qo\'shish',
-					description: 'Mozzarella pishloqni barcha go\'shtlar ustiga qo\'ying',
-				},
-				{
-					step: 4,
-					title: 'Pishirish',
-					description: '235°C da 20 daqiqa pishiring. Qalampir bilan bezang',
-				},
+				{ step: 1, title: 'Xamir va sous', description: 'Xamirni yoyib, pomidor sousini surkang' },
+				{ step: 2, title: 'Go\'shtlar', description: 'Barcha go\'shtlarni qo\'shing' },
+				{ step: 3, title: 'Pishloq', description: 'Mozzarella qo\'shing' },
+				{ step: 4, title: 'Pishirish', description: '235°C da 20 daqiqa' },
 			],
 			calories: 450,
 			protein: 28.0,
@@ -381,32 +440,34 @@ async function main() {
 				'https://images.unsplash.com/photo-1513104890138-7c749659a591',
 				'https://images.unsplash.com/photo-1628840042765-356cda07504e',
 			],
+			variations: {
+				create: [
+					{ size: 'Small', price: 65000, diameter: 25, slices: 6 },
+					{ size: 'Medium', price: 75000, diameter: 30, slices: 8 },
+					{ size: 'Large', price: 85000, diameter: 35, slices: 10 },
+					{ size: 'XL', price: 95000, diameter: 40, slices: 12 },
+				],
+			},
 		},
 	}))
 
-	console.log('✅ Mahsulotlar yaratildi')
+	console.log('✅ Mahsulotlar (variations bilan) yaratildi')
 
 	// ============================================
 	// 4. MAHSULOT-INGREDIENT BOG'LANISHI
 	// ============================================
 
-	// Margarita ingredientlari
 	await prisma.productIngredient.createMany({
 		data: [
-			{ productId: margarita.id, ingredientId: ingredients[0].id, quantity: 0.3 }, // Xamir
-			{ productId: margarita.id, ingredientId: ingredients[1].id, quantity: 0.2 }, // Mozzarella
-			{ productId: margarita.id, ingredientId: ingredients[2].id, quantity: 0.1 }, // Sous
-		],
-		skipDuplicates: true,
-	})
-
-	// Pepperoni ingredientlari
-	await prisma.productIngredient.createMany({
-		data: [
-			{ productId: pepperoni.id, ingredientId: ingredients[0].id, quantity: 0.3 }, // Xamir
-			{ productId: pepperoni.id, ingredientId: ingredients[1].id, quantity: 0.2 }, // Mozzarella
-			{ productId: pepperoni.id, ingredientId: ingredients[2].id, quantity: 0.1 }, // Sous
-			{ productId: pepperoni.id, ingredientId: ingredients[3].id, quantity: 0.15 }, // Pepperoni
+			// Margarita
+			{ productId: margarita.id, ingredientId: ingredients[0].id, quantity: 0.3 },
+			{ productId: margarita.id, ingredientId: ingredients[1].id, quantity: 0.2 },
+			{ productId: margarita.id, ingredientId: ingredients[2].id, quantity: 0.1 },
+			// Pepperoni
+			{ productId: pepperoni.id, ingredientId: ingredients[0].id, quantity: 0.3 },
+			{ productId: pepperoni.id, ingredientId: ingredients[1].id, quantity: 0.2 },
+			{ productId: pepperoni.id, ingredientId: ingredients[2].id, quantity: 0.1 },
+			{ productId: pepperoni.id, ingredientId: ingredients[3].id, quantity: 0.15 },
 		],
 		skipDuplicates: true,
 	})
@@ -433,8 +494,9 @@ async function main() {
 	console.log('\n📊 SEED SUMMARY:')
 	console.log(`   - Kategoriyalar: 2`)
 	console.log(`   - Ingredientlar: ${ingredients.length}`)
-	console.log(`   - Mahsulotlar: 7`)
-	console.log(`   - Admin: ${adminUser.email}`)
+	console.log(`   - Mahsulotlar: 7 (har biri 4 ta size bilan)`)
+	console.log(`   - Jami variations: 28`)
+	console.log(`   - Admin: ${adminUser.email} / admin123`)
 	console.log('\n🎉 Seed muvaffaqiyatli tugadi!\n')
 }
 
