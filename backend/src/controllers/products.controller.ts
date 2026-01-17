@@ -1,5 +1,5 @@
 // backend/src/controllers/products.controller.ts
-// 🍕 PRODUCTS CONTROLLER
+// 🍕 PRODUCTS CONTROLLER - Updated with Variations
 
 import { Request, Response } from 'express'
 import prisma from '../lib/prisma'
@@ -16,6 +16,9 @@ export const getAllProducts = async (req: Request, res: Response) => {
 			},
 			include: {
 				category: true,
+				variations: {
+					orderBy: { price: 'asc' },
+				},
 				ingredientsRel: {
 					include: {
 						ingredient: true,
@@ -50,6 +53,9 @@ export const getProductById = async (req: Request, res: Response) => {
 			where: { id: productId },
 			include: {
 				category: true,
+				variations: {
+					orderBy: { price: 'asc' },
+				},
 				ingredientsRel: {
 					include: {
 						ingredient: true,
@@ -122,16 +128,17 @@ export const getProductById = async (req: Request, res: Response) => {
 	}
 }
 
-// POST /api/products - Yangi mahsulot
+// POST /api/products - Yangi mahsulot (with variations)
 export const createProduct = async (req: Request, res: Response) => {
 	try {
 		const {
 			name,
 			description,
-			price,
+			basePrice,
 			imageUrl,
 			prepTime,
 			categoryId,
+			variations, // NEW: Array of sizes
 			ingredients,
 			recipe,
 			cookingTemp,
@@ -149,10 +156,10 @@ export const createProduct = async (req: Request, res: Response) => {
 		} = req.body
 
 		// Validation
-		if (!name || !price || !categoryId) {
+		if (!name || !basePrice || !categoryId) {
 			return res.status(400).json({
 				success: false,
-				message: 'Name, price, and categoryId are required',
+				message: 'Name, basePrice, and categoryId are required',
 			})
 		}
 
@@ -184,7 +191,7 @@ export const createProduct = async (req: Request, res: Response) => {
 			data: {
 				name,
 				description,
-				price: parseFloat(price),
+				basePrice: parseFloat(basePrice),
 				imageUrl,
 				prepTime: parseInt(prepTime) || 15,
 				categoryId,
@@ -202,9 +209,22 @@ export const createProduct = async (req: Request, res: Response) => {
 				allergens: allergens || [],
 				images: images || [],
 				isActive: isActive !== undefined ? isActive : true,
+				// NEW: Create variations
+				...(variations && variations.length > 0 && {
+					variations: {
+						create: variations.map((v: any) => ({
+							size: v.size,
+							price: parseFloat(v.price),
+							diameter: v.diameter ? parseInt(v.diameter) : null,
+							slices: v.slices ? parseInt(v.slices) : null,
+							weight: v.weight ? parseInt(v.weight) : null,
+						})),
+					},
+				}),
 			},
 			include: {
 				category: true,
+				variations: true,
 			},
 		})
 
@@ -223,12 +243,21 @@ export const createProduct = async (req: Request, res: Response) => {
 	}
 }
 
-// PUT /api/products/:id - Mahsulot yangilash
+// PUT /api/products/:id - Mahsulot yangilash (with variations)
 export const updateProduct = async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params
 		const productId = Array.isArray(id) ? id[0] : id
-		const { name, description, price, imageUrl, prepTime, categoryId, isActive } = req.body
+		const {
+			name,
+			description,
+			basePrice,
+			imageUrl,
+			prepTime,
+			categoryId,
+			variations,
+			isActive,
+		} = req.body
 
 		// Mahsulot mavjudligini tekshirish
 		const existing = await prisma.product.findUnique({
@@ -256,19 +285,39 @@ export const updateProduct = async (req: Request, res: Response) => {
 			}
 		}
 
+		// If variations provided, delete old and create new
+		if (variations && Array.isArray(variations)) {
+			await prisma.productVariation.deleteMany({
+				where: { productId },
+			})
+		}
+
 		const product = await prisma.product.update({
 			where: { id: productId },
 			data: {
 				...(name && { name }),
 				...(description && { description }),
-				...(price && { price: parseFloat(price) }),
+				...(basePrice && { basePrice: parseFloat(basePrice) }),
 				...(imageUrl && { imageUrl }),
 				...(prepTime && { prepTime: parseInt(prepTime) }),
 				...(categoryId && { categoryId }),
 				...(isActive !== undefined && { isActive }),
+				// Update variations if provided
+				...(variations && variations.length > 0 && {
+					variations: {
+						create: variations.map((v: any) => ({
+							size: v.size,
+							price: parseFloat(v.price),
+							diameter: v.diameter ? parseInt(v.diameter) : null,
+							slices: v.slices ? parseInt(v.slices) : null,
+							weight: v.weight ? parseInt(v.weight) : null,
+						})),
+					},
+				}),
 			},
 			include: {
 				category: true,
+				variations: true,
 			},
 		})
 
@@ -310,7 +359,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
 			where: { id: productId },
 			data: {
 				isActive: false,
-				updatedAt: new Date(), // O'chirilgan vaqtni qayd qilish
+				updatedAt: new Date(),
 			},
 		})
 

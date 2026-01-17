@@ -1,5 +1,4 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import Image from 'next/image'
 import { TopProduct } from '../types/analytics.types'
 import { formatCurrency, formatNumber } from '../utils/chartHelpers'
@@ -32,6 +31,7 @@ export function TopProductsTable({ products }: TopProductsTableProps) {
 											alt={product.name}
 											fill
 											className='object-cover'
+											sizes='48px'
 										/>
 									</div>
 								) : (
