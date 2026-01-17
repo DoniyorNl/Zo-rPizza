@@ -177,7 +177,12 @@ async function main() {
 			cookingTemp: 220,
 			cookingTime: 16,
 			cookingSteps: [
-				{ step: 1, title: 'Xamir tayyorlash', description: 'Xamirni kerakli o\'lchamda yoying' },
+				{
+					step: 1,
+					title: 'Xamir tayyorlash',
+					description:
+						'300 g un, 180 ml iliq suv, 5 g quruq droj, 1 ch.q. shakar, 1 ch.q. tuz va 1 osh.q. zaytun yog\'ini aralashtiring. 8-10 daqiqa yoğing, ustini yopib 45-60 daqiqa ko\'taring. So\'ng xamirni yumaloq qilib yoying.',
+				},
 				{ step: 2, title: 'Asosiy qatlamlar', description: 'Sous va pishloq qo\'shing' },
 				{ step: 3, title: 'Pepperoni', description: 'Pepperoni bo\'laklarini joylashtiring' },
 				{ step: 4, title: 'Pishirish', description: '220°C da 14-16 daqiqa' },
