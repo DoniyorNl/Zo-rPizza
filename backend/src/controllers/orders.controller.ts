@@ -222,7 +222,20 @@ export const createOrder = async (req: Request, res: Response) => {
 				variationId = variation.id
 				size = variation.size
 			} else if (item.size) {
-				size = item.size
+				const variationBySize = await prisma.productVariation.findFirst({
+					where: {
+						productId: product.id,
+						size: item.size,
+					},
+				})
+
+				if (variationBySize) {
+					variationPrice = variationBySize.price
+					variationId = variationBySize.id
+					size = variationBySize.size
+				} else {
+					size = item.size
+				}
 			}
 
 			const itemTotal = variationPrice * item.quantity

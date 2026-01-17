@@ -94,6 +94,7 @@ model Product {
   ingredientsRel ProductIngredient[]
   orderItems  OrderItem[]
   reviews     Review[]
+  dealItems   DealItem[]
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -154,6 +155,72 @@ model ProductIngredient {
 
   @@unique([productId, ingredientId])
   @@map("product_ingredients")
+}
+
+// ============================================
+// DEALS & COUPONS
+// ============================================
+
+enum DiscountType {
+  PERCENT
+  FIXED
+}
+
+enum DealItemType {
+  PIZZA
+  DRINK
+  SIDE
+}
+
+model Deal {
+  id            String        @id @default(uuid())
+  title         String
+  description   String?
+  imageUrl      String?
+  discountType  DiscountType
+  discountValue Float
+  isActive      Boolean       @default(true)
+  startsAt      DateTime?
+  endsAt        DateTime?
+
+  items         DealItem[]
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@map("deals")
+}
+
+model DealItem {
+  id        String       @id @default(uuid())
+  dealId    String
+  productId String
+  itemType  DealItemType
+  quantity  Int          @default(1)
+
+  deal      Deal         @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([dealId, productId, itemType])
+  @@map("deal_items")
+}
+
+model Coupon {
+  id            String       @id @default(uuid())
+  code          String       @unique
+  description   String?
+  discountType  DiscountType
+  discountValue Float
+  isActive      Boolean      @default(true)
+  startsAt      DateTime?
+  endsAt        DateTime?
+  usageLimit    Int?
+  perUserLimit  Int?
+
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@map("coupons")
 }
 
 // ============================================

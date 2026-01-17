@@ -1,12 +1,18 @@
-import { ProductFormData, Category, ProductVariationForm } from '../../types/product.types'
+import {
+	Category,
+	ProductFormData,
+	ProductFormErrors,
+	ProductVariationForm,
+} from '../../types/product.types'
 
 interface BasicTabProps {
 	formData: ProductFormData
 	setFormData: (data: ProductFormData) => void
 	categories: Category[]
+	errors: ProductFormErrors
 }
 
-export function BasicTab({ formData, setFormData, categories }: BasicTabProps) {
+export function BasicTab({ formData, setFormData, categories, errors }: BasicTabProps) {
 	const sizeOptions = ['Small', 'Medium', 'Large', 'XL']
 
 	const updateVariation = (index: number, patch: Partial<ProductVariationForm>) => {
@@ -41,6 +47,7 @@ export function BasicTab({ formData, setFormData, categories }: BasicTabProps) {
 					className='w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500'
 					required
 				/>
+				{errors.name && <p className='text-xs text-red-600 mt-1'>{errors.name}</p>}
 			</div>
 
 			<div>
@@ -52,6 +59,7 @@ export function BasicTab({ formData, setFormData, categories }: BasicTabProps) {
 					rows={3}
 					required
 				/>
+				{errors.description && <p className='text-xs text-red-600 mt-1'>{errors.description}</p>}
 			</div>
 
 			<div className='grid grid-cols-2 gap-4'>
@@ -65,6 +73,7 @@ export function BasicTab({ formData, setFormData, categories }: BasicTabProps) {
 						min='0'
 						required
 					/>
+					{errors.basePrice && <p className='text-xs text-red-600 mt-1'>{errors.basePrice}</p>}
 				</div>
 				<div>
 					<label className='block text-sm font-medium mb-2'>Tayyorlash vaqti (daq) *</label>
@@ -76,6 +85,7 @@ export function BasicTab({ formData, setFormData, categories }: BasicTabProps) {
 						min='1'
 						required
 					/>
+					{errors.prepTime && <p className='text-xs text-red-600 mt-1'>{errors.prepTime}</p>}
 				</div>
 			</div>
 
@@ -94,6 +104,7 @@ export function BasicTab({ formData, setFormData, categories }: BasicTabProps) {
 						</option>
 					))}
 				</select>
+				{errors.categoryId && <p className='text-xs text-red-600 mt-1'>{errors.categoryId}</p>}
 			</div>
 
 			<div>
@@ -142,6 +153,9 @@ export function BasicTab({ formData, setFormData, categories }: BasicTabProps) {
 					<div className='text-sm text-gray-500'>Hozircha o&apos;lchamlar yo&apos;q</div>
 				) : (
 					<div className='space-y-3'>
+						{errors.variations && (
+							<p className='text-xs text-red-600'>{errors.variations}</p>
+						)}
 						{formData.variations.map((variation, index) => (
 							<div key={`${variation.size}-${index}`} className='border rounded-lg p-3 space-y-3'>
 								<div className='flex items-center justify-between gap-3'>
@@ -159,6 +173,11 @@ export function BasicTab({ formData, setFormData, categories }: BasicTabProps) {
 													</option>
 												))}
 											</select>
+											{errors.variationRows?.[index]?.size && (
+												<p className='text-[11px] text-red-600 mt-1'>
+													{errors.variationRows[index]?.size}
+												</p>
+											)}
 										</div>
 										<div>
 											<label className='block text-xs font-medium mb-1'>Narx (so&apos;m)</label>
@@ -170,6 +189,11 @@ export function BasicTab({ formData, setFormData, categories }: BasicTabProps) {
 												className='w-full px-3 py-2 border rounded-lg text-sm'
 												required
 											/>
+											{errors.variationRows?.[index]?.price && (
+												<p className='text-[11px] text-red-600 mt-1'>
+													{errors.variationRows[index]?.price}
+												</p>
+											)}
 										</div>
 									</div>
 									<button

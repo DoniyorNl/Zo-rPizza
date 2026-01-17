@@ -40,11 +40,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 						{/* Dashboard - Main Admin Page */}
 						<Link
 							href='/admin'
-							className={`block py-2 px-4 rounded transition ${
-								isActive('/admin') && pathname === '/admin'
+							className={`block py-2 px-4 rounded transition ${isActive('/admin') && pathname === '/admin'
 									? 'bg-orange-600'
 									: 'hover:bg-gray-800'
-							}`}
+								}`}
 						>
 							📊 Dashboard
 						</Link>
@@ -52,9 +51,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 						{/* Products */}
 						<Link
 							href='/admin/products'
-							className={`block py-2 px-4 rounded transition ${
-								isActive('/admin/products') ? 'bg-orange-600' : 'hover:bg-gray-800'
-							}`}
+							className={`block py-2 px-4 rounded transition ${isActive('/admin/products') ? 'bg-orange-600' : 'hover:bg-gray-800'
+								}`}
 						>
 							🍕 Mahsulotlar
 						</Link>
@@ -62,19 +60,35 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 						{/* Orders */}
 						<Link
 							href='/admin/orders'
-							className={`block py-2 px-4 rounded transition ${
-								isActive('/admin/orders') ? 'bg-orange-600' : 'hover:bg-gray-800'
-							}`}
+							className={`block py-2 px-4 rounded transition ${isActive('/admin/orders') ? 'bg-orange-600' : 'hover:bg-gray-800'
+								}`}
 						>
 							📦 Buyurtmalar
+						</Link>
+
+						{/* Deals */}
+						<Link
+							href='/admin/deals'
+							className={`block py-2 px-4 rounded transition ${isActive('/admin/deals') ? 'bg-orange-600' : 'hover:bg-gray-800'
+								}`}
+						>
+							🎯 Deals
+						</Link>
+
+						{/* Coupons */}
+						<Link
+							href='/admin/coupons'
+							className={`block py-2 px-4 rounded transition ${isActive('/admin/coupons') ? 'bg-orange-600' : 'hover:bg-gray-800'
+								}`}
+						>
+							🏷️ Kuponlar
 						</Link>
 
 						{/* Categories */}
 						<Link
 							href='/admin/categories'
-							className={`block py-2 px-4 rounded transition ${
-								isActive('/admin/categories') ? 'bg-orange-600' : 'hover:bg-gray-800'
-							}`}
+							className={`block py-2 px-4 rounded transition ${isActive('/admin/categories') ? 'bg-orange-600' : 'hover:bg-gray-800'
+								}`}
 						>
 							📁 Kategoriyalar
 						</Link>
@@ -82,9 +96,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 						{/* Users/Customers */}
 						<Link
 							href='/admin/users'
-							className={`block py-2 px-4 rounded transition ${
-								isActive('/admin/users') ? 'bg-orange-600' : 'hover:bg-gray-800'
-							}`}
+							className={`block py-2 px-4 rounded transition ${isActive('/admin/users') ? 'bg-orange-600' : 'hover:bg-gray-800'
+								}`}
 						>
 							👥 Foydalanuvchilar
 						</Link>
@@ -92,9 +105,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 						{/* Analytics */}
 						<Link
 							href='/admin/analytics'
-							className={`block py-2 px-4 rounded transition ${
-								isActive('/admin/analytics') ? 'bg-orange-600' : 'hover:bg-gray-800'
-							}`}
+							className={`block py-2 px-4 rounded transition ${isActive('/admin/analytics') ? 'bg-orange-600' : 'hover:bg-gray-800'
+								}`}
 						>
 							📈 Statistika
 						</Link>

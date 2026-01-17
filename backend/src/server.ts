@@ -12,6 +12,8 @@ import prisma from './lib/prisma'
 // Route'larni tepada import qilamiz
 import analyticsRoutes from './routes/analytics.routes'
 import categoriesRoutes from './routes/categories.routes'
+import couponsRoutes from './routes/coupons.routes'
+import dealsRoutes from './routes/deals.routes'
 import ordersRoutes from './routes/orders.routes'
 import productsRoutes from './routes/products.routes'
 import usersRoutes from './routes/users.routes'
@@ -85,6 +87,8 @@ app.get('/health', (_req: Request, res: Response) => {
 // API Route'lari
 app.use('/api/analytics', analyticsLimiter, analyticsRoutes) // Maxsus limit
 app.use('/api/categories', generalLimiter, categoriesRoutes)
+app.use('/api/deals', generalLimiter, dealsRoutes)
+app.use('/api/coupons', generalLimiter, couponsRoutes)
 app.use('/api/products', generalLimiter, productsRoutes)
 app.use('/api/orders', generalLimiter, ordersRoutes)
 app.use('/api/users', generalLimiter, usersRoutes)
@@ -154,7 +158,7 @@ const startServer = async () => {
 		console.error('❌ Serverni boshlashda xatolik:', error)
 		try {
 			await prisma.$disconnect()
-		} catch (_e) {}
+		} catch (_e) { }
 		process.exit(1)
 	}
 }
@@ -174,5 +178,5 @@ process.on('SIGTERM', () => shutdown('SIGTERM'))
 process.on('beforeExit', async () => {
 	try {
 		await prisma.$disconnect()
-	} catch (_e) {}
+	} catch (_e) { }
 })

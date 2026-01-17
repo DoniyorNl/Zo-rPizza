@@ -3,6 +3,7 @@
 
 import { Request, Response } from 'express'
 import prisma from '../lib/prisma'
+import { createProductSchema, updateProductSchema } from '../validators/product.validator'
 
 // GET /api/products - Barcha mahsulotlar
 export const getAllProducts = async (req: Request, res: Response) => {
@@ -131,6 +132,15 @@ export const getProductById = async (req: Request, res: Response) => {
 // POST /api/products - Yangi mahsulot (with variations)
 export const createProduct = async (req: Request, res: Response) => {
 	try {
+		const validation = createProductSchema.safeParse(req.body)
+		if (!validation.success) {
+			return res.status(400).json({
+				success: false,
+				message: 'Validation error',
+				errors: validation.error.flatten(),
+			})
+		}
+
 		const {
 			name,
 			description,
@@ -154,14 +164,6 @@ export const createProduct = async (req: Request, res: Response) => {
 			images,
 			isActive,
 		} = req.body
-
-		// Validation
-		if (!name || !basePrice || !categoryId) {
-			return res.status(400).json({
-				success: false,
-				message: 'Name, basePrice, and categoryId are required',
-			})
-		}
 
 		// Category mavjudligini tekshirish
 		const category = await prisma.category.findUnique({
@@ -246,6 +248,15 @@ export const createProduct = async (req: Request, res: Response) => {
 // PUT /api/products/:id - Mahsulot yangilash (with variations)
 export const updateProduct = async (req: Request, res: Response) => {
 	try {
+		const validation = updateProductSchema.safeParse(req.body)
+		if (!validation.success) {
+			return res.status(400).json({
+				success: false,
+				message: 'Validation error',
+				errors: validation.error.flatten(),
+			})
+		}
+
 		const { id } = req.params
 		const productId = Array.isArray(id) ? id[0] : id
 		const {

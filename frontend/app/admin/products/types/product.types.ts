@@ -40,6 +40,19 @@ export interface ProductVariationForm {
 	weight: string
 }
 
+export interface ProductFormErrors {
+	name?: string
+	description?: string
+	basePrice?: string
+	prepTime?: string
+	categoryId?: string
+	variations?: string
+	variationRows?: Array<{
+		size?: string
+		price?: string
+	}>
+}
+
 export interface Category {
 	id: string
 	name: string

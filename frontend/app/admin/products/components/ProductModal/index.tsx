@@ -1,8 +1,8 @@
-import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Product, TabType } from '../../types/product.types'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useState } from 'react'
 import { useProductForm } from '../../hooks/useProductForm'
+import { Product, TabType } from '../../types/product.types'
 import { BasicTab } from './BasicTab'
 import { DetailsTab } from './DetailsTab'
 import { NutritionTab } from './NutritionTab'
@@ -15,10 +15,12 @@ interface ProductModalProps {
 
 export function ProductModal({ product, onClose, onSuccess }: ProductModalProps) {
 	const [activeTab, setActiveTab] = useState<TabType>('basic')
-	const { loading, categories, formData, setFormData, handleSubmit } = useProductForm(product)
+	const { loading, categories, formData, setFormData, errors, setErrors, handleSubmit } =
+		useProductForm(product)
 
 	const onSubmit = (e: React.FormEvent) => {
 		e.preventDefault()
+		setErrors({})
 		handleSubmit(onSuccess)
 	}
 
@@ -37,11 +39,10 @@ export function ProductModal({ product, onClose, onSuccess }: ProductModalProps)
 									key={tab}
 									type='button'
 									onClick={() => setActiveTab(tab)}
-									className={`pb-3 px-4 font-medium ${
-										activeTab === tab
+									className={`pb-3 px-4 font-medium ${activeTab === tab
 											? 'border-b-2 border-orange-600 text-orange-600'
 											: 'text-gray-600'
-									}`}
+										}`}
 								>
 									{tab === 'basic' && "Asosiy ma'lumotlar"}
 									{tab === 'details' && "Qo'shimcha ma'lumotlar"}
@@ -53,7 +54,12 @@ export function ProductModal({ product, onClose, onSuccess }: ProductModalProps)
 
 					<form onSubmit={onSubmit} className='space-y-4'>
 						{activeTab === 'basic' && (
-							<BasicTab formData={formData} setFormData={setFormData} categories={categories} />
+							<BasicTab
+								formData={formData}
+								setFormData={setFormData}
+								categories={categories}
+								errors={errors}
+							/>
 						)}
 						{activeTab === 'details' && (
 							<DetailsTab formData={formData} setFormData={setFormData} />
