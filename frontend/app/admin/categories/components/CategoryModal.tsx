@@ -18,9 +18,9 @@ function ErrorModal({ message, onClose }: { message: string; onClose: () => void
 				<div className='text-lg font-semibold text-red-600 mb-2'>Xatolik!</div>
 				<div className='text-gray-800 mb-4'>{message}</div>
 				<ul className='text-sm text-gray-600 mb-4 list-disc pl-5'>
-					<li>Kategoriya nomi bo'sh bo'lmasligi kerak.</li>
+					<li>Kategoriya nomi bo&apos;sh bo&apos;lmasligi kerak.</li>
 					<li>Kategoriya nomi takrorlanmasligi kerak.</li>
-					<li>Barcha majburiy maydonlarni to'g'ri to'ldiring.</li>
+					<li>Barcha majburiy maydonlarni to&apos;g&apos;ri to&apos;ldiring.</li>
 				</ul>
 				<button
 					className='bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded w-full'
@@ -41,8 +41,12 @@ export function CategoryModal({ category, onClose, onSuccess }: CategoryModalPro
 		e.preventDefault()
 		try {
 			await handleSubmit(onSuccess)
-		} catch (error: any) {
-			setErrorMsg(error.message)
+		} catch (error: unknown) {
+			if (error instanceof Error) {
+				setErrorMsg(error.message)
+			} else {
+				setErrorMsg('Xatolik yuz berdi')
+			}
 		}
 	}
 

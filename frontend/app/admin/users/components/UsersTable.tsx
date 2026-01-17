@@ -61,7 +61,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
 										Buyurtmalar
 									</th>
 									<th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider'>
-										Ro'yxatdan o'tgan
+										Ro&apos;yxatdan o&apos;tgan
 									</th>
 									<th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider'>
 										Status

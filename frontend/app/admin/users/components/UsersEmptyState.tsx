@@ -42,7 +42,7 @@ export const UsersEmptyState: React.FC<UsersEmptyStateProps> = ({ loading, error
 				<User className='w-16 h-16 text-gray-300 mx-auto mb-4' />
 				<p className='text-gray-600'>Foydalanuvchilar topilmadi</p>
 				<p className='text-gray-500 text-sm mt-2'>
-					Qidiruv yoki filter shartlaringizni o'zgartiring
+					Qidiruv yoki filter shartlaringizni o&apos;zgartiring
 				</p>
 			</div>
 		)

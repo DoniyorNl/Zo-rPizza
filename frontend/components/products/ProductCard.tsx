@@ -56,7 +56,7 @@ export function ProductCard({
 			</CardContent>
 
 			<CardFooter className='p-6 pt-0 flex items-center justify-between'>
-				<span className='text-3xl font-bold text-orange-600'>{price.toLocaleString()} so'm</span>
+				<span className='text-3xl font-bold text-orange-600'>{price.toLocaleString()} so&apos;m</span>
 				<Button size='lg' onClick={() => onAddToCart?.(id)}>
 					Buyurtma
 				</Button>

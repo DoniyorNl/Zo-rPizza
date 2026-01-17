@@ -11,11 +11,11 @@ export function TopProductsTable({ products }: TopProductsTableProps) {
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle>Eng ko'p sotilgan mahsulotlar</CardTitle>
+				<CardTitle>Eng ko&apos;p sotilgan mahsulotlar</CardTitle>
 			</CardHeader>
 			<CardContent>
 				{products.length === 0 ? (
-					<div className='text-center py-8 text-gray-500'>Ma'lumot topilmadi</div>
+					<div className='text-center py-8 text-gray-500'>Ma&apos;lumot topilmadi</div>
 				) : (
 					<div className='space-y-4'>
 						{products.map((product, index) => (

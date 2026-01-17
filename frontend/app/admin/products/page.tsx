@@ -49,7 +49,7 @@ export default function AdminProductsPage() {
 			<div className='flex items-center justify-between mb-6'>
 				<div>
 					<h1 className='text-3xl font-bold mb-2'>Mahsulotlar Boshqaruvi</h1>
-					<p className='text-gray-600'>Barcha mahsulotlarni ko'ring va boshqaring</p>
+					<p className='text-gray-600'>Barcha mahsulotlarni ko&apos;ring va boshqaring</p>
 				</div>
 				<Button onClick={() => setShowAddModal(true)} className='bg-orange-600 hover:bg-orange-700'>
 					<Plus className='w-4 h-4 mr-2' />

@@ -34,7 +34,7 @@ export default function AdminAnalyticsPage() {
 			{/* Header */}
 			<div>
 				<h1 className='text-3xl font-bold mb-2'>Statistika va Tahlil</h1>
-				<p className='text-gray-600'>Biznes ko'rsatkichlari va hisobotlar</p>
+				<p className='text-gray-600'>Biznes ko&apos;rsatkichlari va hisobotlar</p>
 			</div>
 
 			{/* Date Range Picker */}

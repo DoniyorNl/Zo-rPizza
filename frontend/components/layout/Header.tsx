@@ -101,7 +101,7 @@ export function Header() {
 							transition-all
 						'
 							>
-								Ro'yxatdan o'tish
+								Ro&apos;yxatdan o&apos;tish
 							</Button>
 						</>
 					)}

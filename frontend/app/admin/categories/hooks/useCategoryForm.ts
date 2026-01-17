@@ -1,5 +1,5 @@
-import { useState } from 'react'
 import axios from 'axios'
+import { useState } from 'react'
 import { Category, CategoryFormData } from '../types/category.types'
 
 const initialFormData: CategoryFormData = {
@@ -14,11 +14,11 @@ export function useCategoryForm(category: Category | null) {
 	const [formData, setFormData] = useState<CategoryFormData>(
 		category
 			? {
-					name: category.name,
-					description: category.description || '',
-					imageUrl: category.imageUrl || '',
-					isActive: category.isActive,
-			  }
+				name: category.name,
+				description: category.description || '',
+				imageUrl: category.imageUrl || '',
+				isActive: category.isActive,
+			}
 			: initialFormData,
 	)
 
@@ -40,9 +40,12 @@ export function useCategoryForm(category: Category | null) {
 				await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`, data)
 				onSuccess("Kategoriya muvaffaqiyatli qo'shildi")
 			}
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error saving category:', error)
-			throw new Error(error.response?.data?.message || 'Xatolik yuz berdi')
+			const message = axios.isAxiosError(error)
+				? error.response?.data?.message || 'Xatolik yuz berdi'
+				: 'Xatolik yuz berdi'
+			throw new Error(message)
 		} finally {
 			setLoading(false)
 		}

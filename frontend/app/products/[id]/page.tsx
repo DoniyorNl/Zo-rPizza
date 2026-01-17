@@ -358,7 +358,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 							</select>
 							{selectedHalfProduct && (
 								<p className='text-xs text-gray-500 mt-2'>
-									Narx ikkala pitsaning yuqori narxiga teng boladi.
+									Narx ikkala pitsaning yuqori narxiga teng bo&apos;ladi.
 								</p>
 							)}
 						</div>
