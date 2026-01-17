@@ -16,6 +16,7 @@ import couponsRoutes from './routes/coupons.routes'
 import dealsRoutes from './routes/deals.routes'
 import ordersRoutes from './routes/orders.routes'
 import productsRoutes from './routes/products.routes'
+import toppingsRoutes from './routes/toppings.routes'
 import usersRoutes from './routes/users.routes'
 
 const app: Express = express()
@@ -90,6 +91,7 @@ app.use('/api/categories', generalLimiter, categoriesRoutes)
 app.use('/api/deals', generalLimiter, dealsRoutes)
 app.use('/api/coupons', generalLimiter, couponsRoutes)
 app.use('/api/products', generalLimiter, productsRoutes)
+app.use('/api/toppings', generalLimiter, toppingsRoutes)
 app.use('/api/orders', generalLimiter, ordersRoutes)
 app.use('/api/users', generalLimiter, usersRoutes)
 

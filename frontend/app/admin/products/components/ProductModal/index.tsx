@@ -15,7 +15,7 @@ interface ProductModalProps {
 
 export function ProductModal({ product, onClose, onSuccess }: ProductModalProps) {
 	const [activeTab, setActiveTab] = useState<TabType>('basic')
-	const { loading, categories, formData, setFormData, errors, setErrors, handleSubmit } =
+	const { loading, categories, formData, setFormData, errors, setErrors, toppings, handleSubmit } =
 		useProductForm(product)
 
 	const onSubmit = (e: React.FormEvent) => {
@@ -40,8 +40,8 @@ export function ProductModal({ product, onClose, onSuccess }: ProductModalProps)
 									type='button'
 									onClick={() => setActiveTab(tab)}
 									className={`pb-3 px-4 font-medium ${activeTab === tab
-											? 'border-b-2 border-orange-600 text-orange-600'
-											: 'text-gray-600'
+										? 'border-b-2 border-orange-600 text-orange-600'
+										: 'text-gray-600'
 										}`}
 								>
 									{tab === 'basic' && "Asosiy ma'lumotlar"}
@@ -59,6 +59,7 @@ export function ProductModal({ product, onClose, onSuccess }: ProductModalProps)
 								setFormData={setFormData}
 								categories={categories}
 								errors={errors}
+								toppings={toppings}
 							/>
 						)}
 						{activeTab === 'details' && (

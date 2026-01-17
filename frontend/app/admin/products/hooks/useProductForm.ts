@@ -11,6 +11,7 @@ const initialFormData: ProductFormData = {
 	categoryId: '',
 	isActive: true,
 	variations: [],
+	defaultToppingIds: [],
 	ingredients: [],
 	recipe: '',
 	cookingTemp: '',
@@ -56,6 +57,7 @@ type ProductPayload = {
 	protein?: number
 	carbs?: number
 	fat?: number
+	defaultToppingIds?: string[]
 }
 
 type ProductVariationResponse = {
@@ -88,6 +90,7 @@ type ProductResponse = {
 	protein?: number | null
 	carbs?: number | null
 	fat?: number | null
+	productToppings?: Array<{ topping: { id: string; name: string } }>
 }
 
 const parseJsonArray = <T,>(data: unknown): T[] | null => {
@@ -108,6 +111,7 @@ export function useProductForm(product: Product | null) {
 	const [categories, setCategories] = useState<Category[]>([])
 	const [formData, setFormData] = useState<ProductFormData>(initialFormData)
 	const [errors, setErrors] = useState<ProductFormErrors>({})
+	const [toppings, setToppings] = useState<Array<{ id: string; name: string }>>([])
 
 	const fetchCategories = useCallback(async () => {
 		try {
@@ -120,6 +124,15 @@ export function useProductForm(product: Product | null) {
 			console.error('Error fetching categories:', error)
 		}
 	}, [product])
+
+	const fetchToppings = useCallback(async () => {
+		try {
+			const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/toppings`)
+			setToppings(response.data.data)
+		} catch (error) {
+			console.error('Error fetching toppings:', error)
+		}
+	}, [])
 
 	const fetchProductDetails = useCallback(async (productId: string) => {
 		try {
@@ -145,6 +158,9 @@ export function useProductForm(product: Product | null) {
 						weight: variation.weight?.toString() || '',
 					}))
 					: [],
+				defaultToppingIds: fullProduct.productToppings
+					? fullProduct.productToppings.map(item => item.topping.id)
+					: [],
 				ingredients:
 					parseJsonArray<ProductFormData['ingredients'][number]>(fullProduct.ingredients) || [],
 				recipe: fullProduct.recipe || '',
@@ -168,10 +184,11 @@ export function useProductForm(product: Product | null) {
 
 	useEffect(() => {
 		fetchCategories()
+		fetchToppings()
 		if (product) {
 			fetchProductDetails(product.id)
 		}
-	}, [product, fetchCategories, fetchProductDetails])
+	}, [product, fetchCategories, fetchToppings, fetchProductDetails])
 
 	const validateForm = () => {
 		const nextErrors: ProductFormErrors = {}
@@ -235,6 +252,12 @@ export function useProductForm(product: Product | null) {
 				data.variations = []
 			}
 
+			if (formData.defaultToppingIds.length > 0) {
+				data.defaultToppingIds = formData.defaultToppingIds
+			} else {
+				data.defaultToppingIds = []
+			}
+
 			// Add optional fields
 			if (formData.ingredients.length > 0) data.ingredients = formData.ingredients
 			if (formData.recipe) data.recipe = formData.recipe
@@ -276,6 +299,7 @@ export function useProductForm(product: Product | null) {
 		setFormData,
 		errors,
 		setErrors,
+		toppings,
 		handleSubmit,
 	}
 }

@@ -95,6 +95,9 @@ model Product {
   orderItems  OrderItem[]
   reviews     Review[]
   dealItems   DealItem[]
+  productToppings ProductTopping[]
+  halfLeftItems OrderItemHalf[] @relation("HalfLeft")
+  halfRightItems OrderItemHalf[] @relation("HalfRight")
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -290,10 +293,70 @@ model OrderItem {
   
   quantity    Int
   price       Float
+  toppings    OrderItemTopping[]
+  halfHalf    OrderItemHalf?
   
   createdAt   DateTime @default(now())
 
   @@map("order_items")
+}
+
+// ============================================
+// TOPPINGS & CUSTOMIZATION
+// ============================================
+
+model Topping {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  price     Float
+  isActive  Boolean  @default(true)
+
+  productToppings ProductTopping[]
+  orderItemToppings OrderItemTopping[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("toppings")
+}
+
+model ProductTopping {
+  id        String   @id @default(uuid())
+  productId String
+  toppingId String
+  isDefault Boolean  @default(true)
+
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  topping   Topping  @relation(fields: [toppingId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, toppingId])
+  @@map("product_toppings")
+}
+
+model OrderItemTopping {
+  id          String   @id @default(uuid())
+  orderItemId String
+  toppingId   String
+  isRemoved   Boolean  @default(false)
+
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  topping     Topping   @relation(fields: [toppingId], references: [id], onDelete: Cascade)
+
+  @@unique([orderItemId, toppingId, isRemoved])
+  @@map("order_item_toppings")
+}
+
+model OrderItemHalf {
+  id           String   @id @default(uuid())
+  orderItemId  String   @unique
+  leftProductId  String
+  rightProductId String
+
+  orderItem    OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  leftProduct  Product   @relation("HalfLeft", fields: [leftProductId], references: [id], onDelete: Cascade)
+  rightProduct Product   @relation("HalfRight", fields: [rightProductId], references: [id], onDelete: Cascade)
+
+  @@map("order_item_half")
 }
 
 // ============================================

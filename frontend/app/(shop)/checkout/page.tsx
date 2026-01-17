@@ -3,14 +3,14 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { useCartStore } from '@/store/cartStore'
-import { useAuth } from '@/lib/AuthContext'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useAuth } from '@/lib/AuthContext'
+import { useCartStore } from '@/store/cartStore'
 import axios from 'axios'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 export default function CheckoutPage() {
 	const { items, getTotalPrice, clearCart } = useCartStore()
@@ -58,6 +58,9 @@ export default function CheckoutPage() {
 					variationId: item.variationId,
 					size: item.size,
 					quantity: item.quantity,
+					addedToppingIds: item.addedToppingIds,
+					removedToppingIds: item.removedToppingIds,
+					halfProductId: item.halfProductId,
 				})),
 				paymentMethod,
 				deliveryAddress,
@@ -72,8 +75,12 @@ export default function CheckoutPage() {
 			// Success page'ga yo'naltirish (yoki orders page)
 			alert(`Buyurtma muvaffaqiyatli! Order ${response.data.data.orderNumber}`)
 			router.push('/')
-		} catch (err: any) {
-			setError(err.response?.data?.message || 'Buyurtma berishda xatolik')
+		} catch (err: unknown) {
+			if (axios.isAxiosError(err)) {
+				setError(err.response?.data?.message || 'Buyurtma berishda xatolik')
+			} else {
+				setError('Buyurtma berishda xatolik')
+			}
 		} finally {
 			setLoading(false)
 		}
@@ -91,7 +98,7 @@ export default function CheckoutPage() {
 					<div className='lg:col-span-2'>
 						<Card>
 							<CardHeader>
-								<CardTitle>Yetkazib berish ma'lumotlari</CardTitle>
+								<CardTitle>Yetkazib berish ma&apos;lumotlari</CardTitle>
 							</CardHeader>
 							<CardContent>
 								<form onSubmit={handleSubmit} className='space-y-6'>
@@ -125,29 +132,27 @@ export default function CheckoutPage() {
 										/>
 									</div>
 
-									{/* To'lov usuli */}
+									{/* To&apos;lov usuli */}
 									<div>
-										<label className='block text-sm font-medium mb-2'>To'lov usuli *</label>
+										<label className='block text-sm font-medium mb-2'>To&apos;lov usuli *</label>
 										<div className='grid grid-cols-2 gap-4'>
 											<button
 												type='button'
 												onClick={() => setPaymentMethod('CASH')}
-												className={`p-4 border-2 rounded-lg font-semibold transition-all ${
-													paymentMethod === 'CASH'
-														? 'border-orange-600 bg-orange-50 text-orange-600'
-														: 'border-gray-300 hover:border-orange-300'
-												}`}
+												className={`p-4 border-2 rounded-lg font-semibold transition-all ${paymentMethod === 'CASH'
+													? 'border-orange-600 bg-orange-50 text-orange-600'
+													: 'border-gray-300 hover:border-orange-300'
+													}`}
 											>
 												💵 Naqd pul
 											</button>
 											<button
 												type='button'
 												onClick={() => setPaymentMethod('CARD')}
-												className={`p-4 border-2 rounded-lg font-semibold transition-all ${
-													paymentMethod === 'CARD'
-														? 'border-orange-600 bg-orange-50 text-orange-600'
-														: 'border-gray-300 hover:border-orange-300'
-												}`}
+												className={`p-4 border-2 rounded-lg font-semibold transition-all ${paymentMethod === 'CARD'
+													? 'border-orange-600 bg-orange-50 text-orange-600'
+													: 'border-gray-300 hover:border-orange-300'
+													}`}
 											>
 												💳 Karta
 											</button>
@@ -178,7 +183,7 @@ export default function CheckoutPage() {
 												{item.name} x{item.quantity}
 											</span>
 											<span className='font-semibold'>
-												{(item.price * item.quantity).toLocaleString()} so'm
+												{(item.price * item.quantity).toLocaleString()} so&apos;m
 											</span>
 										</div>
 									))}
@@ -192,7 +197,7 @@ export default function CheckoutPage() {
 
 									<div className='flex justify-between text-xl font-bold'>
 										<span>Jami:</span>
-										<span className='text-orange-600'>{getTotalPrice().toLocaleString()} so'm</span>
+										<span className='text-orange-600'>{getTotalPrice().toLocaleString()} so&apos;m</span>
 									</div>
 								</div>
 							</CardContent>

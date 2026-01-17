@@ -111,6 +111,17 @@ export const getOrderById = async (req: Request, res: Response) => {
 								category: true,
 							},
 						},
+						toppings: {
+							include: {
+								topping: true,
+							},
+						},
+						halfHalf: {
+							include: {
+								leftProduct: true,
+								rightProduct: true,
+							},
+						},
 					},
 				},
 				reviews: true,
@@ -143,7 +154,7 @@ export const createOrder = async (req: Request, res: Response) => {
 	try {
 		let {
 			userId,
-			items, // [{ productId, quantity, variationId?, size? }]
+			items, // [{ productId, quantity, variationId?, size?, addedToppingIds?, removedToppingIds?, halfProductId? }]
 			paymentMethod,
 			deliveryAddress,
 			deliveryPhone,
@@ -238,7 +249,59 @@ export const createOrder = async (req: Request, res: Response) => {
 				}
 			}
 
-			const itemTotal = variationPrice * item.quantity
+			let halfProductId: string | null = null
+			let halfPrice = 0
+			if (item.halfProductId) {
+				const halfProduct = await prisma.product.findUnique({
+					where: { id: item.halfProductId },
+				})
+				if (!halfProduct) {
+					return res.status(404).json({
+						success: false,
+						message: `Half product ${item.halfProductId} not found`,
+					})
+				}
+				halfProductId = halfProduct.id
+
+				if (variationId) {
+					const halfVariation = await prisma.productVariation.findFirst({
+						where: {
+							productId: halfProduct.id,
+							size: size || undefined,
+						},
+					})
+					if (halfVariation) {
+						halfPrice = halfVariation.price
+					} else {
+						halfPrice = halfProduct.basePrice
+					}
+				} else {
+					halfPrice = halfProduct.basePrice
+				}
+			}
+
+			const addedToppingIds: string[] = Array.isArray(item.addedToppingIds)
+				? item.addedToppingIds
+				: []
+			const removedToppingIds: string[] = Array.isArray(item.removedToppingIds)
+				? item.removedToppingIds
+				: []
+
+			let toppingsPrice = 0
+			if (addedToppingIds.length > 0) {
+				const toppings = await prisma.topping.findMany({
+					where: {
+						id: { in: addedToppingIds },
+						isActive: true,
+					},
+				})
+				toppingsPrice = toppings.reduce((sum, topping) => sum + topping.price, 0)
+			}
+
+			const baseItemPrice = Math.max(variationPrice, halfPrice)
+			const finalItemPrice = baseItemPrice + toppingsPrice
+
+			const itemTotal = finalItemPrice * item.quantity
 			totalPrice += itemTotal
 
 			orderItems.push({
@@ -246,7 +309,29 @@ export const createOrder = async (req: Request, res: Response) => {
 				variationId,
 				size,
 				quantity: item.quantity,
-				price: variationPrice,
+				price: finalItemPrice,
+				toppings: {
+					create: [
+						...addedToppingIds.map((toppingId: string) => ({
+							toppingId,
+							isRemoved: false,
+						})),
+						...removedToppingIds.map((toppingId: string) => ({
+							toppingId,
+							isRemoved: true,
+						})),
+					],
+				},
+				...(halfProductId
+					? {
+						halfHalf: {
+							create: {
+								leftProductId: product.id,
+								rightProductId: halfProductId,
+							},
+						},
+					}
+					: {}),
 			})
 		}
 
