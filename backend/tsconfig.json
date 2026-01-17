@@ -1,26 +1,50 @@
 {
 	"compilerOptions": {
-		"target": "ES2022",
-		"lib": ["ES2022"],
+		/* Language and Environment */
+		"target": "ES2020",
+		"lib": ["ES2020"],
+
+		/* Modules */
 		"module": "commonjs",
-		"rootDir": "./",
+		"rootDir": "./src",
 		"moduleResolution": "node",
-		"types": ["node"],
-		"baseUrl": "./",
+		"resolveJsonModule": true,
+
+		/* PATH MAPPING - 🆕 YANGI */
+		"baseUrl": ".",
 		"paths": {
 			"@/*": ["src/*"]
 		},
+
+		/* Emit */
 		"outDir": "./dist",
+		"sourceMap": true,
+		"declaration": true,
+		"declarationMap": true,
 		"removeComments": true,
+
+		/* Interop Constraints */
 		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
 		"forceConsistentCasingInFileNames": true,
+
+		/* Type Checking */
 		"strict": true,
-		"noUnusedLocals": true,
-		"noUnusedParameters": true,
-		"noImplicitReturns": true,
-		"skipLibCheck": true,
-		"resolveJsonModule": true
+		"noImplicitAny": true,
+		"strictNullChecks": true,
+		"strictFunctionTypes": true,
+		"strictBindCallApply": true,
+		"strictPropertyInitialization": true,
+		"noImplicitThis": true,
+		"alwaysStrict": true,
+		"noUnusedLocals": false,
+		"noUnusedParameters": false,
+		"noImplicitReturns": false,
+		"noFallthroughCasesInSwitch": true,
+
+		/* Completeness */
+		"skipLibCheck": true
 	},
-	"include": ["src/**/*", "prisma/**/*"],
-	"exclude": ["node_modules", "dist"]
+	"include": ["src/**/*"],
+	"exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts"]
 }

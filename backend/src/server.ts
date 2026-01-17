@@ -1,18 +1,22 @@
-// 🍕 ZOR PIZZA - BACKEND SERVER (Optimized Version)
 // backend/src/server.ts
 
 import cors from 'cors'
 import 'dotenv/config'
 import express, { Express, NextFunction, Request, Response } from 'express'
-import rateLimit from 'express-rate-limit'
 import helmet from 'helmet'
 import morgan from 'morgan'
 import prisma from './lib/prisma'
 
-// Route'larni tepada import qilamiz
+// ============================================================================
+// RATE LIMIT IMPORT (Fixed)
+// ============================================================================
+import { rateLimit } from 'express-rate-limit'
+
+// Routes
 import analyticsRoutes from './routes/analytics.routes'
 import categoriesRoutes from './routes/categories.routes'
 import couponsRoutes from './routes/coupons.routes'
+import dashboardRoutes from './routes/dashboard.routes'
 import dealsRoutes from './routes/deals.routes'
 import ordersRoutes from './routes/orders.routes'
 import productsRoutes from './routes/products.routes'
@@ -26,20 +30,17 @@ const PORT = process.env.PORT || 5001
 // MIDDLEWARE & SECURITY
 // ============================================
 
-// 1. Helmet - HTTP xavfsizligi
 app.use(helmet())
 
-// 2. CORS - Xavfsiz whitelist bilan
 const allowedOrigins = [
 	process.env.FRONTEND_URL,
 	'http://localhost:3000',
-	'http://localhost:5173', // Vite default port
+	'http://localhost:5173',
 ]
 
 app.use(
 	cors({
 		origin: (origin, callback) => {
-			// Brauzerdan bo'lmagan so'rovlar (Postman kabi) yoki whitelist'dagi domenlar
 			if (!origin || allowedOrigins.some(domain => domain && origin.startsWith(domain))) {
 				return callback(null, true)
 			}
@@ -52,41 +53,109 @@ app.use(
 	}),
 )
 
-// 3. Rate Limiting (Tartibga solingan)
-// Analytics uchun alohida, yuqoriroq limit
+// ============================================================================
+// RATE LIMITING (Fixed)
+// ============================================================================
+
+// Dashboard limiter
+const dashboardLimiter = rateLimit({
+	windowMs: 1 * 60 * 1000, // 1 minute
+	max: 120, // 120 requests per minute
+	message: { success: false, message: 'Dashboard limit exceeded' },
+	standardHeaders: true,
+	legacyHeaders: false,
+})
+
+// Analytics limiter
 const analyticsLimiter = rateLimit({
 	windowMs: 1 * 60 * 1000,
 	max: 500,
 	message: { success: false, message: 'Analytics limit exceeded' },
+	standardHeaders: true,
+	legacyHeaders: false,
 })
 
-// Umumiy API uchun limit
+// General limiter
 const generalLimiter = rateLimit({
-	windowMs: 15 * 60 * 1000,
+	windowMs: 15 * 60 * 1000, // 15 minutes
 	max: 1000,
 	message: { success: false, message: 'Too many requests, try again later' },
+	standardHeaders: true,
+	legacyHeaders: false,
 })
 
-// 4. Boshqa standart middleware'lar
+// ============================================
+// OTHER MIDDLEWARE
+// ============================================
+
 app.use(morgan('dev'))
-app.use(express.json({ limit: '10kb' })) // Body hajmini cheklash (Xavfsizlik uchun)
+app.use(express.json({ limit: '10kb' }))
 app.use(express.urlencoded({ extended: true, limit: '10kb' }))
 
 // ============================================
 // ROUTES
 // ============================================
 
-// Health check (Hech qanday limitlarsiz)
+// Health check
 app.get('/health', (_req: Request, res: Response) => {
 	res.status(200).json({
 		success: true,
 		status: 'up',
+		uptime: process.uptime(),
 		timestamp: new Date().toISOString(),
 	})
 })
 
-// API Route'lari
-app.use('/api/analytics', analyticsLimiter, analyticsRoutes) // Maxsus limit
+// Root endpoint
+app.get('/', (_req: Request, res: Response) => {
+	res.status(200).json({
+		success: true,
+		message: '🍕 Zor Pizza API v1.0.0',
+		version: '1.0.0',
+		endpoints: {
+			health: '/health',
+			api: '/api',
+			dashboard: '/api/dashboard',
+			analytics: '/api/analytics',
+			products: '/api/products',
+			orders: '/api/orders',
+			users: '/api/users',
+			categories: '/api/categories',
+			toppings: '/api/toppings',
+			coupons: '/api/coupons',
+			deals: '/api/deals',
+		},
+	})
+})
+
+// API list
+app.get('/api', (_req: Request, res: Response) => {
+	res.status(200).json({
+		success: true,
+		message: 'Zor Pizza API v1.0',
+		availableEndpoints: [
+			{ method: 'GET', path: '/api/dashboard', description: 'Real-time dashboard' },
+			{ method: 'GET', path: '/api/analytics', description: 'Analytics' },
+			{ method: 'GET', path: '/api/products', description: 'Products' },
+			{ method: 'GET', path: '/api/orders', description: 'Orders' },
+			{ method: 'GET', path: '/api/users', description: 'Users' },
+			{ method: 'GET', path: '/api/categories', description: 'Categories' },
+			{ method: 'GET', path: '/api/toppings', description: 'Toppings' },
+			{ method: 'GET', path: '/api/coupons', description: 'Coupons' },
+			{ method: 'GET', path: '/api/deals', description: 'Deals' },
+		],
+		timestamp: new Date().toISOString(),
+	})
+})
+
+// Favicon handler
+app.get('/favicon.ico', (_req: Request, res: Response) => {
+	res.status(204).end()
+})
+
+// API Routes
+app.use('/api/dashboard', dashboardLimiter, dashboardRoutes)
+app.use('/api/analytics', analyticsLimiter, analyticsRoutes)
 app.use('/api/categories', generalLimiter, categoriesRoutes)
 app.use('/api/deals', generalLimiter, dealsRoutes)
 app.use('/api/coupons', generalLimiter, couponsRoutes)
@@ -95,25 +164,20 @@ app.use('/api/toppings', generalLimiter, toppingsRoutes)
 app.use('/api/orders', generalLimiter, ordersRoutes)
 app.use('/api/users', generalLimiter, usersRoutes)
 
-// Root endpoint
-app.get('/', (_req: Request, res: Response) => {
-	res.status(200).json({
-		success: true,
-		message: '🍕 Zor Pizza API v1.0.0',
-		documentation: '/health',
-	})
-})
-
 // ============================================
 // ERROR HANDLING
 // ============================================
 
 // 404 Handler
-app.use((_req: Request, res: Response) => {
-	res.status(404).json({ success: false, message: 'Route topilmadi' })
+app.use((req: Request, res: Response) => {
+	res.status(404).json({
+		success: false,
+		message: `Route topilmadi: ${req.method} ${req.path}`,
+		availableEndpoints: '/api',
+	})
 })
 
-// Global Error Handler (TypeScript bilan boyitilgan)
+// Global Error Handler
 interface AppError extends Error {
 	status?: number
 }
@@ -132,12 +196,11 @@ app.use((err: AppError, _req: Request, res: Response, _next: NextFunction) => {
 })
 
 // ============================================
-// SERVER LUNCHER
+// SERVER LAUNCHER
 // ============================================
 
 const startServer = async () => {
 	try {
-		// DB connection
 		await prisma.$connect()
 		console.log('✅ Database connected')
 
@@ -147,10 +210,11 @@ const startServer = async () => {
       📍 Port: ${PORT}
       📍 Mode: ${process.env.NODE_ENV || 'development'}
       🍕 API Base: http://localhost:${PORT}/api
+      📊 Dashboard: http://localhost:${PORT}/api/dashboard
+      💚 Health: http://localhost:${PORT}/health
       `)
 		})
 
-		// Kutilmagan xatoliklarni ushlash (Process level)
 		process.on('unhandledRejection', err => {
 			console.log('❌ UNHANDLED REJECTION! Shutting down...')
 			console.error(err)
@@ -160,14 +224,14 @@ const startServer = async () => {
 		console.error('❌ Serverni boshlashda xatolik:', error)
 		try {
 			await prisma.$disconnect()
-		} catch (_e) { }
+		} catch (_e) {}
 		process.exit(1)
 	}
 }
 
 startServer()
 
-// Graceful Shutdown (Bazani toza yopish)
+// Graceful Shutdown
 const shutdown = async (signal: string) => {
 	console.log(`\n👋 ${signal} qabul qilindi. Yopilmoqda...`)
 	await prisma.$disconnect()
@@ -180,5 +244,5 @@ process.on('SIGTERM', () => shutdown('SIGTERM'))
 process.on('beforeExit', async () => {
 	try {
 		await prisma.$disconnect()
-	} catch (_e) { }
+	} catch (_e) {}
 })
