@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
 import axios from 'axios'
-import { Product, ProductFormData, Category } from '../types/product.types'
+import { useCallback, useEffect, useState } from 'react'
+import { Category, Product, ProductFormData, ProductFormErrors } from '../types/product.types'
 
 const initialFormData: ProductFormData = {
 	name: '',
@@ -26,19 +26,90 @@ const initialFormData: ProductFormData = {
 	fat: '',
 }
 
+type ProductVariationPayload = {
+	size: string
+	price: number
+	diameter?: number
+	slices?: number
+	weight?: number
+}
+
+type ProductPayload = {
+	name: string
+	description: string
+	basePrice: number
+	prepTime: number
+	categoryId: string
+	imageUrl: string | null
+	isActive: boolean
+	variations?: ProductVariationPayload[]
+	ingredients?: ProductFormData['ingredients']
+	recipe?: string
+	cookingTemp?: number
+	cookingTime?: number
+	cookingSteps?: ProductFormData['cookingSteps']
+	difficulty?: string
+	servings?: number
+	allergens?: string[]
+	images?: string[]
+	calories?: number
+	protein?: number
+	carbs?: number
+	fat?: number
+}
+
+type ProductVariationResponse = {
+	size?: string
+	price?: number
+	diameter?: number | null
+	slices?: number | null
+	weight?: number | null
+}
+
+type ProductResponse = {
+	name: string
+	description: string
+	basePrice?: number
+	imageUrl?: string | null
+	prepTime: number
+	categoryId: string
+	isActive: boolean
+	variations?: ProductVariationResponse[]
+	ingredients?: unknown
+	recipe?: string
+	cookingTemp?: number | null
+	cookingTime?: number | null
+	cookingSteps?: unknown
+	difficulty?: string
+	servings?: number | null
+	allergens?: string[]
+	images?: string[]
+	calories?: number | null
+	protein?: number | null
+	carbs?: number | null
+	fat?: number | null
+}
+
+const parseJsonArray = <T,>(data: unknown): T[] | null => {
+	if (!data) return null
+	if (typeof data === 'string') {
+		try {
+			const parsed = JSON.parse(data)
+			return Array.isArray(parsed) ? (parsed as T[]) : null
+		} catch {
+			return null
+		}
+	}
+	return Array.isArray(data) ? (data as T[]) : null
+}
+
 export function useProductForm(product: Product | null) {
 	const [loading, setLoading] = useState(false)
 	const [categories, setCategories] = useState<Category[]>([])
 	const [formData, setFormData] = useState<ProductFormData>(initialFormData)
+	const [errors, setErrors] = useState<ProductFormErrors>({})
 
-	useEffect(() => {
-		fetchCategories()
-		if (product) {
-			fetchProductDetails(product.id)
-		}
-	}, [product])
-
-	const fetchCategories = async () => {
+	const fetchCategories = useCallback(async () => {
 		try {
 			const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`)
 			setCategories(response.data.data)
@@ -48,19 +119,14 @@ export function useProductForm(product: Product | null) {
 		} catch (error) {
 			console.error('Error fetching categories:', error)
 		}
-	}
+	}, [product])
 
-	const fetchProductDetails = async (productId: string) => {
+	const fetchProductDetails = useCallback(async (productId: string) => {
 		try {
 			const response = await axios.get(
 				`${process.env.NEXT_PUBLIC_API_URL}/api/products/${productId}`,
 			)
-			const fullProduct = response.data.data
-
-			const parseJson = (data: any) => {
-				if (!data) return null
-				return typeof data === 'string' ? JSON.parse(data) : data
-			}
+			const fullProduct = response.data.data as ProductResponse
 
 			setFormData({
 				name: fullProduct.name,
@@ -71,19 +137,21 @@ export function useProductForm(product: Product | null) {
 				categoryId: fullProduct.categoryId,
 				isActive: fullProduct.isActive,
 				variations: Array.isArray(fullProduct.variations)
-					? fullProduct.variations.map((variation: any) => ({
-							size: variation.size,
-							price: variation.price?.toString() || '',
-							diameter: variation.diameter?.toString() || '',
-							slices: variation.slices?.toString() || '',
-							weight: variation.weight?.toString() || '',
-						}))
+					? fullProduct.variations.map(variation => ({
+						size: variation.size || 'Medium',
+						price: variation.price?.toString() || '',
+						diameter: variation.diameter?.toString() || '',
+						slices: variation.slices?.toString() || '',
+						weight: variation.weight?.toString() || '',
+					}))
 					: [],
-				ingredients: parseJson(fullProduct.ingredients) || [],
+				ingredients:
+					parseJsonArray<ProductFormData['ingredients'][number]>(fullProduct.ingredients) || [],
 				recipe: fullProduct.recipe || '',
 				cookingTemp: fullProduct.cookingTemp?.toString() || '',
 				cookingTime: fullProduct.cookingTime?.toString() || '',
-				cookingSteps: parseJson(fullProduct.cookingSteps) || [],
+				cookingSteps:
+					parseJsonArray<ProductFormData['cookingSteps'][number]>(fullProduct.cookingSteps) || [],
 				difficulty: fullProduct.difficulty || '',
 				servings: fullProduct.servings?.toString() || '',
 				allergens: fullProduct.allergens || [],
@@ -96,13 +164,56 @@ export function useProductForm(product: Product | null) {
 		} catch (error) {
 			console.error('Error fetching product details:', error)
 		}
+	}, [])
+
+	useEffect(() => {
+		fetchCategories()
+		if (product) {
+			fetchProductDetails(product.id)
+		}
+	}, [product, fetchCategories, fetchProductDetails])
+
+	const validateForm = () => {
+		const nextErrors: ProductFormErrors = {}
+
+		if (!formData.name.trim()) nextErrors.name = 'Nomi majburiy'
+		if (!formData.description.trim()) nextErrors.description = 'Tavsif majburiy'
+		if (!formData.basePrice || Number(formData.basePrice) <= 0) {
+			nextErrors.basePrice = 'Asosiy narx 0 dan katta bo‘lishi kerak'
+		}
+		if (!formData.prepTime || Number(formData.prepTime) <= 0) {
+			nextErrors.prepTime = 'Tayyorlash vaqti 0 dan katta bo‘lishi kerak'
+		}
+		if (!formData.categoryId) nextErrors.categoryId = 'Kategoriya tanlang'
+
+		if (formData.variations.length > 0) {
+			const sizes = formData.variations.map(variation => variation.size)
+			const uniqueSizes = new Set(sizes)
+			if (uniqueSizes.size !== sizes.length) {
+				nextErrors.variations = 'O‘lchamlar takrorlanmasligi kerak'
+			}
+
+			nextErrors.variationRows = formData.variations.map(variation => {
+				const rowErrors: { size?: string; price?: string } = {}
+				if (!variation.size) rowErrors.size = 'O‘lcham tanlang'
+				if (!variation.price || Number(variation.price) <= 0) {
+					rowErrors.price = 'Narx 0 dan katta bo‘lishi kerak'
+				}
+				return rowErrors
+			})
+		}
+
+		setErrors(nextErrors)
+		return Object.keys(nextErrors).length === 0
 	}
 
 	const handleSubmit = async (onSuccess: (message: string) => void) => {
+		if (!validateForm()) return
+
 		setLoading(true)
 
 		try {
-			const data: any = {
+			const data: ProductPayload = {
 				name: formData.name,
 				description: formData.description,
 				basePrice: parseFloat(formData.basePrice),
@@ -146,9 +257,13 @@ export function useProductForm(product: Product | null) {
 				await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/products`, data)
 				onSuccess("Mahsulot muvaffaqiyatli qo'shildi")
 			}
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error saving product:', error)
-			alert(error.response?.data?.message || 'Xatolik yuz berdi')
+			if (axios.isAxiosError(error)) {
+				alert(error.response?.data?.message || 'Xatolik yuz berdi')
+			} else {
+				alert('Xatolik yuz berdi')
+			}
 		} finally {
 			setLoading(false)
 		}
@@ -159,6 +274,8 @@ export function useProductForm(product: Product | null) {
 		categories,
 		formData,
 		setFormData,
+		errors,
+		setErrors,
 		handleSubmit,
 	}
 }

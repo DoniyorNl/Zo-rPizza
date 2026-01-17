@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Edit, Eye, RotateCcw, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Product, FilterStatus } from '../types/product.types'
+import { FilterStatus, Product } from '../types/product.types'
 
 interface ProductsTableProps {
 	products: Product[]
@@ -48,8 +48,8 @@ export function ProductsTable({ products, filterStatus, onEdit, onDelete, onRest
 							</thead>
 							<tbody>
 								{products.map(product => (
-									<tr 
-										key={product.id} 
+									<tr
+										key={product.id}
 										className={`border-b hover:bg-gray-50 ${!product.isActive ? 'opacity-60' : ''}`}
 									>
 										<td className='p-4'>
@@ -73,6 +73,11 @@ export function ProductsTable({ products, filterStatus, onEdit, onDelete, onRest
 											<div className='text-sm text-gray-500 line-clamp-1'>
 												{product.description}
 											</div>
+											{product.variations && product.variations.length > 0 && (
+												<div className='text-xs text-gray-500 mt-1'>
+													Sizes: {product.variations.map(variation => variation.size).join(', ')}
+												</div>
+											)}
 										</td>
 										<td className='p-4'>
 											<Badge variant='outline'>{product.category.name}</Badge>
