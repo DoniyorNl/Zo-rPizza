@@ -1,15 +1,9 @@
 // frontend/app/admin/page.tsx
-'use client'
+// frontend/app/admin/page.tsx
+// ✅ Admin root page (dashboard)
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { DashboardView } from './dashboard/DashboardView'
 
 export default function AdminPage() {
-	const router = useRouter()
-
-	useEffect(() => {
-		router.replace('/admin/orders')
-	}, [router])
-
-	return <div className='text-center py-12'>Yo&apos;naltirilmoqda...</div>
+	return <DashboardView />
 }
