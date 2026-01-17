@@ -9,6 +9,9 @@
 		"prisma:push": "prisma db push",
 		"prisma:seed": "tsx prisma/seed.ts"
 	},
+	"prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
 	"dependencies": {
 		"@prisma/client": "^6.2.0",
 		"bcryptjs": "^2.4.3",
