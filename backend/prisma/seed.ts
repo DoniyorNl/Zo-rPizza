@@ -123,12 +123,17 @@ async function main() {
 				{ name: 'Pomidor sousi', amount: '100ml', icon: '🍅' },
 				{ name: 'Rayhon', amount: '10g', icon: '🌿' },
 			],
-			recipe: 'Klassik Margherita pitsasi - italyan oshpazligining ajoyib namunasi. Yumshoq xamir, yangi pomidor sousi va eruvchan mozzarella.',
+			recipe:
+				'Klassik Margherita pitsasi - italyan oshpazligining ajoyib namunasi. Yumshoq xamir, yangi pomidor sousi va eruvchan mozzarella.',
 			cookingTemp: 220,
 			cookingTime: 15,
 			cookingSteps: [
 				{ step: 1, title: 'Xamirni yoyish', description: 'Pizza xamirini yumaloq shaklda yoying' },
-				{ step: 2, title: 'Sous surish', description: 'Pomidor sousini xamir ustiga teng taqsimlang' },
+				{
+					step: 2,
+					title: 'Sous surish',
+					description: 'Pomidor sousini xamir ustiga teng taqsimlang',
+				},
 				{ step: 3, title: 'Pishirish', description: '220°C da 15 daqiqa pishiring' },
 			],
 			calories: 320,
@@ -173,7 +178,8 @@ async function main() {
 				{ name: 'Mozzarella pishloq', amount: '150g', icon: '🧀' },
 				{ name: 'Pepperoni', amount: '100g', icon: '🍖' },
 			],
-			recipe: 'Amerika\'ning eng mashhur pitsasi. Achchiq pepperoni va eruvchan pishloq - ajoyib kombinatsiya!',
+			recipe:
+				"Amerika'ning eng mashhur pitsasi. Achchiq pepperoni va eruvchan pishloq - ajoyib kombinatsiya!",
 			cookingTemp: 220,
 			cookingTime: 16,
 			cookingSteps: [
@@ -181,10 +187,10 @@ async function main() {
 					step: 1,
 					title: 'Xamir tayyorlash',
 					description:
-						'300 g un, 180 ml iliq suv, 5 g quruq droj, 1 ch.q. shakar, 1 ch.q. tuz va 1 osh.q. zaytun yog\'ini aralashtiring. 8-10 daqiqa yoğing, ustini yopib 45-60 daqiqa ko\'taring. So\'ng xamirni yumaloq qilib yoying.',
+						"300 g un, 180 ml iliq suv, 5 g quruq droj, 1 ch.q. shakar, 1 ch.q. tuz va 1 osh.q. zaytun yog'ini aralashtiring. 8-10 daqiqa yoğing, ustini yopib 45-60 daqiqa ko'taring. So'ng xamirni yumaloq qilib yoying.",
 				},
-				{ step: 2, title: 'Asosiy qatlamlar', description: 'Sous va pishloq qo\'shing' },
-				{ step: 3, title: 'Pepperoni', description: 'Pepperoni bo\'laklarini joylashtiring' },
+				{ step: 2, title: 'Asosiy qatlamlar', description: "Sous va pishloq qo'shing" },
+				{ step: 3, title: 'Pepperoni', description: "Pepperoni bo'laklarini joylashtiring" },
 				{ step: 4, title: 'Pishirish', description: '220°C da 14-16 daqiqa' },
 			],
 			calories: 380,
@@ -227,7 +233,7 @@ async function main() {
 				{ name: 'Zaytun', amount: '50g', icon: '🫒' },
 				{ name: "Qo'ziqorin", amount: '80g', icon: '🍄' },
 			],
-			recipe: 'Sog\'lom va mazali vegetarian pitsa - faqat yangi sabzavotlar!',
+			recipe: "Sog'lom va mazali vegetarian pitsa - faqat yangi sabzavotlar!",
 			cookingTemp: 220,
 			cookingTime: 15,
 			calories: 280,
@@ -268,12 +274,17 @@ async function main() {
 				{ name: 'Gorgonzola', amount: '50g', icon: '🧀' },
 				{ name: 'Ricotta', amount: '100g', icon: '🧀' },
 			],
-			recipe: 'Pizza xamirini yoyib, ustiga barcha pishloqlarni qo\'ying. 220°C da 15 daqiqa pishiring.',
+			recipe:
+				"Pizza xamirini yoyib, ustiga barcha pishloqlarni qo'ying. 220°C da 15 daqiqa pishiring.",
 			cookingTemp: 220,
 			cookingTime: 15,
 			cookingSteps: [
 				{ step: 1, title: 'Xamirni yoyish', description: 'Pizza xamirini yumaloq shaklda yoying' },
-				{ step: 2, title: 'Pishloqlarni qo\'shish', description: 'Barcha pishloqlarni teng taqsimlang' },
+				{
+					step: 2,
+					title: "Pishloqlarni qo'shish",
+					description: 'Barcha pishloqlarni teng taqsimlang',
+				},
 				{ step: 3, title: 'Pishirish', description: '220°C da 15 daqiqa pishiring' },
 			],
 			calories: 320,
@@ -319,20 +330,21 @@ async function main() {
 				{ name: 'Qizil piyoz', amount: '50g', icon: '🧅' },
 				{ name: 'Rayhon', amount: '10g', icon: '🌿' },
 			],
-			recipe: 'Pizza xamirini yoyib, ustiga BBQ sousini surkang. Pishgan tovuq go\'shtini qo\'shib, ustiga mozzarella pishloq va qizil piyoz qo\'ying. 230°C da 18 daqiqa pishiring.',
+			recipe:
+				"Pizza xamirini yoyib, ustiga BBQ sousini surkang. Pishgan tovuq go'shtini qo'shib, ustiga mozzarella pishloq va qizil piyoz qo'ying. 230°C da 18 daqiqa pishiring.",
 			cookingTemp: 230,
 			cookingTime: 18,
 			cookingSteps: [
 				{ step: 1, title: 'Xamir va sous', description: 'Xamirni yoyib, BBQ sousini surkang' },
-				{ step: 2, title: 'Tovuq', description: 'Pishgan tovuqni qo\'shing' },
-				{ step: 3, title: 'Pishloq va piyoz', description: 'Mozzarella va piyoz qo\'shing' },
+				{ step: 2, title: 'Tovuq', description: "Pishgan tovuqni qo'shing" },
+				{ step: 3, title: 'Pishloq va piyoz', description: "Mozzarella va piyoz qo'shing" },
 				{ step: 4, title: 'Pishirish', description: '230°C da 18 daqiqa' },
 			],
 			calories: 380,
 			protein: 22.0,
 			carbs: 32.0,
 			fat: 18.5,
-			difficulty: 'O\'rtacha',
+			difficulty: "O'rtacha",
 			servings: 2,
 			allergens: ['Sut', 'Gluten'],
 			images: [
@@ -371,13 +383,14 @@ async function main() {
 				{ name: 'Mozzarella pishloq', amount: '180g', icon: '🧀' },
 				{ name: 'Qalampir', amount: '30g', icon: '🌶️' },
 			],
-			recipe: 'Pizza xamirini yoyib, pomidor sousini surkang. Vetchina va ananas bo\'laklarini qo\'shib, ustiga mozzarella pishloq qo\'ying. 220°C da 16 daqiqa pishiring.',
+			recipe:
+				"Pizza xamirini yoyib, pomidor sousini surkang. Vetchina va ananas bo'laklarini qo'shib, ustiga mozzarella pishloq qo'ying. 220°C da 16 daqiqa pishiring.",
 			cookingTemp: 220,
 			cookingTime: 16,
 			cookingSteps: [
 				{ step: 1, title: 'Xamir va sous', description: 'Xamirni yoyib, pomidor sousini surkang' },
-				{ step: 2, title: 'Vetchina va ananas', description: 'Vetchina va ananas qo\'shing' },
-				{ step: 3, title: 'Pishloq', description: 'Mozzarella qo\'shing' },
+				{ step: 2, title: 'Vetchina va ananas', description: "Vetchina va ananas qo'shing" },
+				{ step: 3, title: 'Pishloq', description: "Mozzarella qo'shing" },
 				{ step: 4, title: 'Pishirish', description: '220°C da 16 daqiqa' },
 			],
 			calories: 350,
@@ -408,8 +421,9 @@ async function main() {
 		update: {},
 		create: {
 			id: 'meat-lovers-1',
-			name: 'Go\'shtli Pitsa',
-			description: 'Pepperoni, vetchina, kolbasa, mol go\'shti, mozzarella - go\'sht sevuvchilar uchun',
+			name: "Go'shtli Pitsa",
+			description:
+				"Pepperoni, vetchina, kolbasa, mol go'shti, mozzarella - go'sht sevuvchilar uchun",
 			basePrice: 75000,
 			imageUrl: 'https://images.unsplash.com/photo-1513104890138-7c749659a591',
 			prepTime: 22,
@@ -421,17 +435,18 @@ async function main() {
 				{ name: 'Pepperoni', amount: '100g', icon: '🍖' },
 				{ name: 'Vetchina', amount: '100g', icon: '🥓' },
 				{ name: 'Kolbasa', amount: '100g', icon: '🌭' },
-				{ name: 'Mol go\'shti', amount: '120g', icon: '🥩' },
+				{ name: "Mol go'shti", amount: '120g', icon: '🥩' },
 				{ name: 'Mozzarella pishloq', amount: '200g', icon: '🧀' },
 				{ name: 'Qalampir', amount: '20g', icon: '🌶️' },
 			],
-			recipe: 'Pizza xamirini yoyib, pomidor sousini surkang. Barcha go\'sht turlarini pitsa ustiga qo\'ying. Mozzarella pishloqni qo\'shib, 235°C da 20 daqiqa pishiring.',
+			recipe:
+				"Pizza xamirini yoyib, pomidor sousini surkang. Barcha go'sht turlarini pitsa ustiga qo'ying. Mozzarella pishloqni qo'shib, 235°C da 20 daqiqa pishiring.",
 			cookingTemp: 235,
 			cookingTime: 20,
 			cookingSteps: [
 				{ step: 1, title: 'Xamir va sous', description: 'Xamirni yoyib, pomidor sousini surkang' },
-				{ step: 2, title: 'Go\'shtlar', description: 'Barcha go\'shtlarni qo\'shing' },
-				{ step: 3, title: 'Pishloq', description: 'Mozzarella qo\'shing' },
+				{ step: 2, title: "Go'shtlar", description: "Barcha go'shtlarni qo'shing" },
+				{ step: 3, title: 'Pishloq', description: "Mozzarella qo'shing" },
 				{ step: 4, title: 'Pishirish', description: '235°C da 20 daqiqa' },
 			],
 			calories: 450,
@@ -496,20 +511,130 @@ async function main() {
 	})
 
 	console.log('✅ Admin user yaratildi')
+
+	console.log('👥 Test mijozlar yaratilmoqda...')
+
+	const customerSeedData = [
+		{
+			email: 'alisher@gmail.com',
+			name: 'Alisher Karimov',
+			phone: '+998901111111',
+			address: 'Toshkent, Chilonzor tumani, 12-kvartal',
+		},
+		{
+			email: 'dilnoza@gmail.com',
+			name: 'Dilnoza Rahimova',
+			phone: '+998902222222',
+			address: 'Toshkent, Yunusobod tumani, 5-mavze',
+		},
+		{
+			email: 'bobur@gmail.com',
+			name: 'Bobur Toshmatov',
+			phone: '+998903333333',
+			address: 'Toshkent, Sergeli tumani, 8-kvartal',
+		},
+	]
+
+	const customers = await Promise.all(
+		customerSeedData.map(data =>
+			prisma.user.upsert({
+				where: { email: data.email },
+				update: {},
+				create: {
+					email: data.email,
+					password: '$2a$10$7xKj8KpL9Z.vQw5yE6X0muZJG1Y0F8hC9L2mN3pQ4rR5sS6tT7uU8',
+					name: data.name,
+					phone: data.phone,
+					role: 'CUSTOMER',
+				},
+			}),
+		),
+	)
+
+	console.log(`✅ ${customers.length} ta mijoz yaratildi`)
+
+	console.log('🛍️ Bugungi buyurtmalar yaratilmoqda...')
+
+	const today = new Date()
+	const orderTimes = [
+		new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 30),
+		new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10, 45),
+		new Date(today.getFullYear(), today.getMonth(), today.getDate(), 11, 20),
+		new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12, 15),
+		new Date(today.getFullYear(), today.getMonth(), today.getDate(), 13, 40),
+		new Date(today.getFullYear(), today.getMonth(), today.getDate(), 14, 10),
+		new Date(today.getFullYear(), today.getMonth(), today.getDate(), 18, 30),
+		new Date(today.getFullYear(), today.getMonth(), today.getDate(), 19, 15),
+		new Date(today.getFullYear(), today.getMonth(), today.getDate(), 19, 50),
+		new Date(today.getFullYear(), today.getMonth(), today.getDate(), 20, 25),
+	]
+
+	const allProducts = await prisma.product.findMany({
+		include: { variations: true },
+	})
+
+	const orders: { id: string }[] = []
+
+	for (let i = 0; i < orderTimes.length; i++) {
+		const customer = customers[i % customers.length]
+		const customerSeed = customerSeedData[i % customerSeedData.length]
+		const orderTime = orderTimes[i]
+
+		const order = await prisma.order.create({
+			data: {
+				orderNumber: `ORD${Date.now()}${i}`,
+				userId: customer.id,
+				status: i < 6 ? 'DELIVERED' : i < 8 ? 'PREPARING' : 'PENDING',
+				totalPrice: 0,
+				paymentMethod: i % 2 === 0 ? 'CARD' : 'CASH',
+				deliveryAddress: customerSeed.address,
+				deliveryPhone: customerSeed.phone,
+				createdAt: orderTime,
+				estimatedTime: 40,
+			},
+		})
+
+		const itemsCount = Math.floor(Math.random() * 3) + 1
+		let orderTotal = 0
+
+		for (let j = 0; j < itemsCount; j++) {
+			const product = allProducts[Math.floor(Math.random() * allProducts.length)]
+			const variation = product.variations[Math.floor(Math.random() * product.variations.length)]
+			const quantity = Math.floor(Math.random() * 2) + 1
+
+			await prisma.orderItem.create({
+				data: {
+					orderId: order.id,
+					productId: product.id,
+					variationId: variation.id,
+					quantity,
+					price: variation.price,
+					size: variation.size,
+				},
+			})
+
+			orderTotal += variation.price * quantity
+		}
+
+		await prisma.order.update({
+			where: { id: order.id },
+			data: { totalPrice: orderTotal },
+		})
+
+		orders.push(order)
+	}
+
+	console.log(`✅ ${orders.length} ta bugungi buyurtma yaratildi`)
+
 	console.log('\n📊 SEED SUMMARY:')
 	console.log(`   - Kategoriyalar: 2`)
 	console.log(`   - Ingredientlar: ${ingredients.length}`)
-	console.log(`   - Mahsulotlar: 7 (har biri 4 ta size bilan)`)
-	console.log(`   - Jami variations: 28`)
+	console.log(`   - Mahsulotlar: ${allProducts.length}`)
+	console.log(
+		`   - Jami variations: ${allProducts.reduce((sum, p) => sum + p.variations.length, 0)}`,
+	)
+	console.log(`   - Mijozlar: ${customers.length}`)
+	console.log(`   - Bugungi buyurtmalar: ${orders.length}`)
 	console.log(`   - Admin: ${adminUser.email} / admin123`)
 	console.log('\n🎉 Seed muvaffaqiyatli tugadi!\n')
 }
-
-main()
-	.catch(e => {
-		console.error('❌ Seed xatosi:', e)
-		process.exit(1)
-	})
-	.finally(async () => {
-		await prisma.$disconnect()
-	})
