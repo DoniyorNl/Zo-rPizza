@@ -1,5 +1,5 @@
-// 🍕 ZOR PIZZA - DATABASE SCHEMA
-// Prisma schema, updated with new Product fields and minor improvements
+// backend/prisma/schema.prisma
+// 🍕 ZOR PIZZA - COMPLETE DATABASE SCHEMA
 
 generator client {
   provider = "prisma-client-js"
@@ -16,19 +16,17 @@ datasource db {
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
-  password  String   // Hashed password (bcrypt)
-  name      String
+  password  String?  // Optional (Firebase users may not have password)
+  name      String?
   phone     String?
   role      UserRole @default(CUSTOMER)
+  isBlocked Boolean  @default(false)
   
-  // Relationships
   orders    Order[]
   reviews   Review[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  isBlocked Boolean  @default(false) 
 
   @@map("users")
 }
@@ -63,32 +61,39 @@ model Product {
   id          String   @id @default(uuid())
   name        String
   description String
-  price       Float
+  basePrice   Float    // Base price (actual prices in variations)
   imageUrl    String?
-  prepTime    Int
+  prepTime    Int      // daqiqalarda
+  categoryId  String
   isActive    Boolean  @default(true)
   
-  categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  
-  // ✅ New detailed fields
+  // ✅ Recipe & Cooking Details
   ingredients Json?     // [{name: "Un", amount: "500g", icon: "🌾"}, ...]
   recipe      String?   @db.Text
   cookingTemp Int?      // °C
   cookingTime Int?      // daqiqa
   cookingSteps Json?    // [{step: 1, title: "...", description: "..."}, ...]
-  calories    Int?      
-  protein     Float?    
-  carbs       Float?    
-  fat         Float?    
-  difficulty  String?   
-  servings    Int?      
-  allergens   String[]  
-  images      String[]  
   
+  // ✅ Nutrition Info
+  calories    Int?
+  protein     Float?
+  carbs       Float?
+  fat         Float?
+  
+  // ✅ Additional Info
+  difficulty  String?
+  servings    Int?
+  allergens   String[]
+  images      String[]
+  
+  // ✅ NEW: Variations (Sizes)
+  variations  ProductVariation[]
+  
+  // Relations
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   ingredientsRel ProductIngredient[]
-  orderItems    OrderItem[]
-  reviews       Review[]
+  orderItems  OrderItem[]
+  reviews     Review[]
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -97,14 +102,35 @@ model Product {
 }
 
 // ============================================
-// INGREDIENT MODEL
+// ✅ NEW: PRODUCT VARIATION MODEL - Sizes
+// ============================================
+model ProductVariation {
+  id          String   @id @default(uuid())
+  productId   String
+  size        String   // "Small", "Medium", "Large", "XL"
+  price       Float
+  diameter    Int?     // cm
+  slices      Int?
+  weight      Int?     // gram
+  
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([productId, size])
+  @@map("product_variations")
+}
+
+// ============================================
+// INGREDIENT MODEL (Advanced - optional)
 // ============================================
 model Ingredient {
   id          String   @id @default(uuid())
   name        String   @unique
-  unit        String   
-  costPerUnit Float    
-  stockQty    Float    
+  unit        String
+  costPerUnit Float
+  stockQty    Float
   minStock    Float    @default(10)
   
   products    ProductIngredient[]
@@ -116,7 +142,7 @@ model Ingredient {
 }
 
 // ============================================
-// PRODUCT-INGREDIENT RELATION
+// PRODUCT-INGREDIENT RELATION (Advanced)
 // ============================================
 model ProductIngredient {
   id           String     @id @default(uuid())
@@ -146,9 +172,9 @@ model Order {
   
   deliveryAddress String
   deliveryPhone   String
-  deliveryLat     Float?
+  deliveryLat     Float?      // GPS coordinates (optional)
   deliveryLng     Float?
-  estimatedTime   Int?
+  estimatedTime   Int?        // minutes
   
   items           OrderItem[]
   reviews         Review[]
@@ -185,15 +211,20 @@ enum PaymentStatus {
 // ORDER ITEM MODEL
 // ============================================
 model OrderItem {
-  id        String   @id @default(uuid())
-  orderId   String
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId String?
-  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
-  quantity  Int
-  price     Float
+  id          String   @id @default(uuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
   
-  createdAt DateTime @default(now())
+  // ✅ NEW: Size information
+  variationId String?  // Which size variation
+  size        String?  // "Small", "Medium", "Large", "XL"
+  
+  quantity    Int
+  price       Float
+  
+  createdAt   DateTime @default(now())
 
   @@map("order_items")
 }
@@ -212,7 +243,7 @@ model Review {
   productId String?
   product   Product? @relation(fields: [productId], references: [id])
   
-  rating    Int
+  rating    Int      // 1-5
   comment   String?
   
   createdAt DateTime @default(now())
