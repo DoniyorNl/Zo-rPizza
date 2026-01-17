@@ -41,8 +41,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 						<Link
 							href='/admin'
 							className={`block py-2 px-4 rounded transition ${isActive('/admin') && pathname === '/admin'
-									? 'bg-orange-600'
-									: 'hover:bg-gray-800'
+								? 'bg-orange-600'
+								: 'hover:bg-gray-800'
 								}`}
 						>
 							📊 Dashboard
@@ -82,6 +82,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 								}`}
 						>
 							🏷️ Kuponlar
+						</Link>
+
+						{/* Toppings */}
+						<Link
+							href='/admin/toppings'
+							className={`block py-2 px-4 rounded transition ${isActive('/admin/toppings') ? 'bg-orange-600' : 'hover:bg-gray-800'
+								}`}
+						>
+							🧀 Toppinglar
 						</Link>
 
 						{/* Categories */}

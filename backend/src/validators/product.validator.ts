@@ -35,6 +35,7 @@ const baseProductSchema = z.object({
 	servings: z.coerce.number().int().positive().optional(),
 	allergens: z.array(z.string()).optional(),
 	images: z.array(z.string()).optional(),
+	defaultToppingIds: z.array(z.string()).optional(),
 })
 
 export const createProductSchema = baseProductSchema.superRefine((data, ctx) => {

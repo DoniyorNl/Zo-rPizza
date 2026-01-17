@@ -11,6 +11,9 @@ export interface Product {
 		name: string
 	}
 	variations?: ProductVariation[]
+	productToppings?: Array<{
+		topping: { id: string; name: string }
+	}>
 	ingredientsRel?: Array<{
 		id: string
 		quantity: number
@@ -67,6 +70,7 @@ export interface ProductFormData {
 	categoryId: string
 	isActive: boolean
 	variations: ProductVariationForm[]
+	defaultToppingIds: string[]
 	ingredients: Array<{ name: string; amount: string; icon?: string }>
 	recipe: string
 	cookingTemp: string

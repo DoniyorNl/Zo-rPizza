@@ -10,7 +10,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useCartStore } from '@/store/cartStore'
 import axios from 'axios'
-import { AlertCircle, ArrowLeft, Clock, Flame, Plus, Pizza } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Clock, Flame, Pizza, Plus } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { use, useEffect, useState } from 'react'
@@ -26,6 +26,16 @@ interface ProductVariation {
 	diameter?: number
 	slices?: number
 	weight?: number
+}
+
+interface Topping {
+	id: string
+	name: string
+	price: number
+}
+
+interface ProductTopping {
+	topping: Topping
 }
 
 interface Product {
@@ -49,6 +59,8 @@ interface Product {
 	allergens?: string[]
 	images?: string[]
 	variations: ProductVariation[] // ✅ NEW
+	productToppings?: ProductTopping[]
+	category?: { id: string; name: string }
 }
 
 // ============================================
@@ -65,6 +77,11 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 
 	// ✅ NEW: Size selection state
 	const [selectedVariation, setSelectedVariation] = useState<ProductVariation | null>(null)
+	const [toppings, setToppings] = useState<Topping[]>([])
+	const [addedToppingIds, setAddedToppingIds] = useState<string[]>([])
+	const [removedToppingIds, setRemovedToppingIds] = useState<string[]>([])
+	const [halfProducts, setHalfProducts] = useState<Product[]>([])
+	const [halfProductId, setHalfProductId] = useState<string>('')
 
 	// ============================================
 	// DATA FETCHING
@@ -114,6 +131,23 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 		fetchProduct()
 	}, [id])
 
+	useEffect(() => {
+		const fetchExtras = async () => {
+			try {
+				const [toppingsResponse, productsResponse] = await Promise.all([
+					axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/toppings`),
+					axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/products`, { params: { isActive: true } }),
+				])
+				setToppings(toppingsResponse.data.data)
+				setHalfProducts(productsResponse.data.data)
+			} catch (error) {
+				console.error('❌ Error fetching extras:', error)
+			}
+		}
+
+		fetchExtras()
+	}, [])
+
 	// ============================================
 	// HANDLERS
 	// ============================================
@@ -126,9 +160,13 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 			variationId: selectedVariation.id,
 			name: product.name,
 			size: selectedVariation.size,
-			price: selectedVariation.price,
+			price: currentPrice,
 			imageUrl:
 				product.imageUrl || (product.images && product.images[0]) || '/images/placeholder.png',
+			addedToppingIds,
+			removedToppingIds,
+			halfProductId: selectedHalfProduct ? selectedHalfProduct.id : undefined,
+			halfProductName: selectedHalfProduct ? selectedHalfProduct.name : undefined,
 		})
 
 		console.log('✅ Added to cart:', product.name, selectedVariation.size)
@@ -165,7 +203,27 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 			? product.images
 			: [product.imageUrl || '/images/placeholder.png']
 
-	const currentPrice = selectedVariation?.price || product.basePrice
+	const selectedHalfProduct = halfProducts.find(item => item.id === halfProductId) || null
+	const defaultToppingIds = product.productToppings
+		? product.productToppings.map(item => item.topping.id)
+		: []
+
+	const getVariationPrice = (item: Product | null, size: string | undefined) => {
+		if (!item) return 0
+		if (!item.variations || item.variations.length === 0) return item.basePrice
+		if (!size) return item.basePrice
+		const variation = item.variations.find(v => v.size === size)
+		return variation ? variation.price : item.basePrice
+	}
+
+	const basePrice = selectedVariation?.price || product.basePrice
+	const halfPrice = selectedHalfProduct
+		? getVariationPrice(selectedHalfProduct, selectedVariation?.size)
+		: 0
+	const extraToppingsPrice = toppings
+		.filter(topping => addedToppingIds.includes(topping.id))
+		.reduce((sum, topping) => sum + topping.price, 0)
+	const currentPrice = Math.max(basePrice, halfPrice) + extraToppingsPrice
 
 	// ============================================
 	// MAIN RENDER
@@ -206,9 +264,8 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 									<button
 										key={idx}
 										onClick={() => setSelectedImage(idx)}
-										className={`relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
-											selectedImage === idx ? 'border-orange-500' : 'border-transparent opacity-60'
-										}`}
+										className={`relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all ${selectedImage === idx ? 'border-orange-500' : 'border-transparent opacity-60'
+											}`}
 									>
 										<Image src={img} alt='thumb' fill className='object-cover' sizes='80px' />
 									</button>
@@ -249,34 +306,129 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 							<div className='mb-6'>
 								<div className='flex items-center gap-2 mb-3'>
 									<Pizza className='w-5 h-5 text-orange-600' />
-									<h3 className='font-bold text-sm'>O'lchamni tanlang</h3>
+									<h3 className='font-bold text-sm'>O&apos;lchamni tanlang</h3>
 								</div>
 								<div className='grid grid-cols-2 gap-3'>
 									{product.variations.map(variation => (
 										<button
 											key={variation.id}
 											onClick={() => setSelectedVariation(variation)}
-											className={`p-3 border-2 rounded-xl transition-all text-left ${
-												selectedVariation?.id === variation.id
-													? 'border-orange-600 bg-orange-50 shadow-sm'
-													: 'border-stone-200 hover:border-orange-300'
-											}`}
+											className={`p-3 border-2 rounded-xl transition-all text-left ${selectedVariation?.id === variation.id
+												? 'border-orange-600 bg-orange-50 shadow-sm'
+												: 'border-stone-200 hover:border-orange-300'
+												}`}
 										>
 											<div className='font-bold text-sm'>{variation.size}</div>
 											{variation.diameter && (
 												<div className='text-xs text-stone-500'>{variation.diameter}cm</div>
 											)}
 											{variation.slices && (
-												<div className='text-xs text-stone-500'>{variation.slices} bo'lak</div>
+												<div className='text-xs text-stone-500'>{variation.slices} bo&apos;lak</div>
 											)}
 											<div className='text-sm font-semibold text-orange-600 mt-1'>
-												{variation.price.toLocaleString()} so'm
+												{variation.price.toLocaleString()} so&apos;m
 											</div>
 										</button>
 									))}
 								</div>
 							</div>
 						)}
+
+						{/* ============================================ */}
+						{/* HALF AND HALF */}
+						{/* ============================================ */}
+						<div className='mb-6'>
+							<div className='flex items-center gap-2 mb-3'>
+								<Pizza className='w-5 h-5 text-orange-600' />
+								<h3 className='font-bold text-sm'>Half &amp; Half</h3>
+							</div>
+							<select
+								value={halfProductId}
+								onChange={e => setHalfProductId(e.target.value)}
+								className='w-full px-3 py-2 border rounded-lg text-sm'
+							>
+								<option value=''>Bitta pitsa (oddiy)</option>
+								{halfProducts
+									.filter(item => item.id !== product.id)
+									.map(item => (
+										<option key={item.id} value={item.id}>
+											{item.name}
+										</option>
+									))}
+							</select>
+							{selectedHalfProduct && (
+								<p className='text-xs text-gray-500 mt-2'>
+									Narx ikkala pitsaning yuqori narxiga teng boladi.
+								</p>
+							)}
+						</div>
+
+						{/* ============================================ */}
+						{/* TOPPINGS */}
+						{/* ============================================ */}
+						<div className='mb-6 space-y-4'>
+							<div>
+								<h3 className='font-bold text-sm mb-2'>Extra toppinglar</h3>
+								{toppings.length === 0 ? (
+									<p className='text-xs text-gray-500'>Toppinglar topilmadi</p>
+								) : (
+									<div className='grid grid-cols-2 gap-2'>
+										{toppings.map(topping => {
+											const checked = addedToppingIds.includes(topping.id)
+											return (
+												<label key={topping.id} className='flex items-center gap-2 text-xs'>
+													<input
+														type='checkbox'
+														checked={checked}
+														onChange={e => {
+															if (e.target.checked) {
+																setAddedToppingIds([...addedToppingIds, topping.id])
+															} else {
+																setAddedToppingIds(
+																	addedToppingIds.filter(id => id !== topping.id),
+																)
+															}
+														}}
+													/>
+													<span>
+														{topping.name} (+{topping.price.toLocaleString()} so&apos;m)
+													</span>
+												</label>
+											)
+										})}
+									</div>
+								)}
+							</div>
+
+							{defaultToppingIds.length > 0 && (
+								<div>
+									<h3 className='font-bold text-sm mb-2'>Olib tashlash</h3>
+									<div className='grid grid-cols-2 gap-2'>
+										{product.productToppings?.map(item => {
+											const checked = removedToppingIds.includes(item.topping.id)
+											return (
+												<label key={item.topping.id} className='flex items-center gap-2 text-xs'>
+													<input
+														type='checkbox'
+														checked={checked}
+														onChange={e => {
+															if (e.target.checked) {
+																setRemovedToppingIds([...removedToppingIds, item.topping.id])
+															} else {
+																setRemovedToppingIds(
+																	removedToppingIds.filter(id => id !== item.topping.id),
+																)
+															}
+														}}
+													/>
+													<span>{item.topping.name}</span>
+												</label>
+											)
+										})}
+									</div>
+								</div>
+							)}
+						</div>
 
 						{/* Quick Info */}
 						<div className='grid grid-cols-2 gap-3 mb-6'>
@@ -309,10 +461,10 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 									<p className='text-orange-100 text-xs uppercase font-bold'>Narxi</p>
 									<p className='text-2xl font-black'>
 										{currentPrice.toLocaleString()}{' '}
-										<span className='text-sm font-normal'>so'm</span>
+										<span className='text-sm font-normal'>so&apos;m</span>
 									</p>
 									{selectedVariation && (
-										<p className='text-orange-100 text-xs mt-1'>{selectedVariation.size} o'lcham</p>
+										<p className='text-orange-100 text-xs mt-1'>{selectedVariation.size} o&apos;lcham</p>
 									)}
 								</div>
 								<Button
@@ -320,7 +472,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 									disabled={!selectedVariation}
 									className='bg-white text-orange-600 hover:bg-stone-100 rounded-xl px-6 disabled:opacity-50'
 								>
-									<Plus className='w-5 h-5 mr-1' /> Qo'shish
+									<Plus className='w-5 h-5 mr-1' /> Qo&apos;shish
 								</Button>
 							</CardContent>
 						</Card>
@@ -350,7 +502,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 											<p className='font-bold'>{product.carbs}g</p>
 										</div>
 										<div>
-											<p className='text-xs text-stone-400'>Yog'</p>
+											<p className='text-xs text-stone-400'>Yog&apos;</p>
 											<p className='font-bold'>{product.fat}g</p>
 										</div>
 									</div>

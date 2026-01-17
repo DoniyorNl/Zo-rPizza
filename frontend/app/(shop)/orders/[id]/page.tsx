@@ -116,12 +116,14 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
 
 		order.items.forEach(item => {
 			addItem({
-			productId: item.product.id,
-			variationId: item.variationId || 'default',
+				productId: item.product.id,
+				variationId: item.variationId || 'default',
 				name: item.product.name,
-			size: item.size || 'Standard',
+				size: item.size || 'Standard',
 				price: item.price,
 				imageUrl: item.product.imageUrl,
+				addedToppingIds: [],
+				removedToppingIds: [],
 			})
 		})
 

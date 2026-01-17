@@ -20,6 +20,11 @@ export const getAllProducts = async (req: Request, res: Response) => {
 				variations: {
 					orderBy: { price: 'asc' },
 				},
+				productToppings: {
+					include: {
+						topping: true,
+					},
+				},
 				ingredientsRel: {
 					include: {
 						ingredient: true,
@@ -56,6 +61,11 @@ export const getProductById = async (req: Request, res: Response) => {
 				category: true,
 				variations: {
 					orderBy: { price: 'asc' },
+				},
+				productToppings: {
+					include: {
+						topping: true,
+					},
 				},
 				ingredientsRel: {
 					include: {
@@ -163,6 +173,7 @@ export const createProduct = async (req: Request, res: Response) => {
 			allergens,
 			images,
 			isActive,
+			defaultToppingIds,
 		} = req.body
 
 		// Category mavjudligini tekshirish
@@ -211,6 +222,14 @@ export const createProduct = async (req: Request, res: Response) => {
 				allergens: allergens || [],
 				images: images || [],
 				isActive: isActive !== undefined ? isActive : true,
+				...(defaultToppingIds && defaultToppingIds.length > 0 && {
+					productToppings: {
+						create: defaultToppingIds.map((toppingId: string) => ({
+							toppingId,
+							isDefault: true,
+						})),
+					},
+				}),
 				// NEW: Create variations
 				...(variations && variations.length > 0 && {
 					variations: {
@@ -268,6 +287,7 @@ export const updateProduct = async (req: Request, res: Response) => {
 			categoryId,
 			variations,
 			isActive,
+			defaultToppingIds,
 		} = req.body
 
 		// Mahsulot mavjudligini tekshirish
@@ -303,6 +323,12 @@ export const updateProduct = async (req: Request, res: Response) => {
 			})
 		}
 
+		if (defaultToppingIds && Array.isArray(defaultToppingIds)) {
+			await prisma.productTopping.deleteMany({
+				where: { productId },
+			})
+		}
+
 		const product = await prisma.product.update({
 			where: { id: productId },
 			data: {
@@ -313,6 +339,14 @@ export const updateProduct = async (req: Request, res: Response) => {
 				...(prepTime && { prepTime: parseInt(prepTime) }),
 				...(categoryId && { categoryId }),
 				...(isActive !== undefined && { isActive }),
+				...(defaultToppingIds && defaultToppingIds.length > 0 && {
+					productToppings: {
+						create: defaultToppingIds.map((toppingId: string) => ({
+							toppingId,
+							isDefault: true,
+						})),
+					},
+				}),
 				// Update variations if provided
 				...(variations && variations.length > 0 && {
 					variations: {

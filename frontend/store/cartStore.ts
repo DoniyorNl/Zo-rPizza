@@ -17,6 +17,10 @@ interface CartItem {
 	price: number
 	imageUrl: string
 	quantity: number
+	addedToppingIds: string[]
+	removedToppingIds: string[]
+	halfProductId?: string
+	halfProductName?: string
 }
 
 interface CartStore {
@@ -43,8 +47,10 @@ export const useCartStore = create<CartStore>()(
 			// ============================================
 			addItem: product => {
 				set(state => {
-					// ✅ Unique ID: productId + variationId
-					const itemId = `${product.productId}-${product.variationId}`
+					const addedKey = product.addedToppingIds.join(',')
+					const removedKey = product.removedToppingIds.join(',')
+					const halfKey = product.halfProductId || 'single'
+					const itemId = `${product.productId}-${product.variationId}-${halfKey}-${addedKey}-${removedKey}`
 					const existing = state.items.find(item => item.id === itemId)
 
 					if (existing) {

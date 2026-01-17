@@ -10,9 +10,10 @@ interface BasicTabProps {
 	setFormData: (data: ProductFormData) => void
 	categories: Category[]
 	errors: ProductFormErrors
+	toppings: Array<{ id: string; name: string }>
 }
 
-export function BasicTab({ formData, setFormData, categories, errors }: BasicTabProps) {
+export function BasicTab({ formData, setFormData, categories, errors, toppings }: BasicTabProps) {
 	const sizeOptions = ['Small', 'Medium', 'Large', 'XL']
 
 	const updateVariation = (index: number, patch: Partial<ProductVariationForm>) => {
@@ -129,6 +130,45 @@ export function BasicTab({ formData, setFormData, categories, errors }: BasicTab
 				<label htmlFor='isActive' className='text-sm font-medium'>
 					Faol mahsulot
 				</label>
+			</div>
+
+			{/* Default toppings */}
+			<div className='border rounded-lg p-4 space-y-3'>
+				<div>
+					<p className='text-sm font-medium'>Standart toppinglar</p>
+					<p className='text-xs text-gray-500'>Mijoz olib tashlashi mumkin bolgan toppinglar.</p>
+				</div>
+				{toppings.length === 0 ? (
+					<div className='text-sm text-gray-500'>Toppinglar topilmadi</div>
+				) : (
+					<div className='grid grid-cols-2 gap-2'>
+						{toppings.map(topping => {
+							const checked = formData.defaultToppingIds.includes(topping.id)
+							return (
+								<label key={topping.id} className='flex items-center gap-2 text-sm'>
+									<input
+										type='checkbox'
+										checked={checked}
+										onChange={e => {
+											if (e.target.checked) {
+												setFormData({
+													...formData,
+													defaultToppingIds: [...formData.defaultToppingIds, topping.id],
+												})
+											} else {
+												setFormData({
+													...formData,
+													defaultToppingIds: formData.defaultToppingIds.filter(id => id !== topping.id),
+												})
+											}
+										}}
+									/>
+									<span>{topping.name}</span>
+								</label>
+							)
+						})}
+					</div>
+				)}
 			</div>
 
 			{/* Variations */}
