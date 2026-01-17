@@ -31,11 +31,11 @@ export function RecentActivity({ orders }: RecentActivityProps) {
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle>So'nggi faoliyat</CardTitle>
+				<CardTitle>So&apos;nggi faoliyat</CardTitle>
 			</CardHeader>
 			<CardContent>
 				{orders.length === 0 ? (
-					<div className='text-center py-8 text-gray-500'>Ma'lumot topilmadi</div>
+					<div className='text-center py-8 text-gray-500'>Ma&apos;lumot topilmadi</div>
 				) : (
 					<div className='space-y-4'>
 						{orders.map(order => (

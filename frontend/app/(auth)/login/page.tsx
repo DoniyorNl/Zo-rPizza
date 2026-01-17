@@ -3,11 +3,11 @@
 
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useAuth } from '@/lib/AuthContext'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 export default function LoginPage() {
 	const [email, setEmail] = useState('')
@@ -26,8 +26,12 @@ export default function LoginPage() {
 		try {
 			await login(email, password)
 			router.push('/')
-		} catch (err: any) {
-			setError(err.message || 'Login xatosi')
+		} catch (err: unknown) {
+			if (err instanceof Error) {
+				setError(err.message || 'Login xatosi')
+			} else {
+				setError('Login xatosi')
+			}
 		} finally {
 			setLoading(false)
 		}
@@ -70,9 +74,9 @@ export default function LoginPage() {
 						</Button>
 
 						<p className='text-center text-sm'>
-							Akkaunt yo'qmi?{' '}
+							Akkaunt yo&apos;qmi?{' '}
 							<a href='/register' className='text-orange-600 hover:underline'>
-								Ro'yxatdan o'tish
+								Ro&apos;yxatdan o&apos;tish
 							</a>
 						</p>
 					</form>

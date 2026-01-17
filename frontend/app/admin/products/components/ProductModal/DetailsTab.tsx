@@ -122,13 +122,13 @@ export function DetailsTab({ formData, setFormData }: DetailsTabProps) {
 				))}
 				<Button type='button' variant='outline' onClick={addIngredient} className='w-full'>
 					<Plus className='w-4 h-4 mr-2' />
-					Ingredient qo'shish
+					Ingredient qo&apos;shish
 				</Button>
 			</div>
 
 			{/* Recipe */}
 			<div>
-				<label className='block text-sm font-medium mb-2'>To'liq retsept</label>
+				<label className='block text-sm font-medium mb-2'>To&apos;liq retsept</label>
 				<textarea
 					value={formData.recipe}
 					onChange={e => setFormData({ ...formData, recipe: e.target.value })}
@@ -167,7 +167,7 @@ export function DetailsTab({ formData, setFormData }: DetailsTabProps) {
 					>
 						<option value=''>Tanlang...</option>
 						<option value='Oson'>Oson</option>
-						<option value="O'rtacha">O'rtacha</option>
+						<option value="O'rtacha">O&apos;rtacha</option>
 						<option value='Qiyin'>Qiyin</option>
 					</select>
 				</div>
@@ -217,7 +217,7 @@ export function DetailsTab({ formData, setFormData }: DetailsTabProps) {
 				))}
 				<Button type='button' variant='outline' onClick={addCookingStep} className='w-full'>
 					<Plus className='w-4 h-4 mr-2' />
-					Bosqich qo'shish
+					Bosqich qo&apos;shish
 				</Button>
 			</div>
 
@@ -254,7 +254,7 @@ export function DetailsTab({ formData, setFormData }: DetailsTabProps) {
 
 			{/* Additional Images */}
 			<div>
-				<label className='block text-sm font-medium mb-2'>Qo'shimcha rasmlar</label>
+				<label className='block text-sm font-medium mb-2'>Qo&apos;shimcha rasmlar</label>
 				<div className='flex flex-wrap gap-2 mb-2'>
 					{formData.images.map((img, idx) => (
 						<Badge key={idx} variant='outline' className='flex items-center gap-1'>

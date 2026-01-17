@@ -11,5 +11,5 @@ export default function AdminPage() {
 		router.replace('/admin/orders')
 	}, [router])
 
-	return <div className='text-center py-12'>Yo'naltirilmoqda...</div>
+	return <div className='text-center py-12'>Yo&apos;naltirilmoqda...</div>
 }

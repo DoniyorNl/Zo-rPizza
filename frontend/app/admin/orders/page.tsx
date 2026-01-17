@@ -1,13 +1,13 @@
 // frontend/app/admin/orders/page.tsx
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useAuth } from '@/lib/AuthContext'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useAuth } from '@/lib/AuthContext'
 import axios from 'axios'
 import { format } from 'date-fns'
+import { useEffect, useState } from 'react'
 
 interface Order {
 	id: string
@@ -46,8 +46,11 @@ export default function AdminOrdersPage() {
 					},
 				})
 				setOrders(response.data.data)
-			} catch (err: any) {
-				setError(err.response?.data?.message || 'Xatolik yuz berdi')
+			} catch (err: unknown) {
+				const message = axios.isAxiosError(err)
+					? err.response?.data?.message || 'Xatolik yuz berdi'
+					: 'Xatolik yuz berdi'
+				setError(message)
 			} finally {
 				setLoading(false)
 			}
@@ -72,8 +75,11 @@ export default function AdminOrdersPage() {
 			setOrders(
 				orders.map(order => (order.id === orderId ? { ...order, status: newStatus } : order)),
 			)
-		} catch (err: any) {
-			alert("Status o'zgartirib bo'lmadi: " + err.response?.data?.message)
+		} catch (err: unknown) {
+			const message = axios.isAxiosError(err)
+				? err.response?.data?.message || "Status o'zgartirib bo'lmadi"
+				: "Status o'zgartirib bo'lmadi"
+			alert(`Status o'zgartirib bo'lmadi: ${message}`)
 		}
 	}
 
@@ -144,7 +150,7 @@ export default function AdminOrdersPage() {
 								<div className='flex justify-between items-center pt-4 border-t'>
 									<span className='font-bold'>Jami:</span>
 									<span className='text-xl font-bold text-orange-600'>
-										{order.totalPrice.toLocaleString()} so'm
+										{order.totalPrice.toLocaleString()} so&apos;m
 									</span>
 								</div>
 

@@ -3,15 +3,16 @@
 
 'use client'
 
-import { use, useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import axios from 'axios'
 import { Header } from '@/components/layout/Header'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useCartStore } from '@/store/cartStore'
-import { ArrowLeft, Package, Clock, MapPin, CreditCard, ShoppingBag } from 'lucide-react'
+import axios from 'axios'
+import { ArrowLeft, CreditCard, MapPin, Package, ShoppingBag } from 'lucide-react'
+import Image from 'next/image'
+import { useRouter } from 'next/navigation'
+import { use, useEffect, useState } from 'react'
 
 // ============================================
 // TYPES & INTERFACES
@@ -173,23 +174,25 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 									{order.items.map(item => (
 										<div key={item.id} className='flex items-center gap-4 p-4 bg-gray-50 rounded-lg'>
 											<div className='relative w-20 h-20 rounded-lg overflow-hidden bg-white flex-shrink-0'>
-												<img
+												<Image
 													src={item.product.imageUrl}
 													alt={item.product.name}
-													className='object-cover w-full h-full'
+													fill
+													sizes='80px'
+													className='object-cover'
 												/>
 											</div>
 											<div className='flex-1'>
 												<h3 className='font-semibold text-lg'>{item.product.name}</h3>
-												{item.size && <p className='text-sm text-gray-600'>O'lcham: {item.size}</p>}
+												{item.size && <p className='text-sm text-gray-600'>O&apos;lcham: {item.size}</p>}
 												<p className='text-sm text-gray-600'>Miqdor: {item.quantity} ta</p>
 											</div>
 											<div className='text-right'>
 												<p className='font-bold text-lg text-orange-600'>
-													{(item.price * item.quantity).toLocaleString()} so'm
+													{(item.price * item.quantity).toLocaleString()} so&apos;m
 												</p>
 												<p className='text-sm text-gray-500'>
-													{item.price.toLocaleString()} so'm × {item.quantity}
+													{item.price.toLocaleString()} so&apos;m × {item.quantity}
 												</p>
 											</div>
 										</div>
@@ -228,7 +231,6 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 							<CardHeader>
 								<CardTitle className='flex items-center gap-2'>
 									<CreditCard className='w-5 h-5 text-orange-600' />
-									To'lov
 								</CardTitle>
 							</CardHeader>
 							<CardContent className='space-y-3'>
@@ -241,7 +243,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 								<div className='pt-3 border-t'>
 									<p className='text-sm text-gray-600 mb-1'>Jami summa:</p>
 									<p className='text-2xl font-bold text-orange-600'>
-										{order.totalPrice.toLocaleString()} so'm
+										{order.totalPrice.toLocaleString()} so&apos;m
 									</p>
 								</div>
 							</CardContent>

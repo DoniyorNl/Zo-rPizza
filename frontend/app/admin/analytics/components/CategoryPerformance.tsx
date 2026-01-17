@@ -19,11 +19,11 @@ export function CategoryPerformance({ categories }: CategoryPerformanceProps) {
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle>Kategoriyalar bo'yicha</CardTitle>
+				<CardTitle>Kategoriyalar bo&apos;yicha</CardTitle>
 			</CardHeader>
 			<CardContent>
 				{categories.length === 0 ? (
-					<div className='text-center py-8 text-gray-500'>Ma'lumot topilmadi</div>
+					<div className='text-center py-8 text-gray-500'>Ma&apos;lumot topilmadi</div>
 				) : (
 					<div className='space-y-4'>
 						{categories.map((category, index) => (

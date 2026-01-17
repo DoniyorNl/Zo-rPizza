@@ -3,11 +3,11 @@
 
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useAuth } from '@/lib/AuthContext'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 export default function RegisterPage() {
 	const [email, setEmail] = useState('')
@@ -37,8 +37,12 @@ export default function RegisterPage() {
 		try {
 			await signup(email, password)
 			router.push('/')
-		} catch (err: any) {
-			setError(err.message || "Ro'yxatdan o'tishda xato")
+		} catch (err: unknown) {
+			if (err instanceof Error) {
+				setError(err.message || "Ro'yxatdan o'tishda xato")
+			} else {
+				setError("Ro'yxatdan o'tishda xato")
+			}
 		} finally {
 			setLoading(false)
 		}
@@ -48,7 +52,7 @@ export default function RegisterPage() {
 		<div className='min-h-screen flex items-center justify-center bg-gradient-to-b from-orange-50 to-white p-4'>
 			<Card className='w-full max-w-md'>
 				<CardHeader>
-					<CardTitle className='text-3xl text-center'>🍕 Ro'yxatdan o'tish</CardTitle>
+					<CardTitle className='text-3xl text-center'>🍕 Ro&apos;yxatdan o&apos;tish</CardTitle>
 				</CardHeader>
 				<CardContent>
 					<form onSubmit={handleSubmit} className='space-y-4'>
