@@ -3,18 +3,18 @@
 
 'use client'
 
-import { use, useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/AuthContext'
-import { useCartStore } from '@/store/cartStore'
 import { Header } from '@/components/layout/Header'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useAuth } from '@/lib/AuthContext'
+import { useCartStore } from '@/store/cartStore'
 import axios from 'axios'
 import { format } from 'date-fns'
-import { ArrowLeft, MapPin, Phone, CreditCard, Clock, Package, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Clock, CreditCard, MapPin, Package, Phone } from 'lucide-react'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
+import { use, useEffect, useState } from 'react'
 
 interface OrderItem {
 	id: string
@@ -59,8 +59,12 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
 			try {
 				const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/orders/${id}`)
 				setOrder(response.data.data)
-			} catch (err: any) {
-				setError(err.response?.data?.message || 'Buyurtma topilmadi')
+			} catch (err: unknown) {
+				if (axios.isAxiosError(err)) {
+					setError(err.response?.data?.message || 'Buyurtma topilmadi')
+				} else {
+					setError('Buyurtma topilmadi')
+				}
 			} finally {
 				setLoading(false)
 			}
@@ -110,8 +114,11 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
 
 		order.items.forEach(item => {
 			addItem({
-				id: item.product.id,
+				productId: item.product.id,
+				// Orders do not store variation metadata yet; use a safe default.
+				variationId: 'default',
 				name: item.product.name,
+				size: 'Standard',
 				price: item.price,
 				imageUrl: item.product.imageUrl,
 			})
@@ -217,7 +224,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
 											<div className='flex items-center justify-between'>
 												<span className='text-sm text-gray-600'>Miqdor: {item.quantity} ta</span>
 												<span className='font-semibold text-lg'>
-													{(item.price * item.quantity).toLocaleString()} so'm
+													{(item.price * item.quantity).toLocaleString()} so&apos;m
 												</span>
 											</div>
 										</div>
@@ -232,7 +239,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
 						{/* Delivery Info */}
 						<Card>
 							<CardHeader>
-								<CardTitle>Yetkazish ma'lumotlari</CardTitle>
+								<CardTitle>Yetkazish ma&apos;lumotlari</CardTitle>
 							</CardHeader>
 							<CardContent className='space-y-4'>
 								{/* Address */}
@@ -257,7 +264,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
 								<div className='flex items-start gap-3'>
 									<CreditCard className='w-5 h-5 text-gray-500 mt-1 flex-shrink-0' />
 									<div>
-										<p className='font-semibold text-sm mb-1'>To'lov usuli:</p>
+										<p className='font-semibold text-sm mb-1'>To&apos;lov usuli:</p>
 										<p className='text-gray-700'>
 											{order.paymentMethod === 'CASH' ? '💵 Naqd pul' : '💳 Karta'}
 										</p>
@@ -274,7 +281,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
 							<CardContent className='space-y-3'>
 								<div className='flex justify-between text-sm'>
 									<span className='text-gray-600'>Mahsulotlar:</span>
-									<span className='font-semibold'>{order.totalPrice.toLocaleString()} so'm</span>
+									<span className='font-semibold'>{order.totalPrice.toLocaleString()} so&apos;m</span>
 								</div>
 								<div className='flex justify-between text-sm'>
 									<span className='text-gray-600'>Yetkazish:</span>
@@ -284,7 +291,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
 									<div className='flex justify-between'>
 										<span className='text-lg font-bold'>Jami:</span>
 										<span className='text-2xl font-bold text-orange-600'>
-											{order.totalPrice.toLocaleString()} so'm
+											{order.totalPrice.toLocaleString()} so&apos;m
 										</span>
 									</div>
 								</div>
