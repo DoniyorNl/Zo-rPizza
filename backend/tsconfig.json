@@ -3,14 +3,17 @@
 		/* Language and Environment */
 		"target": "ES2020",
 		"lib": ["ES2020"],
+		"types": ["node"], // Node.js tiplarini aniq ko'rsatamiz
 
 		/* Modules */
 		"module": "commonjs",
-		"rootDir": "./src",
 		"moduleResolution": "node",
 		"resolveJsonModule": true,
 
-		/* PATH MAPPING - 🆕 YANGI */
+		/* ROOT DIR MUAMMOSI YECHIMI: 
+       'rootDir' olib tashlandi yoki '.' ga sozlandi, 
+       chunki 'prisma' papkasi 'src' ichida emas. 
+    */
 		"baseUrl": ".",
 		"paths": {
 			"@/*": ["src/*"]
@@ -45,6 +48,6 @@
 		/* Completeness */
 		"skipLibCheck": true
 	},
-	"include": ["src/**/*"],
+	"include": ["src/**/*", "prisma/**/*.ts"],
 	"exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts"]
 }

@@ -1,640 +1,430 @@
 // backend/prisma/seed.ts
-// 🍕 ZOR PIZZA - DATABASE SEED with Variations
+// 🍕 ZOR PIZZA - COMPLETE DATABASE SEED with Orders & Variations
 
-import { PrismaClient } from '@prisma/client'
+import { OrderStatus, PaymentMethod, PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
 async function main() {
-	console.log('🌱 Starting seed...')
+	console.log('🌱 Starting seed...\n')
 
-	// ============================================
-	// 1. KATEGORIYALAR
-	// ============================================
+	try {
+		// ============================================
+		// 1. KATEGORIYALAR
+		// ============================================
+		console.log('📂 Kategoriyalar yaratilmoqda...')
 
-	const pizzaCategory = await prisma.category.upsert({
-		where: { name: 'Pitsa' },
-		update: {},
-		create: {
-			name: 'Pitsa',
-			description: 'Issiq va mazali pitsalar',
-			imageUrl: 'https://images.unsplash.com/photo-1513104890138-7c749659a591',
-			isActive: true,
-		},
-	})
-
-	void (await prisma.category.upsert({
-		where: { name: 'Ichimliklar' },
-		update: {},
-		create: {
-			name: 'Ichimliklar',
-			description: 'Sovuq ichimliklar',
-			imageUrl: 'https://images.unsplash.com/photo-1437418747212-8d9709afab22',
-			isActive: true,
-		},
-	}))
-
-	console.log('✅ Kategoriyalar yaratildi')
-
-	// ============================================
-	// 2. INGREDIENTLAR
-	// ============================================
-
-	const ingredients = await Promise.all([
-		prisma.ingredient.upsert({
-			where: { name: 'Pizza xamiri' },
+		const pizzaCategory = await prisma.category.upsert({
+			where: { name: 'Pitsa' },
 			update: {},
 			create: {
+				name: 'Pitsa',
+				description: 'Issiq va mazali pitsalar - italyan va zamonaviy retseptlar',
+				imageUrl: 'https://images.unsplash.com/photo-1513104890138-7c749659a591',
+				isActive: true,
+			},
+		})
+
+		const drinksCategory = await prisma.category.upsert({
+			where: { name: 'Ichimliklar' },
+			update: {},
+			create: {
+				name: 'Ichimliklar',
+				description: 'Sovuq gazlangan va tabiiy ichimliklar',
+				imageUrl: 'https://images.unsplash.com/photo-1437418747212-8d9709afab22',
+				isActive: true,
+			},
+		})
+
+		const sidesCategory = await prisma.category.upsert({
+			where: { name: "Qo'shimchalar" },
+			update: {},
+			create: {
+				name: "Qo'shimchalar",
+				description: 'Salatlar, sous va garnirlar',
+				imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c',
+				isActive: true,
+			},
+		})
+
+		console.log('✅ 3 ta kategoriya yaratildi\n')
+
+		// ============================================
+		// 2. INGREDIENTLAR
+		// ============================================
+		console.log('🧑‍🍳 Ingredientlar yaratilmoqda...')
+
+		const ingredientData = [
+			{
 				name: 'Pizza xamiri',
 				unit: 'kg',
 				costPerUnit: 15000,
 				stockQty: 50,
 				minStock: 10,
 			},
-		}),
-		prisma.ingredient.upsert({
-			where: { name: 'Mozzarella pishloq' },
-			update: {},
-			create: {
+			{
 				name: 'Mozzarella pishloq',
 				unit: 'kg',
 				costPerUnit: 85000,
 				stockQty: 30,
 				minStock: 5,
 			},
-		}),
-		prisma.ingredient.upsert({
-			where: { name: 'Pomidor sousi' },
-			update: {},
-			create: {
+			{
 				name: 'Pomidor sousi',
 				unit: 'litr',
 				costPerUnit: 25000,
 				stockQty: 40,
 				minStock: 10,
 			},
-		}),
-		prisma.ingredient.upsert({
-			where: { name: 'Pepperoni' },
-			update: {},
-			create: {
+			{
 				name: 'Pepperoni',
 				unit: 'kg',
 				costPerUnit: 120000,
 				stockQty: 15,
 				minStock: 3,
 			},
-		}),
-		prisma.ingredient.upsert({
-			where: { name: 'Zaytun' },
-			update: {},
-			create: {
+			{
 				name: 'Zaytun',
 				unit: 'kg',
 				costPerUnit: 45000,
 				stockQty: 20,
 				minStock: 5,
 			},
-		}),
-	])
+		]
 
-	console.log('✅ Ingredientlar yaratildi')
+		const ingredients = []
+		for (const ing of ingredientData) {
+			const created = await prisma.ingredient.upsert({
+				where: { name: ing.name },
+				update: {},
+				create: ing,
+			})
+			ingredients.push(created)
+		}
 
-	// ============================================
-	// 3. MAHSULOTLAR (PITSALAR) with VARIATIONS
-	// ============================================
+		console.log(`✅ ${ingredients.length} ta ingredient yaratildi\n`)
 
-	// 1. Margarita
-	const margarita = await prisma.product.upsert({
-		where: { id: 'margarita-1' },
-		update: {},
-		create: {
-			id: 'margarita-1',
-			name: 'Margarita',
-			description: 'Klassik italyan pitsasi - mozzarella, pomidor sousi, rayhon',
-			basePrice: 45000, // ✅ NEW
-			imageUrl: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002',
-			prepTime: 15,
-			categoryId: pizzaCategory.id,
-			isActive: true,
-			ingredients: [
-				{ name: 'Pizza xamiri', amount: '300g', icon: '🌾' },
-				{ name: 'Mozzarella pishloq', amount: '200g', icon: '🧀' },
-				{ name: 'Pomidor sousi', amount: '100ml', icon: '🍅' },
-				{ name: 'Rayhon', amount: '10g', icon: '🌿' },
-			],
-			recipe:
-				'Klassik Margherita pitsasi - italyan oshpazligining ajoyib namunasi. Yumshoq xamir, yangi pomidor sousi va eruvchan mozzarella.',
-			cookingTemp: 220,
-			cookingTime: 15,
-			cookingSteps: [
-				{ step: 1, title: 'Xamirni yoyish', description: 'Pizza xamirini yumaloq shaklda yoying' },
-				{
-					step: 2,
-					title: 'Sous surish',
-					description: 'Pomidor sousini xamir ustiga teng taqsimlang',
-				},
-				{ step: 3, title: 'Pishirish', description: '220°C da 15 daqiqa pishiring' },
-			],
-			calories: 320,
-			protein: 18.5,
-			carbs: 28.0,
-			fat: 15.2,
-			difficulty: 'Oson',
-			servings: 2,
-			allergens: ['Sut', 'Gluten'],
-			images: [
-				'https://images.unsplash.com/photo-1574071318508-1cdbab80d002',
-				'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38',
-			],
-			// ✅ NEW: Variations
-			variations: {
-				create: [
+		// ============================================
+		// 3. MAHSULOTLAR (PITSALAR) with VARIATIONS
+		// ============================================
+		console.log('🍕 Mahsulotlar yaratilmoqda...')
+
+		const productData = [
+			{
+				id: 'margarita-1',
+				name: 'Margarita',
+				description: 'Klassik italyan pitsasi - mozzarella, pomidor sousi, rayhon',
+				basePrice: 45000,
+				imageUrl: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002',
+				categoryId: pizzaCategory.id,
+				variations: [
 					{ size: 'Small', price: 35000, diameter: 25, slices: 6, weight: 400 },
 					{ size: 'Medium', price: 45000, diameter: 30, slices: 8, weight: 550 },
 					{ size: 'Large', price: 55000, diameter: 35, slices: 10, weight: 700 },
 					{ size: 'XL', price: 65000, diameter: 40, slices: 12, weight: 900 },
 				],
 			},
-		},
-	})
-
-	// 2. Pepperoni
-	const pepperoni = await prisma.product.upsert({
-		where: { id: 'pepperoni-1' },
-		update: {},
-		create: {
-			id: 'pepperoni-1',
-			name: 'Pepperoni',
-			description: 'Mazali pepperoni kolbasa va mozzarella pishloq',
-			basePrice: 55000,
-			imageUrl: 'https://images.unsplash.com/photo-1628840042765-356cda07504e',
-			prepTime: 18,
-			categoryId: pizzaCategory.id,
-			isActive: true,
-			ingredients: [
-				{ name: 'Pizza xamiri', amount: '300g', icon: '🌾' },
-				{ name: 'Pomidor sousi', amount: '100ml', icon: '🍅' },
-				{ name: 'Mozzarella pishloq', amount: '150g', icon: '🧀' },
-				{ name: 'Pepperoni', amount: '100g', icon: '🍖' },
-			],
-			recipe:
-				"Amerika'ning eng mashhur pitsasi. Achchiq pepperoni va eruvchan pishloq - ajoyib kombinatsiya!",
-			cookingTemp: 220,
-			cookingTime: 16,
-			cookingSteps: [
-				{
-					step: 1,
-					title: 'Xamir tayyorlash',
-					description:
-						"300 g un, 180 ml iliq suv, 5 g quruq droj, 1 ch.q. shakar, 1 ch.q. tuz va 1 osh.q. zaytun yog'ini aralashtiring. 8-10 daqiqa yoğing, ustini yopib 45-60 daqiqa ko'taring. So'ng xamirni yumaloq qilib yoying.",
-				},
-				{ step: 2, title: 'Asosiy qatlamlar', description: "Sous va pishloq qo'shing" },
-				{ step: 3, title: 'Pepperoni', description: "Pepperoni bo'laklarini joylashtiring" },
-				{ step: 4, title: 'Pishirish', description: '220°C da 14-16 daqiqa' },
-			],
-			calories: 380,
-			protein: 22.0,
-			carbs: 32.0,
-			fat: 18.5,
-			difficulty: 'Oson',
-			servings: 2,
-			allergens: ['Sut', 'Gluten'],
-			images: ['https://images.unsplash.com/photo-1628840042765-356cda07504e'],
-			variations: {
-				create: [
+			{
+				id: 'pepperoni-1',
+				name: 'Pepperoni',
+				description: 'Mazali pepperoni kolbasa va mozzarella pishloq',
+				basePrice: 55000,
+				imageUrl: 'https://images.unsplash.com/photo-1628840042765-356cda07504e',
+				categoryId: pizzaCategory.id,
+				variations: [
 					{ size: 'Small', price: 45000, diameter: 25, slices: 6, weight: 450 },
 					{ size: 'Medium', price: 55000, diameter: 30, slices: 8, weight: 600 },
 					{ size: 'Large', price: 65000, diameter: 35, slices: 10, weight: 750 },
 					{ size: 'XL', price: 75000, diameter: 40, slices: 12, weight: 950 },
 				],
 			},
-		},
-	})
-
-	// 3. Vegetarian
-	void (await prisma.product.upsert({
-		where: { id: 'vegetarian-1' },
-		update: {},
-		create: {
-			id: 'vegetarian-1',
-			name: 'Vegetarian',
-			description: "Sabzavotli pitsa - pomidor, zaytun, qo'ziqorin, qalampir",
-			basePrice: 48000,
-			imageUrl: 'https://images.unsplash.com/photo-1571407970349-bc81e7e96d47',
-			prepTime: 16,
-			categoryId: pizzaCategory.id,
-			isActive: true,
-			ingredients: [
-				{ name: 'Pizza xamiri', amount: '300g', icon: '🌾' },
-				{ name: 'Pomidor sousi', amount: '100ml', icon: '🍅' },
-				{ name: 'Mozzarella', amount: '150g', icon: '🧀' },
-				{ name: 'Pomidor', amount: '100g', icon: '🍅' },
-				{ name: 'Zaytun', amount: '50g', icon: '🫒' },
-				{ name: "Qo'ziqorin", amount: '80g', icon: '🍄' },
-			],
-			recipe: "Sog'lom va mazali vegetarian pitsa - faqat yangi sabzavotlar!",
-			cookingTemp: 220,
-			cookingTime: 15,
-			calories: 280,
-			protein: 14.0,
-			carbs: 30.0,
-			fat: 12.0,
-			difficulty: 'Oson',
-			servings: 2,
-			allergens: ['Sut', 'Gluten'],
-			variations: {
-				create: [
-					{ size: 'Small', price: 38000, diameter: 25, slices: 6 },
-					{ size: 'Medium', price: 48000, diameter: 30, slices: 8 },
-					{ size: 'Large', price: 58000, diameter: 35, slices: 10 },
-					{ size: 'XL', price: 68000, diameter: 40, slices: 12 },
+			{
+				id: 'vegetarian-1',
+				name: 'Vegetarian',
+				description: "Sabzavotli pitsa - pomidor, zaytun, qo'ziqorin, qalampir",
+				basePrice: 48000,
+				imageUrl: 'https://images.unsplash.com/photo-1571407970349-bc81e7e96d47',
+				categoryId: pizzaCategory.id,
+				variations: [
+					{ size: 'Small', price: 38000, diameter: 25, slices: 6, weight: 420 },
+					{ size: 'Medium', price: 48000, diameter: 30, slices: 8, weight: 570 },
+					{ size: 'Large', price: 58000, diameter: 35, slices: 10, weight: 720 },
+					{ size: 'XL', price: 68000, diameter: 40, slices: 12, weight: 920 },
 				],
 			},
-		},
-	}))
+			{
+				id: 'four-cheese-1',
+				name: "To'rt xil pishloq",
+				description: 'Mozzarella, parmesan, gorgonzola, ricotta',
+				basePrice: 62000,
+				imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38',
+				categoryId: pizzaCategory.id,
+				variations: [
+					{ size: 'Small', price: 52000, diameter: 25, slices: 6, weight: 440 },
+					{ size: 'Medium', price: 62000, diameter: 30, slices: 8, weight: 590 },
+					{ size: 'Large', price: 72000, diameter: 35, slices: 10, weight: 740 },
+					{ size: 'XL', price: 82000, diameter: 40, slices: 12, weight: 940 },
+				],
+			},
+			{
+				id: 'bbq-chicken-1',
+				name: 'BBQ Tovuq',
+				description: 'BBQ sousi, pishgan tovuq, qizil piyoz, mozzarella',
+				basePrice: 65000,
+				imageUrl: 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3',
+				categoryId: pizzaCategory.id,
+				variations: [
+					{ size: 'Small', price: 55000, diameter: 25, slices: 6, weight: 470 },
+					{ size: 'Medium', price: 65000, diameter: 30, slices: 8, weight: 620 },
+					{ size: 'Large', price: 75000, diameter: 35, slices: 10, weight: 770 },
+					{ size: 'XL', price: 85000, diameter: 40, slices: 12, weight: 970 },
+				],
+			},
+			{
+				id: 'hawaiian-1',
+				name: 'Hawaiian',
+				description: 'Ananas, vetchina, mozzarella - shirin va tuzli',
+				basePrice: 58000,
+				imageUrl: 'https://images.unsplash.com/photo-1571997478779-2adcbbe9ab2f',
+				categoryId: pizzaCategory.id,
+				variations: [
+					{ size: 'Small', price: 48000, diameter: 25, slices: 6, weight: 430 },
+					{ size: 'Medium', price: 58000, diameter: 30, slices: 8, weight: 580 },
+					{ size: 'Large', price: 68000, diameter: 35, slices: 10, weight: 730 },
+					{ size: 'XL', price: 78000, diameter: 40, slices: 12, weight: 930 },
+				],
+			},
+			{
+				id: 'meat-lovers-1',
+				name: "Go'shtli Pitsa",
+				description: "Pepperoni, vetchina, kolbasa, mol go'shti, mozzarella",
+				basePrice: 75000,
+				imageUrl: 'https://images.unsplash.com/photo-1513104890138-7c749659a591',
+				categoryId: pizzaCategory.id,
+				variations: [
+					{ size: 'Small', price: 65000, diameter: 25, slices: 6, weight: 500 },
+					{ size: 'Medium', price: 75000, diameter: 30, slices: 8, weight: 650 },
+					{ size: 'Large', price: 85000, diameter: 35, slices: 10, weight: 800 },
+					{ size: 'XL', price: 95000, diameter: 40, slices: 12, weight: 1000 },
+				],
+			},
+		]
 
-	// 4. Four Cheese
-	void (await prisma.product.upsert({
-		where: { id: 'four-cheese-1' },
-		update: {},
-		create: {
-			id: 'four-cheese-1',
-			name: "To'rt xil pishloq",
-			description: 'Mozzarella, parmesan, gorgonzola, ricotta',
-			basePrice: 62000,
-			imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38',
-			prepTime: 17,
-			categoryId: pizzaCategory.id,
-			isActive: true,
-			ingredients: [
-				{ name: 'Pizza xamiri', amount: '300g', icon: '🌾' },
-				{ name: 'Mozzarella pishloq', amount: '200g', icon: '🧀' },
-				{ name: 'Parmesan', amount: '50g', icon: '🧀' },
-				{ name: 'Gorgonzola', amount: '50g', icon: '🧀' },
-				{ name: 'Ricotta', amount: '100g', icon: '🧀' },
-			],
-			recipe:
-				"Pizza xamirini yoyib, ustiga barcha pishloqlarni qo'ying. 220°C da 15 daqiqa pishiring.",
-			cookingTemp: 220,
-			cookingTime: 15,
-			cookingSteps: [
-				{ step: 1, title: 'Xamirni yoyish', description: 'Pizza xamirini yumaloq shaklda yoying' },
-				{
-					step: 2,
-					title: "Pishloqlarni qo'shish",
-					description: 'Barcha pishloqlarni teng taqsimlang',
+		const createdProducts = []
+
+		for (const product of productData) {
+			const created = await prisma.product.upsert({
+				where: { id: product.id },
+				update: {},
+				create: {
+					id: product.id,
+					name: product.name,
+					description: product.description,
+					basePrice: product.basePrice,
+					imageUrl: product.imageUrl,
+					prepTime: 15,
+					categoryId: product.categoryId,
+					isActive: true,
+					variations: {
+						create: product.variations,
+					},
 				},
-				{ step: 3, title: 'Pishirish', description: '220°C da 15 daqiqa pishiring' },
-			],
-			calories: 320,
-			protein: 18.5,
-			carbs: 28.0,
-			fat: 15.2,
-			difficulty: 'Oson',
-			servings: 2,
-			allergens: ['Sut', 'Gluten'],
-			images: [
-				'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38',
-				'https://images.unsplash.com/photo-1574071318508-1cdbab80d002',
-			],
-			variations: {
-				create: [
-					{ size: 'Small', price: 52000, diameter: 25, slices: 6 },
-					{ size: 'Medium', price: 62000, diameter: 30, slices: 8 },
-					{ size: 'Large', price: 72000, diameter: 35, slices: 10 },
-					{ size: 'XL', price: 82000, diameter: 40, slices: 12 },
-				],
+				include: {
+					variations: true,
+				},
+			})
+			createdProducts.push(created)
+		}
+
+		console.log(`✅ ${createdProducts.length} ta mahsulot yaratildi`)
+		console.log(
+			`✅ ${createdProducts.reduce((sum, p) => sum + p.variations.length, 0)} ta variation yaratildi\n`,
+		)
+
+		// ============================================
+		// 4. FOYDALANUVCHILAR
+		// ============================================
+		console.log('👥 Foydalanuvchilar yaratilmoqda...')
+
+		const adminUser = await prisma.user.upsert({
+			where: { email: 'admin@zorpizza.uz' },
+			update: {},
+			create: {
+				email: 'admin@zorpizza.uz',
+				password: '$2a$10$7xKj8KpL9Z.vQw5yE6X0muZJG1Y0F8hC9L2mN3pQ4rR5sS6tT7uU8', // "admin123"
+				name: 'Admin',
+				phone: '+998901234567',
+				role: 'ADMIN',
 			},
-		},
-	}))
+		})
 
-	// 5. BBQ Chicken
-	void (await prisma.product.upsert({
-		where: { id: 'bbq-chicken-1' },
-		update: {},
-		create: {
-			id: 'bbq-chicken-1',
-			name: 'BBQ Tovuq Pitsasi',
-			description: 'BBQ sousi, pishgan tovuq, qizil piyoz, mozzarella pishloq',
-			basePrice: 65000,
-			imageUrl: 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3',
-			prepTime: 20,
-			categoryId: pizzaCategory.id,
-			isActive: true,
-			ingredients: [
-				{ name: 'Pizza xamiri', amount: '300g', icon: '🌾' },
-				{ name: 'BBQ sousi', amount: '100ml', icon: '🍖' },
-				{ name: 'Pishgan tovuq', amount: '200g', icon: '🍗' },
-				{ name: 'Mozzarella pishloq', amount: '150g', icon: '🧀' },
-				{ name: 'Qizil piyoz', amount: '50g', icon: '🧅' },
-				{ name: 'Rayhon', amount: '10g', icon: '🌿' },
-			],
-			recipe:
-				"Pizza xamirini yoyib, ustiga BBQ sousini surkang. Pishgan tovuq go'shtini qo'shib, ustiga mozzarella pishloq va qizil piyoz qo'ying. 230°C da 18 daqiqa pishiring.",
-			cookingTemp: 230,
-			cookingTime: 18,
-			cookingSteps: [
-				{ step: 1, title: 'Xamir va sous', description: 'Xamirni yoyib, BBQ sousini surkang' },
-				{ step: 2, title: 'Tovuq', description: "Pishgan tovuqni qo'shing" },
-				{ step: 3, title: 'Pishloq va piyoz', description: "Mozzarella va piyoz qo'shing" },
-				{ step: 4, title: 'Pishirish', description: '230°C da 18 daqiqa' },
-			],
-			calories: 380,
-			protein: 22.0,
-			carbs: 32.0,
-			fat: 18.5,
-			difficulty: "O'rtacha",
-			servings: 2,
-			allergens: ['Sut', 'Gluten'],
-			images: [
-				'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3',
-				'https://images.unsplash.com/photo-1628840042765-356cda07504e',
-			],
-			variations: {
-				create: [
-					{ size: 'Small', price: 55000, diameter: 25, slices: 6 },
-					{ size: 'Medium', price: 65000, diameter: 30, slices: 8 },
-					{ size: 'Large', price: 75000, diameter: 35, slices: 10 },
-					{ size: 'XL', price: 85000, diameter: 40, slices: 12 },
-				],
+		const customerSeedData = [
+			{
+				email: 'alisher@gmail.com',
+				name: 'Alisher Karimov',
+				phone: '+998901111111',
+				address: 'Toshkent, Chilonzor tumani, 12-kvartal, 45-uy',
 			},
-		},
-	}))
-
-	// 6. Hawaiian
-	void (await prisma.product.upsert({
-		where: { id: 'hawaiian-1' },
-		update: {},
-		create: {
-			id: 'hawaiian-1',
-			name: 'Gavayi Pitsasi',
-			description: 'Ananas, vetchina, mozzarella pishloq - shirin va tuzli kombinatsiya',
-			basePrice: 58000,
-			imageUrl: 'https://images.unsplash.com/photo-1571997478779-2adcbbe9ab2f',
-			prepTime: 16,
-			categoryId: pizzaCategory.id,
-			isActive: true,
-			ingredients: [
-				{ name: 'Pizza xamiri', amount: '300g', icon: '🌾' },
-				{ name: 'Pomidor sousi', amount: '100ml', icon: '🍅' },
-				{ name: 'Vetchina', amount: '150g', icon: '🥓' },
-				{ name: 'Ananas', amount: '100g', icon: '🍍' },
-				{ name: 'Mozzarella pishloq', amount: '180g', icon: '🧀' },
-				{ name: 'Qalampir', amount: '30g', icon: '🌶️' },
-			],
-			recipe:
-				"Pizza xamirini yoyib, pomidor sousini surkang. Vetchina va ananas bo'laklarini qo'shib, ustiga mozzarella pishloq qo'ying. 220°C da 16 daqiqa pishiring.",
-			cookingTemp: 220,
-			cookingTime: 16,
-			cookingSteps: [
-				{ step: 1, title: 'Xamir va sous', description: 'Xamirni yoyib, pomidor sousini surkang' },
-				{ step: 2, title: 'Vetchina va ananas', description: "Vetchina va ananas qo'shing" },
-				{ step: 3, title: 'Pishloq', description: "Mozzarella qo'shing" },
-				{ step: 4, title: 'Pishirish', description: '220°C da 16 daqiqa' },
-			],
-			calories: 350,
-			protein: 16.0,
-			carbs: 35.0,
-			fat: 16.0,
-			difficulty: 'Oson',
-			servings: 2,
-			allergens: ['Sut', 'Gluten'],
-			images: [
-				'https://images.unsplash.com/photo-1571997478779-2adcbbe9ab2f',
-				'https://images.unsplash.com/photo-1574071318508-1cdbab80d002',
-			],
-			variations: {
-				create: [
-					{ size: 'Small', price: 48000, diameter: 25, slices: 6 },
-					{ size: 'Medium', price: 58000, diameter: 30, slices: 8 },
-					{ size: 'Large', price: 68000, diameter: 35, slices: 10 },
-					{ size: 'XL', price: 78000, diameter: 40, slices: 12 },
-				],
+			{
+				email: 'dilnoza@gmail.com',
+				name: 'Dilnoza Rahimova',
+				phone: '+998902222222',
+				address: 'Toshkent, Yunusobod tumani, 5-mavze, 23-uy',
 			},
-		},
-	}))
-
-	// 7. Meat Lovers
-	void (await prisma.product.upsert({
-		where: { id: 'meat-lovers-1' },
-		update: {},
-		create: {
-			id: 'meat-lovers-1',
-			name: "Go'shtli Pitsa",
-			description:
-				"Pepperoni, vetchina, kolbasa, mol go'shti, mozzarella - go'sht sevuvchilar uchun",
-			basePrice: 75000,
-			imageUrl: 'https://images.unsplash.com/photo-1513104890138-7c749659a591',
-			prepTime: 22,
-			categoryId: pizzaCategory.id,
-			isActive: true,
-			ingredients: [
-				{ name: 'Pizza xamiri', amount: '350g', icon: '🌾' },
-				{ name: 'Pomidor sousi', amount: '120ml', icon: '🍅' },
-				{ name: 'Pepperoni', amount: '100g', icon: '🍖' },
-				{ name: 'Vetchina', amount: '100g', icon: '🥓' },
-				{ name: 'Kolbasa', amount: '100g', icon: '🌭' },
-				{ name: "Mol go'shti", amount: '120g', icon: '🥩' },
-				{ name: 'Mozzarella pishloq', amount: '200g', icon: '🧀' },
-				{ name: 'Qalampir', amount: '20g', icon: '🌶️' },
-			],
-			recipe:
-				"Pizza xamirini yoyib, pomidor sousini surkang. Barcha go'sht turlarini pitsa ustiga qo'ying. Mozzarella pishloqni qo'shib, 235°C da 20 daqiqa pishiring.",
-			cookingTemp: 235,
-			cookingTime: 20,
-			cookingSteps: [
-				{ step: 1, title: 'Xamir va sous', description: 'Xamirni yoyib, pomidor sousini surkang' },
-				{ step: 2, title: "Go'shtlar", description: "Barcha go'shtlarni qo'shing" },
-				{ step: 3, title: 'Pishloq', description: "Mozzarella qo'shing" },
-				{ step: 4, title: 'Pishirish', description: '235°C da 20 daqiqa' },
-			],
-			calories: 450,
-			protein: 28.0,
-			carbs: 30.0,
-			fat: 24.0,
-			difficulty: 'Qiyin',
-			servings: 3,
-			allergens: ['Sut', 'Gluten'],
-			images: [
-				'https://images.unsplash.com/photo-1513104890138-7c749659a591',
-				'https://images.unsplash.com/photo-1628840042765-356cda07504e',
-			],
-			variations: {
-				create: [
-					{ size: 'Small', price: 65000, diameter: 25, slices: 6 },
-					{ size: 'Medium', price: 75000, diameter: 30, slices: 8 },
-					{ size: 'Large', price: 85000, diameter: 35, slices: 10 },
-					{ size: 'XL', price: 95000, diameter: 40, slices: 12 },
-				],
+			{
+				email: 'bobur@gmail.com',
+				name: 'Bobur Toshmatov',
+				phone: '+998903333333',
+				address: 'Toshkent, Sergeli tumani, 8-kvartal, 67-uy',
 			},
-		},
-	}))
+			{
+				email: 'malika@gmail.com',
+				name: 'Malika Alimova',
+				phone: '+998904444444',
+				address: 'Toshkent, Mirzo Ulugbek tumani, 14-kvartal, 89-uy',
+			},
+		]
 
-	console.log('✅ Mahsulotlar (variations bilan) yaratildi')
-
-	// ============================================
-	// 4. MAHSULOT-INGREDIENT BOG'LANISHI
-	// ============================================
-
-	await prisma.productIngredient.createMany({
-		data: [
-			// Margarita
-			{ productId: margarita.id, ingredientId: ingredients[0].id, quantity: 0.3 },
-			{ productId: margarita.id, ingredientId: ingredients[1].id, quantity: 0.2 },
-			{ productId: margarita.id, ingredientId: ingredients[2].id, quantity: 0.1 },
-			// Pepperoni
-			{ productId: pepperoni.id, ingredientId: ingredients[0].id, quantity: 0.3 },
-			{ productId: pepperoni.id, ingredientId: ingredients[1].id, quantity: 0.2 },
-			{ productId: pepperoni.id, ingredientId: ingredients[2].id, quantity: 0.1 },
-			{ productId: pepperoni.id, ingredientId: ingredients[3].id, quantity: 0.15 },
-		],
-		skipDuplicates: true,
-	})
-
-	console.log("✅ Ingredientlar mahsulotlarga bog'landi")
-
-	// ============================================
-	// 5. TEST USER (Admin)
-	// ============================================
-
-	const adminUser = await prisma.user.upsert({
-		where: { email: 'admin@zorpizza.uz' },
-		update: {},
-		create: {
-			email: 'admin@zorpizza.uz',
-			password: '$2a$10$7xKj8KpL9Z.vQw5yE6X0muZJG1Y0F8hC9L2mN3pQ4rR5sS6tT7uU8', // "admin123"
-			name: 'Admin',
-			phone: '+998901234567',
-			role: 'ADMIN',
-		},
-	})
-
-	console.log('✅ Admin user yaratildi')
-
-	console.log('👥 Test mijozlar yaratilmoqda...')
-
-	const customerSeedData = [
-		{
-			email: 'alisher@gmail.com',
-			name: 'Alisher Karimov',
-			phone: '+998901111111',
-			address: 'Toshkent, Chilonzor tumani, 12-kvartal',
-		},
-		{
-			email: 'dilnoza@gmail.com',
-			name: 'Dilnoza Rahimova',
-			phone: '+998902222222',
-			address: 'Toshkent, Yunusobod tumani, 5-mavze',
-		},
-		{
-			email: 'bobur@gmail.com',
-			name: 'Bobur Toshmatov',
-			phone: '+998903333333',
-			address: 'Toshkent, Sergeli tumani, 8-kvartal',
-		},
-	]
-
-	const customers = await Promise.all(
-		customerSeedData.map(data =>
-			prisma.user.upsert({
+		const customers = []
+		for (const data of customerSeedData) {
+			const created = await prisma.user.upsert({
 				where: { email: data.email },
 				update: {},
 				create: {
 					email: data.email,
-					password: '$2a$10$7xKj8KpL9Z.vQw5yE6X0muZJG1Y0F8hC9L2mN3pQ4rR5sS6tT7uU8',
+					password: '$2a$10$7xKj8KpL9Z.vQw5yE6X0muZJG1Y0F8hC9L2mN3pQ4rR5sS6tT7uU8', // "admin123"
 					name: data.name,
 					phone: data.phone,
 					role: 'CUSTOMER',
 				},
-			}),
-		),
-	)
+			})
+			customers.push(created)
+		}
 
-	console.log(`✅ ${customers.length} ta mijoz yaratildi`)
+		console.log(`✅ 1 ta admin user yaratildi`)
+		console.log(`✅ ${customers.length} ta mijoz yaratildi\n`)
 
-	console.log('🛍️ Bugungi buyurtmalar yaratilmoqda...')
+		// ============================================
+		// 5. BUGUNGI BUYURTMALAR
+		// ============================================
+		console.log('🛍️ Bugungi buyurtmalar yaratilmoqda...')
 
-	const today = new Date()
-	const orderTimes = [
-		new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 30),
-		new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10, 45),
-		new Date(today.getFullYear(), today.getMonth(), today.getDate(), 11, 20),
-		new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12, 15),
-		new Date(today.getFullYear(), today.getMonth(), today.getDate(), 13, 40),
-		new Date(today.getFullYear(), today.getMonth(), today.getDate(), 14, 10),
-		new Date(today.getFullYear(), today.getMonth(), today.getDate(), 18, 30),
-		new Date(today.getFullYear(), today.getMonth(), today.getDate(), 19, 15),
-		new Date(today.getFullYear(), today.getMonth(), today.getDate(), 19, 50),
-		new Date(today.getFullYear(), today.getMonth(), today.getDate(), 20, 25),
-	]
+		const today = new Date()
 
-	const allProducts = await prisma.product.findMany({
-		include: { variations: true },
-	})
+		const orderTimes = [
+			new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 30),
+			new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10, 45),
+			new Date(today.getFullYear(), today.getMonth(), today.getDate(), 11, 20),
+			new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12, 15),
+			new Date(today.getFullYear(), today.getMonth(), today.getDate(), 13, 40),
+			new Date(today.getFullYear(), today.getMonth(), today.getDate(), 14, 10),
+			new Date(today.getFullYear(), today.getMonth(), today.getDate(), 18, 30),
+			new Date(today.getFullYear(), today.getMonth(), today.getDate(), 19, 15),
+			new Date(today.getFullYear(), today.getMonth(), today.getDate(), 19, 50),
+			new Date(today.getFullYear(), today.getMonth(), today.getDate(), 20, 25),
+		]
 
-	const orders: { id: string }[] = []
+		const orders = []
 
-	for (let i = 0; i < orderTimes.length; i++) {
-		const customer = customers[i % customers.length]
-		const customerSeed = customerSeedData[i % customerSeedData.length]
-		const orderTime = orderTimes[i]
+		for (let i = 0; i < orderTimes.length; i++) {
+			const customer = customers[i % customers.length]
+			const customerData = customerSeedData[i % customerSeedData.length]
+			const orderTime = orderTimes[i]
 
-		const order = await prisma.order.create({
-			data: {
-				orderNumber: `ORD${Date.now()}${i}`,
-				userId: customer.id,
-				status: i < 6 ? 'DELIVERED' : i < 8 ? 'PREPARING' : 'PENDING',
-				totalPrice: 0,
-				paymentMethod: i % 2 === 0 ? 'CARD' : 'CASH',
-				deliveryAddress: customerSeed.address,
-				deliveryPhone: customerSeed.phone,
-				createdAt: orderTime,
-				estimatedTime: 40,
-			},
-		})
+			// Status logic
+			let status: OrderStatus
+			if (i < 6) {
+				status = 'DELIVERED'
+			} else if (i < 8) {
+				status = 'PREPARING'
+			} else {
+				status = 'PENDING'
+			}
 
-		const itemsCount = Math.floor(Math.random() * 3) + 1
-		let orderTotal = 0
-
-		for (let j = 0; j < itemsCount; j++) {
-			const product = allProducts[Math.floor(Math.random() * allProducts.length)]
-			const variation = product.variations[Math.floor(Math.random() * product.variations.length)]
-			const quantity = Math.floor(Math.random() * 2) + 1
-
-			await prisma.orderItem.create({
+			// Create order
+			const order = await prisma.order.create({
 				data: {
-					orderId: order.id,
-					productId: product.id,
-					variationId: variation.id,
-					quantity,
-					price: variation.price,
-					size: variation.size,
+					orderNumber: `ORD${Date.now()}${String(i).padStart(3, '0')}`,
+					userId: customer.id,
+					status,
+					totalPrice: 0, // Will update later
+					paymentMethod: (i % 2 === 0 ? 'CARD' : 'CASH') as PaymentMethod,
+					deliveryAddress: customerData.address,
+					deliveryPhone: customerData.phone,
+					createdAt: orderTime,
+					estimatedTime: 40,
 				},
 			})
 
-			orderTotal += variation.price * quantity
+			// Add random items (1-3 products)
+			const itemsCount = Math.floor(Math.random() * 3) + 1
+			let orderTotal = 0
+
+			for (let j = 0; j < itemsCount; j++) {
+				const product = createdProducts[Math.floor(Math.random() * createdProducts.length)]
+				const variation = product.variations[Math.floor(Math.random() * product.variations.length)]
+				const quantity = Math.floor(Math.random() * 2) + 1 // 1-2
+
+				await prisma.orderItem.create({
+					data: {
+						orderId: order.id,
+						productId: product.id,
+						variationId: variation.id,
+						quantity,
+						price: variation.price,
+						size: variation.size,
+					},
+				})
+
+				orderTotal += variation.price * quantity
+			}
+
+			// Update order total
+			await prisma.order.update({
+				where: { id: order.id },
+				data: { totalPrice: orderTotal },
+			})
+
+			orders.push(order)
 		}
 
-		await prisma.order.update({
-			where: { id: order.id },
-			data: { totalPrice: orderTotal },
-		})
+		console.log(`✅ ${orders.length} ta bugungi buyurtma yaratildi\n`)
 
-		orders.push(order)
+		// ============================================
+		// FINAL SUMMARY
+		// ============================================
+		console.log('━'.repeat(60))
+		console.log('📊 SEED SUMMARY:')
+		console.log('━'.repeat(60))
+		console.log(`   📂 Kategoriyalar: 3`)
+		console.log(`   🧑‍🍳 Ingredientlar: ${ingredients.length}`)
+		console.log(`   🍕 Mahsulotlar: ${createdProducts.length}`)
+		console.log(
+			`   📏 Variations: ${createdProducts.reduce((sum, p) => sum + p.variations.length, 0)}`,
+		)
+		console.log(`   👤 Admin: 1 (${adminUser.email})`)
+		console.log(`   👥 Mijozlar: ${customers.length}`)
+		console.log(`   🛍️ Buyurtmalar: ${orders.length}`)
+		console.log(
+			`   💰 Jami daromad: ${orders.reduce((sum, o) => sum + o.totalPrice, 0).toLocaleString()} so'm`,
+		)
+		console.log('━'.repeat(60))
+		console.log('\n🔐 LOGIN CREDENTIALS:')
+		console.log(`   📧 Email: admin@zorpizza.uz`)
+		console.log(`   🔑 Password: admin123`)
+		console.log('━'.repeat(60))
+		console.log('\n🎉 Seed muvaffaqiyatli tugadi!\n')
+	} catch (error) {
+		console.error('\n❌ SEED XATOSI:', error)
+		throw error
 	}
-
-	console.log(`✅ ${orders.length} ta bugungi buyurtma yaratildi`)
-
-	console.log('\n📊 SEED SUMMARY:')
-	console.log(`   - Kategoriyalar: 2`)
-	console.log(`   - Ingredientlar: ${ingredients.length}`)
-	console.log(`   - Mahsulotlar: ${allProducts.length}`)
-	console.log(
-		`   - Jami variations: ${allProducts.reduce((sum, p) => sum + p.variations.length, 0)}`,
-	)
-	console.log(`   - Mijozlar: ${customers.length}`)
-	console.log(`   - Bugungi buyurtmalar: ${orders.length}`)
-	console.log(`   - Admin: ${adminUser.email} / admin123`)
-	console.log('\n🎉 Seed muvaffaqiyatli tugadi!\n')
 }
+
+main()
+	.catch(e => {
+		console.error('❌ Seed jarayonida xatolik:', e)
+		process.exit(1)
+	})
+	.finally(async () => {
+		await prisma.$disconnect()
+	})
