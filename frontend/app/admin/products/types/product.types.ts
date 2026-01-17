@@ -2,7 +2,7 @@ export interface Product {
 	id: string
 	name: string
 	description: string
-	price: number
+	basePrice: number
 	imageUrl: string | null
 	prepTime: number
 	isActive: boolean
@@ -10,6 +10,7 @@ export interface Product {
 		id: string
 		name: string
 	}
+	variations?: ProductVariation[]
 	ingredientsRel?: Array<{
 		id: string
 		quantity: number
@@ -22,6 +23,23 @@ export interface Product {
 	createdAt: string
 }
 
+export interface ProductVariation {
+	id: string
+	size: string
+	price: number
+	diameter?: number | null
+	slices?: number | null
+	weight?: number | null
+}
+
+export interface ProductVariationForm {
+	size: string
+	price: string
+	diameter: string
+	slices: string
+	weight: string
+}
+
 export interface Category {
 	id: string
 	name: string
@@ -30,11 +48,12 @@ export interface Category {
 export interface ProductFormData {
 	name: string
 	description: string
-	price: string
+	basePrice: string
 	imageUrl: string
 	prepTime: string
 	categoryId: string
 	isActive: boolean
+	variations: ProductVariationForm[]
 	ingredients: Array<{ name: string; amount: string; icon?: string }>
 	recipe: string
 	cookingTemp: string

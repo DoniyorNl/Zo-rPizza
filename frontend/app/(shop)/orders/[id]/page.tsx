@@ -20,6 +20,8 @@ interface OrderItem {
 	id: string
 	quantity: number
 	price: number
+	variationId?: string | null
+	size?: string | null
 	product: {
 		id: string
 		name: string
@@ -114,11 +116,10 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
 
 		order.items.forEach(item => {
 			addItem({
-				productId: item.product.id,
-				// Orders do not store variation metadata yet; use a safe default.
-				variationId: 'default',
+			productId: item.product.id,
+			variationId: item.variationId || 'default',
 				name: item.product.name,
-				size: 'Standard',
+			size: item.size || 'Standard',
 				price: item.price,
 				imageUrl: item.product.imageUrl,
 			})

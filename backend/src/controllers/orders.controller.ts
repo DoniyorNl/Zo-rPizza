@@ -143,7 +143,7 @@ export const createOrder = async (req: Request, res: Response) => {
 	try {
 		let {
 			userId,
-			items, // [{ productId, quantity }]
+			items, // [{ productId, quantity, variationId?, size? }]
 			paymentMethod,
 			deliveryAddress,
 			deliveryPhone,
@@ -199,13 +199,41 @@ export const createOrder = async (req: Request, res: Response) => {
 				})
 			}
 
-			const itemTotal = product.price * item.quantity
+			let variationPrice = product.basePrice
+			let variationId: string | null = null
+			let size: string | null = null
+
+			if (item.variationId) {
+				const variation = await prisma.productVariation.findFirst({
+					where: {
+						id: item.variationId,
+						productId: product.id,
+					},
+				})
+
+				if (!variation) {
+					return res.status(400).json({
+						success: false,
+						message: `Invalid variation for product ${product.name}`,
+					})
+				}
+
+				variationPrice = variation.price
+				variationId = variation.id
+				size = variation.size
+			} else if (item.size) {
+				size = item.size
+			}
+
+			const itemTotal = variationPrice * item.quantity
 			totalPrice += itemTotal
 
 			orderItems.push({
 				productId: item.productId,
+				variationId,
+				size,
 				quantity: item.quantity,
-				price: product.price,
+				price: variationPrice,
 			})
 		}
 
