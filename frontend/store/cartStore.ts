@@ -1,12 +1,19 @@
 // frontend/store/cartStore.ts
-// 🛒 CART STORE - ZUSTAND
+// 🛒 CART STORE - ZUSTAND (Updated with Variations Support)
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+// ============================================
+// TYPES & INTERFACES
+// ============================================
+
 interface CartItem {
-	id: string
+	id: string // ✅ Unique ID (productId-variationId)
+	productId: string // ✅ NEW: Product ID
+	variationId: string // ✅ NEW: Variation ID
 	name: string
+	size: string // ✅ NEW: Size ("Small", "Medium", "Large", "XL")
 	price: number
 	imageUrl: string
 	quantity: number
@@ -14,7 +21,7 @@ interface CartItem {
 
 interface CartStore {
 	items: CartItem[]
-	addItem: (product: Omit<CartItem, 'quantity'>) => void
+	addItem: (product: Omit<CartItem, 'id' | 'quantity'>) => void // ✅ Updated
 	removeItem: (id: string) => void
 	updateQuantity: (id: string, quantity: number) => void
 	clearCart: () => void
@@ -22,40 +29,59 @@ interface CartStore {
 	getTotalItems: () => number
 }
 
+// ============================================
+// STORE
+// ============================================
+
 export const useCartStore = create<CartStore>()(
 	persist(
 		(set, get) => ({
 			items: [],
 
-			// Mahsulot qo'shish
+			// ============================================
+			// ADD ITEM (Updated with Variations)
+			// ============================================
 			addItem: product => {
 				set(state => {
-					const existing = state.items.find(item => item.id === product.id)
+					// ✅ Unique ID: productId + variationId
+					const itemId = `${product.productId}-${product.variationId}`
+					const existing = state.items.find(item => item.id === itemId)
 
 					if (existing) {
 						// Mavjud bo'lsa quantity +1
 						return {
 							items: state.items.map(item =>
-								item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item,
+								item.id === itemId ? { ...item, quantity: item.quantity + 1 } : item,
 							),
 						}
 					}
 
-					// Yangi mahsulot
+					// Yangi mahsulot (with unique ID)
 					return {
-						items: [...state.items, { ...product, quantity: 1 }],
+						items: [
+							...state.items,
+							{
+								...product,
+								id: itemId, // ✅ Set unique ID
+								quantity: 1,
+							},
+						],
 					}
 				})
 			},
 
-			// Mahsulot o'chirish
+			// ============================================
+			// REMOVE ITEM
+			// ============================================
 			removeItem: id => {
 				set(state => ({
 					items: state.items.filter(item => item.id !== id),
 				}))
 			},
 
-			// Quantity o'zgartirish
+			// ============================================
+			// UPDATE QUANTITY
+			// ============================================
 			updateQuantity: (id, quantity) => {
 				if (quantity <= 0) {
 					get().removeItem(id)
@@ -67,17 +93,23 @@ export const useCartStore = create<CartStore>()(
 				}))
 			},
 
-			// Savatchani tozalash
+			// ============================================
+			// CLEAR CART
+			// ============================================
 			clearCart: () => {
 				set({ items: [] })
 			},
 
-			// Jami narx
+			// ============================================
+			// GET TOTAL PRICE
+			// ============================================
 			getTotalPrice: () => {
 				return get().items.reduce((total, item) => total + item.price * item.quantity, 0)
 			},
 
-			// Jami mahsulotlar soni
+			// ============================================
+			// GET TOTAL ITEMS
+			// ============================================
 			getTotalItems: () => {
 				return get().items.reduce((total, item) => total + item.quantity, 0)
 			},

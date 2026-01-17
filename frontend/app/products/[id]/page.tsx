@@ -1,3 +1,6 @@
+// frontend/app/products/[id]/page.tsx
+// 🍕 ZOR PIZZA - PRODUCT DETAIL PAGE (Updated with Variations)
+
 'use client'
 
 import { Header } from '@/components/layout/Header'
@@ -7,17 +10,29 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useCartStore } from '@/store/cartStore'
 import axios from 'axios'
-import { AlertCircle, ArrowLeft, Clock, Flame, Plus } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Clock, Flame, Plus, Pizza } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { use, useEffect, useState } from 'react'
 
-// Interface o'zgarishsiz
+// ============================================
+// TYPES & INTERFACES
+// ============================================
+
+interface ProductVariation {
+	id: string
+	size: string
+	price: number
+	diameter?: number
+	slices?: number
+	weight?: number
+}
+
 interface Product {
 	id: string
 	name: string
 	description: string
-	price: number
+	basePrice: number // ✅ Changed from 'price'
 	imageUrl: string
 	prepTime: number
 	ingredients?: Array<{ name: string; amount: string; icon?: string }>
@@ -33,7 +48,12 @@ interface Product {
 	servings?: number
 	allergens?: string[]
 	images?: string[]
+	variations: ProductVariation[] // ✅ NEW
 }
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
 
 export default function ProductDetailsPage({ params }: { params: Promise<{ id: string }> }) {
 	const { id } = use(params)
@@ -43,13 +63,20 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 	const [loading, setLoading] = useState(true)
 	const [selectedImage, setSelectedImage] = useState(0)
 
+	// ✅ NEW: Size selection state
+	const [selectedVariation, setSelectedVariation] = useState<ProductVariation | null>(null)
+
+	// ============================================
+	// DATA FETCHING
+	// ============================================
+
 	useEffect(() => {
 		const fetchProduct = async () => {
 			try {
 				const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${id}`)
 				const productData = response.data.data
 
-				// Sizning original parsing logikangiz (o'zgarishsiz)
+				// JSON parsing (o'zgarishsiz)
 				if (productData.ingredients && typeof productData.ingredients === 'string') {
 					try {
 						productData.ingredients = JSON.parse(productData.ingredients)
@@ -68,8 +95,18 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 				if (!productData.allergens) productData.allergens = []
 
 				setProduct(productData)
+
+				// ✅ NEW: Auto-select Medium or first variation
+				if (productData.variations && productData.variations.length > 0) {
+					const mediumVariation = productData.variations.find(
+						(v: ProductVariation) => v.size === 'Medium',
+					)
+					setSelectedVariation(mediumVariation || productData.variations[0])
+				}
+
+				console.log('✅ Product loaded:', productData.name)
 			} catch (error) {
-				console.error('Error fetching product:', error)
+				console.error('❌ Error fetching product:', error)
 			} finally {
 				setLoading(false)
 			}
@@ -77,24 +114,40 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 		fetchProduct()
 	}, [id])
 
-	// Original handleAddToCart (o'zgarishsiz)
+	// ============================================
+	// HANDLERS
+	// ============================================
+
 	const handleAddToCart = () => {
-		if (!product) return
+		if (!product || !selectedVariation) return
+
 		addItem({
-			id: product.id,
+			productId: product.id,
+			variationId: selectedVariation.id,
 			name: product.name,
-			price: product.price,
+			size: selectedVariation.size,
+			price: selectedVariation.price,
 			imageUrl:
 				product.imageUrl || (product.images && product.images[0]) || '/images/placeholder.png',
 		})
+
+		console.log('✅ Added to cart:', product.name, selectedVariation.size)
 	}
+
+	// ============================================
+	// LOADING & NOT FOUND
+	// ============================================
 
 	if (loading)
 		return (
 			<div className='min-h-screen flex items-center justify-center font-medium text-stone-500'>
-				Yuklanmoqda...
+				<div className='text-center'>
+					<div className='inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mb-4'></div>
+					<p>Yuklanmoqda...</p>
+				</div>
 			</div>
 		)
+
 	if (!product)
 		return (
 			<div className='min-h-screen flex flex-col items-center justify-center gap-4'>
@@ -103,10 +156,20 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 			</div>
 		)
 
+	// ============================================
+	// PREPARE DATA
+	// ============================================
+
 	const displayImages =
 		product.images && product.images.length > 0
 			? product.images
 			: [product.imageUrl || '/images/placeholder.png']
+
+	const currentPrice = selectedVariation?.price || product.basePrice
+
+	// ============================================
+	// MAIN RENDER
+	// ============================================
 
 	return (
 		<main className='min-h-screen bg-white'>
@@ -123,7 +186,9 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 				</Button>
 
 				<div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
-					{/* Visual Section */}
+					{/* ============================================ */}
+					{/* LEFT: VISUAL SECTION */}
+					{/* ============================================ */}
 					<div className='space-y-4'>
 						<div className='relative aspect-square rounded-2xl overflow-hidden bg-stone-100 shadow-sm'>
 							<Image
@@ -152,8 +217,11 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 						)}
 					</div>
 
-					{/* Info Section */}
+					{/* ============================================ */}
+					{/* RIGHT: INFO SECTION */}
+					{/* ============================================ */}
 					<div className='flex flex-col'>
+						{/* Header */}
 						<div className='mb-4'>
 							<div className='flex gap-2 mb-2'>
 								{product.difficulty && (
@@ -174,6 +242,43 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 							<p className='text-stone-600 text-sm leading-relaxed'>{product.description}</p>
 						</div>
 
+						{/* ============================================ */}
+						{/* SIZE SELECTOR */}
+						{/* ============================================ */}
+						{product.variations && product.variations.length > 0 && (
+							<div className='mb-6'>
+								<div className='flex items-center gap-2 mb-3'>
+									<Pizza className='w-5 h-5 text-orange-600' />
+									<h3 className='font-bold text-sm'>O'lchamni tanlang</h3>
+								</div>
+								<div className='grid grid-cols-2 gap-3'>
+									{product.variations.map(variation => (
+										<button
+											key={variation.id}
+											onClick={() => setSelectedVariation(variation)}
+											className={`p-3 border-2 rounded-xl transition-all text-left ${
+												selectedVariation?.id === variation.id
+													? 'border-orange-600 bg-orange-50 shadow-sm'
+													: 'border-stone-200 hover:border-orange-300'
+											}`}
+										>
+											<div className='font-bold text-sm'>{variation.size}</div>
+											{variation.diameter && (
+												<div className='text-xs text-stone-500'>{variation.diameter}cm</div>
+											)}
+											{variation.slices && (
+												<div className='text-xs text-stone-500'>{variation.slices} bo'lak</div>
+											)}
+											<div className='text-sm font-semibold text-orange-600 mt-1'>
+												{variation.price.toLocaleString()} so'm
+											</div>
+										</button>
+									))}
+								</div>
+							</div>
+						)}
+
+						{/* Quick Info */}
 						<div className='grid grid-cols-2 gap-3 mb-6'>
 							<div className='flex items-center gap-3 p-3 bg-stone-50 rounded-xl border border-stone-100'>
 								<Clock className='w-4 h-4 text-orange-500' />
@@ -195,26 +300,34 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 							)}
 						</div>
 
-						{/* Price Card */}
+						{/* ============================================ */}
+						{/* PRICE CARD */}
+						{/* ============================================ */}
 						<Card className='bg-orange-600 text-white border-none shadow-lg shadow-orange-100 mb-6'>
 							<CardContent className='p-4 flex items-center justify-between'>
 								<div>
 									<p className='text-orange-100 text-xs uppercase font-bold'>Narxi</p>
 									<p className='text-2xl font-black'>
-										{product.price.toLocaleString()}{' '}
+										{currentPrice.toLocaleString()}{' '}
 										<span className='text-sm font-normal'>so'm</span>
 									</p>
+									{selectedVariation && (
+										<p className='text-orange-100 text-xs mt-1'>{selectedVariation.size} o'lcham</p>
+									)}
 								</div>
 								<Button
 									onClick={handleAddToCart}
-									className='bg-white text-orange-600 hover:bg-stone-100 rounded-xl px-6'
+									disabled={!selectedVariation}
+									className='bg-white text-orange-600 hover:bg-stone-100 rounded-xl px-6 disabled:opacity-50'
 								>
 									<Plus className='w-5 h-5 mr-1' /> Qo'shish
 								</Button>
 							</CardContent>
 						</Card>
 
-						{/* Tabs for extra info */}
+						{/* ============================================ */}
+						{/* TABS */}
+						{/* ============================================ */}
 						<Tabs defaultValue='details' className='w-full'>
 							<TabsList className='grid w-full grid-cols-2 mb-4'>
 								<TabsTrigger value='details'>Tarkibi</TabsTrigger>
@@ -275,6 +388,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 							</TabsContent>
 						</Tabs>
 
+						{/* Allergens */}
 						{product.allergens && product.allergens.length > 0 && (
 							<div className='mt-4 p-3 bg-red-50 rounded-lg flex gap-2 items-center'>
 								<AlertCircle className='w-4 h-4 text-red-500' />
