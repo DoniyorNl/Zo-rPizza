@@ -1,4 +1,4 @@
-import axios from 'axios'
+import { api } from '@/lib/apiClient'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
 	AnalyticsOverview,
@@ -41,11 +41,11 @@ export function useAnalytics(dateRange: DateRange) {
 		setLoading(true)
 		try {
 			const results = await Promise.allSettled([
-				axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/analytics/overview`, { params }),
-				axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/analytics/revenue`, { params }),
-				axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/analytics/top-products`, { params }),
-				axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/analytics/categories`, { params }),
-				axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/analytics/recent-orders`),
+				api.get('/api/analytics/overview', { params }),
+				api.get('/api/analytics/revenue', { params }),
+				api.get('/api/analytics/top-products', { params }),
+				api.get('/api/analytics/categories', { params }),
+				api.get('/api/analytics/recent-orders'),
 			])
 
 			const [overviewRes, revenueRes, productsRes, categoriesRes, ordersRes] = results

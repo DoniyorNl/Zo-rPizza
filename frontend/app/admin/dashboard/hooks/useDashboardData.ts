@@ -2,6 +2,7 @@
 
 'use client'
 
+import { api } from '@/lib/apiClient'
 import axios from 'axios'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
@@ -11,9 +12,6 @@ import {
 	LiveOrder,
 	TodayTopProduct,
 } from '../types/dashboard.types'
-
-const API_BASE_URL =
-	process.env.NEXT_PUBLIC_API_URL || 'https://zo-rpizza-production.up.railway.app'
 
 interface UseDashboardDataReturn {
 	stats: DashboardStats | null
@@ -54,7 +52,7 @@ export const useDashboardData = (): UseDashboardDataReturn => {
 			}
 			setError(null)
 
-			const response = await axios.get<DashboardApiResponse>(`${API_BASE_URL}/api/dashboard`, {
+			const response = await api.get<DashboardApiResponse>('/api/dashboard', {
 				signal: abortControllerRef.current.signal,
 			})
 

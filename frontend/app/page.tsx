@@ -7,7 +7,7 @@ import { Header } from '@/components/layout/Header'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
-import axios from 'axios'
+import { api } from '@/lib/apiClient'
 import { ChefHat, Clock, Plus } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -55,7 +55,7 @@ export default function HomePage() {
 	useEffect(() => {
 		const fetchProducts = async () => {
 			try {
-				const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/products`)
+				const response = await api.get('/api/products')
 				console.log('✅ Products loaded:', response.data.data.length)
 				setProducts(response.data.data)
 			} catch (error) {

@@ -7,6 +7,7 @@ import { Header } from '@/components/layout/Header'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { api } from '@/lib/apiClient'
 import { useAuth } from '@/lib/AuthContext'
 import { useCartStore } from '@/store/cartStore'
 import axios from 'axios'
@@ -59,7 +60,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
 
 		const fetchOrder = async () => {
 			try {
-				const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/orders/${id}`)
+				const response = await api.get(`/api/orders/${id}`)
 				setOrder(response.data.data)
 			} catch (err: unknown) {
 				if (axios.isAxiosError(err)) {

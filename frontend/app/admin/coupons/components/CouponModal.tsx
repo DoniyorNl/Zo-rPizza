@@ -5,6 +5,7 @@
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { api } from '@/lib/apiClient'
 import axios from 'axios'
 import { useEffect, useState } from 'react'
 import { Coupon, CouponFormData, CouponFormErrors, DiscountType } from '../types/coupon.types'
@@ -79,9 +80,9 @@ export function CouponModal({ coupon, onClose, onSuccess }: CouponModalProps) {
 			}
 
 			if (coupon) {
-				await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/coupons/${coupon.id}`, payload)
+				await api.put(`/api/coupons/${coupon.id}`, payload)
 			} else {
-				await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/coupons`, payload)
+				await api.post('/api/coupons', payload)
 			}
 			onSuccess()
 		} catch (err) {

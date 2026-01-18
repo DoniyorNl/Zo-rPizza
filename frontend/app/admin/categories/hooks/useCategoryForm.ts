@@ -1,3 +1,4 @@
+import { api } from '@/lib/apiClient'
 import axios from 'axios'
 import { useState } from 'react'
 import { Category, CategoryFormData } from '../types/category.types'
@@ -34,10 +35,10 @@ export function useCategoryForm(category: Category | null) {
 			}
 
 			if (category) {
-				await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/categories/${category.id}`, data)
+				await api.put(`/api/categories/${category.id}`, data)
 				onSuccess('Kategoriya muvaffaqiyatli yangilandi')
 			} else {
-				await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`, data)
+				await api.post('/api/categories', data)
 				onSuccess("Kategoriya muvaffaqiyatli qo'shildi")
 			}
 		} catch (error: unknown) {

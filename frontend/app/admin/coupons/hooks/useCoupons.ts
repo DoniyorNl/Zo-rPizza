@@ -1,7 +1,7 @@
 // frontend/app/admin/coupons/hooks/useCoupons.ts
 // ✅ Coupons data hooks
 
-import axios from 'axios'
+import { api } from '@/lib/apiClient'
 import { useEffect, useState } from 'react'
 import { Coupon } from '../types/coupon.types'
 
@@ -12,7 +12,7 @@ export function useCoupons() {
 
 	const fetchCoupons = async () => {
 		try {
-			const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/coupons`)
+			const response = await api.get('/api/coupons')
 			setCoupons(response.data.data)
 		} catch (err) {
 			console.error('Error fetching coupons:', err)
@@ -23,7 +23,7 @@ export function useCoupons() {
 	}
 
 	const deleteCoupon = async (id: string) => {
-		await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/coupons/${id}`)
+		await api.delete(`/api/coupons/${id}`)
 		await fetchCoupons()
 	}
 

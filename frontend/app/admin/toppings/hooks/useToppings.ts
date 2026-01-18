@@ -1,7 +1,7 @@
 // frontend/app/admin/toppings/hooks/useToppings.ts
 // ✅ Toppings data hooks
 
-import axios from 'axios'
+import { api } from '@/lib/apiClient'
 import { useEffect, useState } from 'react'
 import { Topping } from '../types/topping.types'
 
@@ -12,7 +12,7 @@ export function useToppings() {
 
 	const fetchToppings = async () => {
 		try {
-			const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/toppings`)
+			const response = await api.get('/api/toppings')
 			setToppings(response.data.data)
 		} catch (err) {
 			console.error('Error fetching toppings:', err)
@@ -23,7 +23,7 @@ export function useToppings() {
 	}
 
 	const deleteTopping = async (id: string) => {
-		await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/toppings/${id}`)
+		await api.delete(`/api/toppings/${id}`)
 		await fetchToppings()
 	}
 

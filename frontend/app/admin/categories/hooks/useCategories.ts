@@ -1,3 +1,4 @@
+import { api } from '@/lib/apiClient'
 import axios from 'axios'
 import { useCallback, useEffect, useState } from 'react'
 import { Category, FilterStatus, ToastType } from '../types/category.types'
@@ -10,7 +11,7 @@ export function useCategories() {
 
 	const fetchCategories = useCallback(async () => {
 		try {
-			const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`, {
+			const response = await api.get('/api/categories', {
 				params: filterStatus === 'all' ? {} : { isActive: filterStatus === 'active' },
 			})
 			setCategories(response.data.data)
@@ -24,7 +25,7 @@ export function useCategories() {
 
 	const handleDelete = async (id: string, categoryName: string) => {
 		try {
-			await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/categories/${id}`)
+			await api.delete(`/api/categories/${id}`)
 			setToast({ message: `"${categoryName}" o'chirildi`, type: 'success' })
 			fetchCategories()
 		} catch (error: unknown) {
@@ -38,7 +39,7 @@ export function useCategories() {
 
 	const handleRestore = async (id: string, categoryName: string) => {
 		try {
-			await axios.patch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories/${id}/restore`)
+			await api.patch(`/api/categories/${id}/restore`)
 			setToast({ message: `"${categoryName}" qayta faollashtirildi`, type: 'success' })
 			fetchCategories()
 		} catch (error: unknown) {

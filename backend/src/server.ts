@@ -32,14 +32,29 @@ const PORT = process.env.PORT || 5001
 
 app.use(helmet())
 
-const allowedOrigins = [
-	process.env.FRONTEND_URL,
-]
+const allowedOrigins = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || '')
+	.split(',')
+	.map(origin => origin.trim())
+	.filter(Boolean)
+
+const normalizeOrigin = (origin: string) => origin.replace(/\/+$/, '')
+const normalizedAllowedOrigins = allowedOrigins.map(normalizeOrigin).filter(Boolean)
+const allowLocalhostOrigin = process.env.ALLOW_LOCALHOST_ORIGIN === 'true'
+const isLocalhostOrigin = (origin: string) =>
+	/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(normalizeOrigin(origin))
 
 app.use(
 	cors({
 		origin: (origin, callback) => {
-			if (!origin || allowedOrigins.some(domain => domain && origin.startsWith(domain))) {
+			if (!origin) return callback(null, true)
+			if (allowedOrigins.length === 0 && process.env.NODE_ENV !== 'production') {
+				return callback(null, true)
+			}
+			const normalizedOrigin = normalizeOrigin(origin)
+			if (normalizedAllowedOrigins.includes(normalizedOrigin)) {
+				return callback(null, true)
+			}
+			if (allowLocalhostOrigin && isLocalhostOrigin(origin)) {
 				return callback(null, true)
 			}
 			console.log('❌ CORS blocked origin:', origin)

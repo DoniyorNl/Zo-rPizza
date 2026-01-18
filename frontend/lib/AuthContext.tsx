@@ -7,6 +7,7 @@
 
 'use client'
 
+import { api } from '@/lib/apiClient'
 import { createContext, useContext, useEffect, useState } from 'react'
 import {
 	User,
@@ -16,7 +17,6 @@ import {
 	onAuthStateChanged,
 } from 'firebase/auth'
 import { auth } from './firebase'
-import axios from 'axios'
 
 interface AuthContextType {
 	user: User | null
@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 		// Backend'ga user ma'lumotlarini yuborish
 		try {
-			await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
+			await api.post('/api/users', {
 				firebaseUid: userCredential.user.uid,
 				email: userCredential.user.email,
 				name: email.split('@')[0], // Default name

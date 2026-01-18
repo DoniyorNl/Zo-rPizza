@@ -5,6 +5,7 @@
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { api } from '@/lib/apiClient'
 import axios from 'axios'
 import { useEffect, useState } from 'react'
 import {
@@ -43,7 +44,7 @@ export function DealModal({ deal, onClose, onSuccess }: DealModalProps) {
 
 	useEffect(() => {
 		const fetchProducts = async () => {
-			const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/products`)
+			const response = await api.get('/api/products')
 			setProducts(response.data.data)
 		}
 		fetchProducts()
@@ -142,10 +143,10 @@ export function DealModal({ deal, onClose, onSuccess }: DealModalProps) {
 			}
 
 			if (deal) {
-				await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/deals/${deal.id}`, payload)
+				await api.put(`/api/deals/${deal.id}`, payload)
 				onSuccess('Deal yangilandi')
 			} else {
-				await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/deals`, payload)
+				await api.post('/api/deals', payload)
 				onSuccess('Deal yaratildi')
 			}
 		} catch (err) {
