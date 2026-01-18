@@ -21,8 +21,17 @@ export const TodayRevenueChart: React.FC<TodayRevenueChartProps> = ({ data, isLo
 		)
 	}
 
-	const maxRevenue = Math.max(...data.map(d => d.revenue), 1)
+	const maxRevenue = data.length > 0 ? Math.max(...data.map(d => d.revenue), 1) : 1
 	const currentHour = getCurrentHour()
+
+	if (data.length === 0) {
+		return (
+			<div className='bg-white rounded-lg shadow-sm border border-gray-200 p-6'>
+				<h3 className='text-lg font-semibold text-gray-900 mb-4'>📊 Bugungi Soatlik Daromad</h3>
+				<p className='text-gray-500 text-center py-12'>Bugun hali ma&apos;lumot yo&apos;q</p>
+			</div>
+		)
+	}
 
 	return (
 		<div className='bg-white rounded-lg shadow-sm border border-gray-200 p-6'>
@@ -122,8 +131,9 @@ export const TodayRevenueChart: React.FC<TodayRevenueChartProps> = ({ data, isLo
 						<p className='text-sm text-gray-600 mb-1'>Eng Band Soat</p>
 						<p className='text-lg font-bold text-gray-900'>
 							{(() => {
-								const peakHour = data.reduce((max, item) =>
-									item.revenue > max.revenue ? item : max,
+								const peakHour = data.reduce(
+									(max, item) => (item.revenue > max.revenue ? item : max),
+									data[0] || { hour: 0, revenue: 0, orders: 0 },
 								)
 								return formatHour(peakHour.hour)
 							})()}

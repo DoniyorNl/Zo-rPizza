@@ -87,10 +87,11 @@ export const adminOnly = async (req: Request, res: Response, next: NextFunction)
 		const userId = req.headers['x-user-id'] as string
 
 		if (!userId) {
-			console.warn(`[ADMIN_MIDDLEWARE] Unauthorized attempt from IP: ${ip}`)
+			console.warn(`[ADMIN_MIDDLEWARE] Unauthorized attempt (no x-user-id) from IP: ${ip}`)
 			return res.status(401).json({
 				success: false,
-				message: 'Authentication required. Please login.',
+				message: "Kirish uchun avval tizimga kiring.",
+				code: 'AUTH_REQUIRED',
 			})
 		}
 
@@ -106,12 +107,14 @@ export const adminOnly = async (req: Request, res: Response, next: NextFunction)
 			},
 		})
 
-		// 4. User mavjudligini tekshirish
+		// 4. User mavjudligini tekshirish (id = Firebase UID bo'lishi kerak)
 		if (!user) {
 			console.warn(`[ADMIN_MIDDLEWARE] User not found: ${userId} from IP: ${ip}`)
 			return res.status(401).json({
 				success: false,
-				message: 'User not found. Please login again.',
+				message:
+					"Hisob topilmadi. Avval saytda ro'yxatdan o'ting. Admin uchun rolni ADMIN qilish kerak.",
+				code: 'USER_NOT_FOUND',
 			})
 		}
 
