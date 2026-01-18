@@ -34,8 +34,6 @@ app.use(helmet())
 
 const allowedOrigins = [
 	process.env.FRONTEND_URL,
-	'http://localhost:3000',
-	'http://localhost:5173',
 ]
 
 app.use(
@@ -209,9 +207,9 @@ const startServer = async () => {
       🚀 Server muvaffaqiyatli ishga tushdi!
       📍 Port: ${PORT}
       📍 Mode: ${process.env.NODE_ENV || 'development'}
-      🍕 API Base: http://localhost:${PORT}/api
-      📊 Dashboard: http://localhost:${PORT}/api/dashboard
-      💚 Health: http://localhost:${PORT}/health
+      🍕 API Base: /api
+      📊 Dashboard: /api/dashboard
+      💚 Health: /health
       `)
 		})
 
@@ -224,7 +222,7 @@ const startServer = async () => {
 		console.error('❌ Serverni boshlashda xatolik:', error)
 		try {
 			await prisma.$disconnect()
-		} catch (_e) {}
+		} catch (_e) { }
 		process.exit(1)
 	}
 }
@@ -244,5 +242,5 @@ process.on('SIGTERM', () => shutdown('SIGTERM'))
 process.on('beforeExit', async () => {
 	try {
 		await prisma.$disconnect()
-	} catch (_e) {}
+	} catch (_e) { }
 })

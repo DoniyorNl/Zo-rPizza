@@ -9,6 +9,9 @@ import axios from 'axios'
 import { format } from 'date-fns'
 import { useEffect, useState } from 'react'
 
+const API_BASE_URL =
+	process.env.NEXT_PUBLIC_API_URL || 'https://zo-rpizza-production.up.railway.app'
+
 interface Order {
 	id: string
 	orderNumber: string
@@ -40,7 +43,7 @@ export default function AdminOrdersPage() {
 
 		const fetchOrders = async () => {
 			try {
-				const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/orders/admin/all`, {
+				const response = await axios.get(`${API_BASE_URL}/api/orders/admin/all`, {
 					headers: {
 						'x-user-id': user.uid,
 					},
@@ -62,7 +65,7 @@ export default function AdminOrdersPage() {
 	const updateStatus = async (orderId: string, newStatus: string) => {
 		try {
 			await axios.patch(
-				`http://localhost:5001/api/orders/admin/${orderId}/status`,
+				`${API_BASE_URL}/api/orders/admin/${orderId}/status`,
 				{ status: newStatus },
 				{
 					headers: {
