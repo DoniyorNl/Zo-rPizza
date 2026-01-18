@@ -2,17 +2,18 @@
 
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
 import axios from 'axios'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
 	DashboardApiResponse,
 	DashboardStats,
+	HourlyRevenue,
 	LiveOrder,
 	TodayTopProduct,
-	HourlyRevenue,
 } from '../types/dashboard.types'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+const API_BASE_URL =
+	process.env.NEXT_PUBLIC_API_URL || 'https://zo-rpizza-production.up.railway.app'
 
 interface UseDashboardDataReturn {
 	stats: DashboardStats | null
@@ -53,7 +54,7 @@ export const useDashboardData = (): UseDashboardDataReturn => {
 			}
 			setError(null)
 
-			const response = await axios.get<DashboardApiResponse>(`${API_BASE_URL}/dashboard`, {
+			const response = await axios.get<DashboardApiResponse>(`${API_BASE_URL}/api/dashboard`, {
 				signal: abortControllerRef.current.signal,
 			})
 
@@ -65,11 +66,15 @@ export const useDashboardData = (): UseDashboardDataReturn => {
 			setHourlyRevenue(hourlyRevenue)
 			setLastUpdated(new Date().toISOString())
 			setError(null)
-		} catch (err: any) {
-			if (err.name === 'CanceledError') return
+		} catch (err: unknown) {
+			if (axios.isAxiosError(err) && err.name === 'CanceledError') return
 
 			console.error('Dashboard fetch error:', err)
-			setError(err.response?.data?.message || "Ma'lumotlarni yuklashda xatolik")
+			if (axios.isAxiosError(err)) {
+				setError(err.response?.data?.message || "Ma'lumotlarni yuklashda xatolik")
+			} else {
+				setError("Ma'lumotlarni yuklashda xatolik")
+			}
 		} finally {
 			setIsLoading(false)
 		}
