@@ -17,7 +17,6 @@ import { LiveOrdersFeed } from './components/LiveOrdersFeed'
 import { TopProductsToday } from './components/TopProductsToday'
 
 // Historical components (EXISTING)
-import { DashboardView } from './DashboardView'
 
 type DashboardTab = 'today' | 'overview'
 
@@ -190,13 +189,6 @@ export default function DashboardPage() {
 								</div>
 							</div>
 						</div>
-					</TabsContent>
-
-					{/* ================================================================ */}
-					{/* TAB 2: OVERVIEW (Historical) */}
-					{/* ================================================================ */}
-					<TabsContent value='overview'>
-						<DashboardView />
 					</TabsContent>
 				</Tabs>
 			</div>
