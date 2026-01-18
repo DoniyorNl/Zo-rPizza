@@ -226,13 +226,14 @@ const startServer = async () => {
 		console.log('✅ Database connected')
 
 		const server = app.listen(Number(PORT), '0.0.0.0', () => {
+			const baseUrl = `http://localhost:${PORT}`
 			console.log(`
       🚀 Server muvaffaqiyatli ishga tushdi!
       📍 Port: ${PORT}
       📍 Mode: ${process.env.NODE_ENV || 'development'}
-      🍕 API Base: /api
-      📊 Dashboard: /api/dashboard
-      💚 Health: /health
+      🍕 API Base: ${baseUrl}/api
+      📊 Dashboard: ${baseUrl}/api/dashboard
+      💚 Health: ${baseUrl}/health
       `)
 		})
 
