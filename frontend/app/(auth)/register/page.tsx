@@ -1,11 +1,26 @@
-// frontend/app/(auth)/register/page.tsx
-// 📝 REGISTER PAGE
+// =====================================
+// 📁 FILE PATH: frontend/app/(auth)/register/page.tsx
+// 🔐 REGISTER PAGE - FINAL VERSION
+// 🎯 PURPOSE: Complete signup with Firebase + Backend sync
+// 📝 UPDATED: 2025-01-18
+// ✨ FEATURES: Error handling, Loading states, Validation, Professional UI
+// =====================================
 
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { useAuth } from '@/lib/AuthContext'
+import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
@@ -15,6 +30,7 @@ export default function RegisterPage() {
 	const [confirmPassword, setConfirmPassword] = useState('')
 	const [error, setError] = useState('')
 	const [loading, setLoading] = useState(false)
+	const [success, setSuccess] = useState(false)
 
 	const { signup } = useAuth()
 	const router = useRouter()
@@ -22,85 +38,240 @@ export default function RegisterPage() {
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
 		setError('')
+		setSuccess(false)
 
-		// Validation
+		// ============================================
+		// VALIDATION
+		// ============================================
+
+		if (!email || !password || !confirmPassword) {
+			setError('Barcha maydonlarni to\'ldiring')
+			return
+		}
+
 		if (password !== confirmPassword) {
-			return setError('Parollar mos kelmadi')
+			setError('Parollar mos kelmadi')
+			return
 		}
 
 		if (password.length < 6) {
-			return setError("Parol kamida 6 ta belgidan iborat bo'lishi kerak")
+			setError('Parol kamida 6 ta belgidan iborat bo\'lishi kerak')
+			return
+		}
+
+		// Email format tekshirish
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+		if (!emailRegex.test(email)) {
+			setError('Email manzil noto\'g\'ri formatda')
+			return
 		}
 
 		setLoading(true)
 
 		try {
+			// ============================================
+			// FIREBASE SIGNUP + BACKEND SYNC
+			// ============================================
 			await signup(email, password)
-			router.push('/')
+
+			console.log('✅ Signup successful')
+			setSuccess(true)
+
+			// Success message ko'rsatish va redirect
+			setTimeout(() => {
+				router.push('/')
+				router.refresh()
+			}, 1500)
 		} catch (err: unknown) {
+			console.error('❌ Signup error:', err)
+
+			// ============================================
+			// FIREBASE ERROR HANDLING
+			// ============================================
+			let errorMessage = 'Ro\'yxatdan o\'tishda xatolik. Qaytadan urinib ko\'ring.'
+
 			if (err instanceof Error) {
-				setError(err.message || "Ro'yxatdan o'tishda xato")
-			} else {
-				setError("Ro'yxatdan o'tishda xato")
+				// Firebase error kodlari
+				if (err.message.includes('auth/email-already-in-use')) {
+					errorMessage = 'Bu email allaqachon ro\'yxatdan o\'tgan. Login qiling yoki boshqa email kiriting.'
+				} else if (err.message.includes('auth/invalid-email')) {
+					errorMessage = 'Email manzil noto\'g\'ri formatda.'
+				} else if (err.message.includes('auth/weak-password')) {
+					errorMessage = 'Parol juda oddiy. Kamida 6 ta belgi, raqam va harf ishlating.'
+				} else if (err.message.includes('auth/operation-not-allowed')) {
+					errorMessage = 'Email/parol autentifikatsiya o\'chirilgan. Admin bilan bog\'laning.'
+				} else if (err.message.includes('auth/network-request-failed')) {
+					errorMessage = 'Internet ulanishini tekshiring.'
+				} else {
+					errorMessage = err.message
+				}
 			}
+
+			setError(errorMessage)
 		} finally {
 			setLoading(false)
 		}
 	}
 
 	return (
-		<div className='min-h-screen flex items-center justify-center bg-gradient-to-b from-orange-50 to-white p-4'>
-			<Card className='w-full max-w-md'>
-				<CardHeader>
-					<CardTitle className='text-3xl text-center'>🍕 Ro&apos;yxatdan o&apos;tish</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<form onSubmit={handleSubmit} className='space-y-4'>
-						{error && <div className='bg-red-50 text-red-600 p-3 rounded'>{error}</div>}
+		<div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-white to-red-50 p-4'>
+			<Card className='w-full max-w-md shadow-2xl border-0'>
+				<CardHeader className='space-y-3 pb-6'>
+					{/* Logo */}
+					<div className='flex justify-center mb-2'>
+						<div className='w-20 h-20 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform'>
+							<span className='text-4xl'>🍕</span>
+						</div>
+					</div>
 
-						<div>
-							<label className='block text-sm font-medium mb-2'>Email</label>
-							<input
+					{/* Title */}
+					<CardTitle className='text-3xl text-center font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent'>
+						Ro&apos;yxatdan O&apos;tish
+					</CardTitle>
+
+					{/* Description */}
+					<CardDescription className='text-center text-base'>
+						Zor Pizza da akkaunt yarating va buyurtma bering
+					</CardDescription>
+				</CardHeader>
+
+				<CardContent>
+					<form onSubmit={handleSubmit} className='space-y-5'>
+						{/* ============================================ */}
+						{/* SUCCESS MESSAGE */}
+						{/* ============================================ */}
+						{success && (
+							<div className='bg-green-50 border border-green-200 text-green-800 p-4 rounded-lg flex items-start gap-3 animate-in fade-in slide-in-from-top-2'>
+								<CheckCircle2 className='w-5 h-5 flex-shrink-0 mt-0.5' />
+								<div>
+									<p className='font-semibold'>Muvaffaqiyatli ro&apos;yxatdan o&apos;tdingiz!</p>
+									<p className='text-sm mt-1'>Bosh sahifaga yonaltirilmoqda...</p>
+								</div>
+							</div>
+						)}
+
+						{/* ============================================ */}
+						{/* ERROR MESSAGE */}
+						{/* ============================================ */}
+						{error && (
+							<div className='bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg flex items-start gap-3 animate-in fade-in slide-in-from-top-2'>
+								<AlertCircle className='w-5 h-5 flex-shrink-0 mt-0.5' />
+								<p className='text-sm'>{error}</p>
+							</div>
+						)}
+
+						{/* ============================================ */}
+						{/* EMAIL INPUT */}
+						{/* ============================================ */}
+						<div className='space-y-2'>
+							<Label htmlFor='email' className='text-sm font-semibold'>
+								Email Manzil
+							</Label>
+							<Input
+								id='email'
 								type='email'
+								placeholder='example@email.com'
 								value={email}
 								onChange={e => setEmail(e.target.value)}
-								className='w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500'
 								required
+								disabled={loading || success}
+								className='h-11 text-base'
+								autoComplete='email'
 							/>
 						</div>
 
-						<div>
-							<label className='block text-sm font-medium mb-2'>Parol</label>
-							<input
+						{/* ============================================ */}
+						{/* PASSWORD INPUT */}
+						{/* ============================================ */}
+						<div className='space-y-2'>
+							<Label htmlFor='password' className='text-sm font-semibold'>
+								Parol
+							</Label>
+							<Input
+								id='password'
 								type='password'
+								placeholder='Kamida 6 ta belgi'
 								value={password}
 								onChange={e => setPassword(e.target.value)}
-								className='w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500'
 								required
+								disabled={loading || success}
+								className='h-11 text-base'
+								autoComplete='new-password'
 							/>
+							<p className='text-xs text-gray-500'>
+								Kamida 6 ta belgi, raqam va harf ishlating
+							</p>
 						</div>
 
-						<div>
-							<label className='block text-sm font-medium mb-2'>Parolni tasdiqlang</label>
-							<input
+						{/* ============================================ */}
+						{/* CONFIRM PASSWORD INPUT */}
+						{/* ============================================ */}
+						<div className='space-y-2'>
+							<Label htmlFor='confirmPassword' className='text-sm font-semibold'>
+								Parolni Tasdiqlash
+							</Label>
+							<Input
+								id='confirmPassword'
 								type='password'
+								placeholder='Parolni qayta kiriting'
 								value={confirmPassword}
 								onChange={e => setConfirmPassword(e.target.value)}
-								className='w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500'
 								required
+								disabled={loading || success}
+								className='h-11 text-base'
+								autoComplete='new-password'
 							/>
 						</div>
 
-						<Button type='submit' className='w-full' disabled={loading}>
-							{loading ? 'Yuklanmoqda...' : "Ro'yxatdan o'tish"}
+						{/* ============================================ */}
+						{/* SUBMIT BUTTON */}
+						{/* ============================================ */}
+						<Button
+							type='submit'
+							className='w-full h-12 text-base font-semibold bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 shadow-lg hover:shadow-xl transition-all'
+							disabled={loading || success}
+						>
+							{loading ? (
+								<>
+									<Loader2 className='mr-2 h-5 w-5 animate-spin' />
+									Ro&apos;yxatdan o&apos;tilmoqda...
+								</>
+							) : success ? (
+								<>
+									<CheckCircle2 className='mr-2 h-5 w-5' />
+									Muvaffaqiyatli!
+								</>
+							) : (
+								'Ro\'yxatdan O\'tish'
+							)}
 						</Button>
 
-						<p className='text-center text-sm'>
-							Akkauntingiz bormi?{' '}
-							<a href='/login' className='text-orange-600 hover:underline'>
-								Kirish
-							</a>
-						</p>
+						{/* ============================================ */}
+						{/* DIVIDER */}
+						{/* ============================================ */}
+						<div className='relative'>
+							<div className='absolute inset-0 flex items-center'>
+								<span className='w-full border-t border-gray-200' />
+							</div>
+							<div className='relative flex justify-center text-xs uppercase'>
+								<span className='bg-white px-2 text-gray-500 font-medium'>Yoki</span>
+							</div>
+						</div>
+
+						{/* ============================================ */}
+						{/* LOGIN LINK */}
+						{/* ============================================ */}
+						<div className='text-center space-y-2'>
+							<p className='text-sm text-gray-600'>
+								Allaqachon akkauntingiz bormi?{' '}
+								<Link
+									href='/login'
+									className='font-semibold text-orange-600 hover:text-orange-700 hover:underline transition-colors'
+								>
+									Kirish
+								</Link>
+							</p>
+						</div>
 					</form>
 				</CardContent>
 			</Card>

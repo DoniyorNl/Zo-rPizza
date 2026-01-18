@@ -1,8 +1,8 @@
 // =====================================
 // 📁 FILE PATH: frontend/lib/AuthContext.tsx
-// 🔐 AUTH CONTEXT - FIXED VERSION
-// 🎯 PURPOSE: Firebase authentication with localStorage persistence
-// 📝 UPDATED: 2025-01-11
+// 🔐 AUTH CONTEXT - COMPLETE VERSION WITH BACKEND SYNC
+// 🎯 PURPOSE: Firebase authentication + Backend synchronization
+// 📝 UPDATED: 2025-01-18
 // =====================================
 
 'use client'
@@ -24,6 +24,7 @@ interface AuthContextType {
 	signup: (email: string, password: string) => Promise<void>
 	login: (email: string, password: string) => Promise<void>
 	logout: () => Promise<void>
+	refreshToken: () => Promise<string | null>
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType)
@@ -36,78 +37,185 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const [user, setUser] = useState<User | null>(null)
 	const [loading, setLoading] = useState(true)
 
-	// Signup
-	const signup = async (email: string, password: string) => {
-		const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-
-		// ✅ YANGI: localStorage'ga saqlash
-		localStorage.setItem(
-			'firebaseUser',
-			JSON.stringify({
-				uid: userCredential.user.uid,
-				email: userCredential.user.email,
-			}),
-		)
-
-		// Backend'ga user ma'lumotlarini yuborish
+	/**
+	 * 🆕 Backend bilan sinxronlashtirish
+	 * Firebase user ni database ga saqlaydi
+	 */
+	const syncWithBackend = async (firebaseUser: User) => {
 		try {
-			await api.post('/api/users', {
-				firebaseUid: userCredential.user.uid,
-				email: userCredential.user.email,
-				name: email.split('@')[0], // Default name
+			// 1. Firebase token olish
+			const token = await firebaseUser.getIdToken()
+
+			// 2. Backend /api/auth/sync endpointga request
+			const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/sync`, {
+				method: 'POST',
+				headers: {
+					'Authorization': `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
 			})
+
+			const data = await response.json()
+
+			if (data.success) {
+				console.log('✅ User synced with backend:', data.data)
+				return data.data
+			} else {
+				console.warn('⚠️ Backend sync warning:', data.message)
+			}
 		} catch (error) {
-			console.error('Error saving user to database:', error)
+			console.error('❌ Backend sync error:', error)
 		}
 	}
 
-	// Login
+	/**
+	 * 🆕 Token yangilash
+	 */
+	const refreshToken = async () => {
+		try {
+			if (user) {
+				const token = await user.getIdToken(true) // Force refresh
+				localStorage.setItem('firebaseToken', token)
+				console.log('✅ Token refreshed')
+				return token
+			}
+			return null
+		} catch (error) {
+			console.error('❌ Token refresh error:', error)
+			return null
+		}
+	}
+
+	/**
+	 * Ro'yxatdan o'tish
+	 */
+	const signup = async (email: string, password: string) => {
+		try {
+			// 1. Firebase signup
+			const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+			const firebaseUser = userCredential.user
+
+			// 2. Token olish va saqlash
+			const token = await firebaseUser.getIdToken()
+			localStorage.setItem('firebaseToken', token)
+			localStorage.setItem(
+				'firebaseUser',
+				JSON.stringify({
+					uid: firebaseUser.uid,
+					email: firebaseUser.email,
+				}),
+			)
+
+			console.log('✅ Firebase signup successful:', firebaseUser.uid)
+
+			// 3. Backend bilan sinxronlashtirish
+			await syncWithBackend(firebaseUser)
+		} catch (error) {
+			console.error('❌ Signup error:', error)
+			throw error
+		}
+	}
+
+	/**
+	 * Tizimga kirish
+	 */
 	const login = async (email: string, password: string) => {
-		const userCredential = await signInWithEmailAndPassword(auth, email, password)
+		try {
+			// 1. Firebase login
+			const userCredential = await signInWithEmailAndPassword(auth, email, password)
+			const firebaseUser = userCredential.user
 
-		// ✅ YANGI: localStorage'ga saqlash
-		localStorage.setItem(
-			'firebaseUser',
-			JSON.stringify({
-				uid: userCredential.user.uid,
-				email: userCredential.user.email,
-			}),
-		)
+			// 2. Token olish va saqlash
+			const token = await firebaseUser.getIdToken()
+			localStorage.setItem('firebaseToken', token)
+			localStorage.setItem(
+				'firebaseUser',
+				JSON.stringify({
+					uid: firebaseUser.uid,
+					email: firebaseUser.email,
+				}),
+			)
 
-		console.log('✅ User logged in and saved to localStorage:', userCredential.user.uid)
+			console.log('✅ Firebase login successful:', firebaseUser.uid)
+
+			// 3. Backend bilan sinxronlashtirish
+			await syncWithBackend(firebaseUser)
+		} catch (error) {
+			console.error('❌ Login error:', error)
+			throw error
+		}
 	}
 
-	// Logout
+	/**
+	 * Chiqish
+	 */
 	const logout = async () => {
-		await signOut(auth)
+		try {
+			await signOut(auth)
 
-		// ✅ YANGI: localStorage'dan o'chirish
-		localStorage.removeItem('firebaseUser')
-		console.log('✅ User logged out and removed from localStorage')
+			// localStorage tozalash
+			localStorage.removeItem('firebaseUser')
+			localStorage.removeItem('firebaseToken')
+
+			console.log('✅ User logged out')
+		} catch (error) {
+			console.error('❌ Logout error:', error)
+			throw error
+		}
 	}
 
-	// Listen to auth changes
+	/**
+	 * Auth state o'zgarishini kuzatish
+	 */
 	useEffect(() => {
-		const unsubscribe = onAuthStateChanged(auth, currentUser => {
+		const unsubscribe = onAuthStateChanged(auth, async currentUser => {
 			setUser(currentUser)
 			setLoading(false)
 
-			// ✅ YANGI: Auth state o'zgarganda localStorage'ni yangilash
 			if (currentUser) {
-				localStorage.setItem(
-					'firebaseUser',
-					JSON.stringify({
-						uid: currentUser.uid,
-						email: currentUser.email,
-					}),
-				)
+				// User tizimga kirgan
+				try {
+					// Token olish va saqlash
+					const token = await currentUser.getIdToken()
+					localStorage.setItem('firebaseToken', token)
+					localStorage.setItem(
+						'firebaseUser',
+						JSON.stringify({
+							uid: currentUser.uid,
+							email: currentUser.email,
+						}),
+					)
+
+					// Backend bilan sinxronlashtirish
+					await syncWithBackend(currentUser)
+				} catch (error) {
+					console.error('❌ Auth state change error:', error)
+				}
 			} else {
+				// User chiqdi
 				localStorage.removeItem('firebaseUser')
+				localStorage.removeItem('firebaseToken')
 			}
 		})
 
 		return unsubscribe
 	}, [])
+
+	/**
+	 * Token avtomatik yangilanishi (har 50 daqiqada)
+	 */
+	useEffect(() => {
+		if (!user) return
+
+		const interval = setInterval(
+			async () => {
+				await refreshToken()
+			},
+			50 * 60 * 1000,
+		) // 50 daqiqa
+
+		return () => clearInterval(interval)
+	}, [user])
 
 	const value = {
 		user,
@@ -115,6 +223,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		signup,
 		login,
 		logout,
+		refreshToken,
 	}
 
 	return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>
