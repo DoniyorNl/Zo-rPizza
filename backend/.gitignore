@@ -9,3 +9,6 @@ dist/
 
 # Logs
 *.log
+
+# Firebase
+firebase-service-account.json

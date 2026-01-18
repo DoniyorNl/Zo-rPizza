@@ -83,11 +83,14 @@ export const adminOnly = async (req: Request, res: Response, next: NextFunction)
 			})
 		}
 
-		// 2. Firebase UID headers'dan olish
-		const userId = req.headers['x-user-id'] as string
+		// 2. Firebase UID olish - token middleware'dan yoki header'dan
+		// Supports both: req.userId (from authenticateToken) or req.headers['x-user-id']
+		const userIdFromToken = (req as any).userId
+		const userIdFromHeader = req.headers['x-user-id'] as string
+		const userId = userIdFromToken || userIdFromHeader
 
 		if (!userId) {
-			console.warn(`[ADMIN_MIDDLEWARE] Unauthorized attempt (no x-user-id) from IP: ${ip}`)
+			console.warn(`[ADMIN_MIDDLEWARE] Unauthorized attempt (no userId) from IP: ${ip}`)
 			return res.status(401).json({
 				success: false,
 				message: "Kirish uchun avval tizimga kiring.",
