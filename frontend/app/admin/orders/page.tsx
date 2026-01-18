@@ -37,21 +37,27 @@ export default function AdminOrdersPage() {
 	const [error, setError] = useState('')
 
 	useEffect(() => {
-		if (!user) return
+		if (!user?.uid) {
+			setLoading(false)
+			return
+		}
 
 		const fetchOrders = async () => {
 			try {
 				const response = await api.get('/api/orders/admin/all', {
-					headers: {
-						'x-user-id': user.uid,
-					},
+					headers: { 'x-user-id': user.uid },
 				})
 				setOrders(response.data.data)
 			} catch (err: unknown) {
-				const message = axios.isAxiosError(err)
-					? err.response?.data?.message || 'Xatolik yuz berdi'
-					: 'Xatolik yuz berdi'
-				setError(message)
+				const msg = axios.isAxiosError(err) ? err.response?.data?.message : null
+				if (err && axios.isAxiosError(err) && err.response?.status === 401) {
+					setError(
+						msg ||
+							"Kirish mumkin emas. Hisobingizda ADMIN huquqi bo'lishi kerak. Agar yangi ro'yxatdan o'tgan bo'lsangiz, administrator bilan bog'laning.",
+					)
+				} else {
+					setError(msg || 'Xatolik yuz berdi')
+				}
 			} finally {
 				setLoading(false)
 			}
