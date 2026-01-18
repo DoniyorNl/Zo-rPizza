@@ -5,6 +5,7 @@
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { api } from '@/lib/apiClient'
 import axios from 'axios'
 import { useEffect, useState } from 'react'
 import { Topping, ToppingFormData, ToppingFormErrors } from '../types/topping.types'
@@ -57,9 +58,9 @@ export function ToppingModal({ topping, onClose, onSuccess }: ToppingModalProps)
 				isActive: formData.isActive,
 			}
 			if (topping) {
-				await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/toppings/${topping.id}`, payload)
+				await api.put(`/api/toppings/${topping.id}`, payload)
 			} else {
-				await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/toppings`, payload)
+				await api.post('/api/toppings', payload)
 			}
 			onSuccess()
 		} catch (err) {

@@ -6,6 +6,7 @@
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { api } from '@/lib/apiClient'
 import { useAuth } from '@/lib/AuthContext'
 import { useCartStore } from '@/store/cartStore'
 import axios from 'axios'
@@ -67,7 +68,7 @@ export default function CheckoutPage() {
 				deliveryPhone,
 			}
 
-			const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/orders`, orderData)
+			const response = await api.post('/api/orders', orderData)
 
 			// Muvaffaqiyatli - cart tozalash
 			clearCart()

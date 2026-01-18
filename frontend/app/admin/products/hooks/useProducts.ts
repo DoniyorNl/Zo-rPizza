@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import axios from 'axios'
+import { api } from '@/lib/apiClient'
+import { useEffect, useState } from 'react'
 import { Product, FilterStatus, ToastType } from '../types/product.types'
 
 export function useProducts() {
@@ -10,7 +10,7 @@ export function useProducts() {
 
 	const fetchProducts = async () => {
 		try {
-			const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/products`, {
+			const response = await api.get('/api/products', {
 				params: filterStatus === 'all' ? {} : { isActive: filterStatus === 'active' },
 			})
 			setProducts(response.data.data)
@@ -24,7 +24,7 @@ export function useProducts() {
 
 	const handleDelete = async (id: string, productName: string) => {
 		try {
-			await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${id}`)
+			await api.delete(`/api/products/${id}`)
 			setToast({ message: `"${productName}" menyudan yashirildi`, type: 'success' })
 			fetchProducts()
 		} catch (error: any) {
@@ -36,7 +36,7 @@ export function useProducts() {
 
 	const handleRestore = async (id: string, productName: string) => {
 		try {
-			await axios.patch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${id}/restore`)
+			await api.patch(`/api/products/${id}/restore`)
 			setToast({ message: `"${productName}" qayta faollashtirildi`, type: 'success' })
 			fetchProducts()
 		} catch (error: any) {

@@ -1,3 +1,4 @@
+import { api } from '@/lib/apiClient'
 import axios from 'axios'
 import { useCallback, useEffect, useState } from 'react'
 import { Category, Product, ProductFormData, ProductFormErrors } from '../types/product.types'
@@ -115,7 +116,7 @@ export function useProductForm(product: Product | null) {
 
 	const fetchCategories = useCallback(async () => {
 		try {
-			const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`)
+			const response = await api.get('/api/categories')
 			setCategories(response.data.data)
 			if (response.data.data.length > 0 && !product) {
 				setFormData(prev => ({ ...prev, categoryId: response.data.data[0].id }))
@@ -127,7 +128,7 @@ export function useProductForm(product: Product | null) {
 
 	const fetchToppings = useCallback(async () => {
 		try {
-			const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/toppings`)
+			const response = await api.get('/api/toppings')
 			setToppings(response.data.data)
 		} catch (error) {
 			console.error('Error fetching toppings:', error)
@@ -136,9 +137,7 @@ export function useProductForm(product: Product | null) {
 
 	const fetchProductDetails = useCallback(async (productId: string) => {
 		try {
-			const response = await axios.get(
-				`${process.env.NEXT_PUBLIC_API_URL}/api/products/${productId}`,
-			)
+			const response = await api.get(`/api/products/${productId}`)
 			const fullProduct = response.data.data as ProductResponse
 
 			setFormData({
@@ -274,10 +273,10 @@ export function useProductForm(product: Product | null) {
 			if (formData.fat) data.fat = parseFloat(formData.fat)
 
 			if (product) {
-				await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${product.id}`, data)
+				await api.put(`/api/products/${product.id}`, data)
 				onSuccess('Mahsulot muvaffaqiyatli yangilandi')
 			} else {
-				await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/products`, data)
+				await api.post('/api/products', data)
 				onSuccess("Mahsulot muvaffaqiyatli qo'shildi")
 			}
 		} catch (error: unknown) {

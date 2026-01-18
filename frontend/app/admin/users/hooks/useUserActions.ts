@@ -4,6 +4,7 @@
 // 📝 UPDATED: 2025-01-11
 // =====================================
 
+import { apiFetch } from '@/lib/apiFetch'
 import { useState } from 'react'
 
 interface UseUserActionsParams {
@@ -37,7 +38,7 @@ export const useUserActions = ({ onSuccess }: UseUserActionsParams = {}): UseUse
 				throw new Error('Authentication required')
 			}
 
-			const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userId}/role`, {
+			const response = await apiFetch(`/api/users/${userId}/role`, {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
@@ -81,17 +82,14 @@ export const useUserActions = ({ onSuccess }: UseUserActionsParams = {}): UseUse
 				throw new Error('Authentication required')
 			}
 
-			const response = await fetch(
-				`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userId}/status`,
-				{
-					method: 'PUT',
-					headers: {
-						'Content-Type': 'application/json',
-						'x-user-id': currentUserId,
-					},
-					body: JSON.stringify({ isBlocked: !currentStatus }),
+			const response = await apiFetch(`/api/users/${userId}/status`, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json',
+					'x-user-id': currentUserId,
 				},
-			)
+				body: JSON.stringify({ isBlocked: !currentStatus }),
+			})
 
 			const data = await response.json()
 

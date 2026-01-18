@@ -7,8 +7,8 @@ import { Header } from '@/components/layout/Header'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { api } from '@/lib/apiClient'
 import { useCartStore } from '@/store/cartStore'
-import axios from 'axios'
 import { ArrowLeft, CreditCard, MapPin, Package, ShoppingBag } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -71,7 +71,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 		const fetchOrder = async () => {
 			try {
 				const token = localStorage.getItem('token')
-				const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/orders/${id}`, {
+				const response = await api.get(`/api/orders/${id}`, {
 					headers: { Authorization: `Bearer ${token}` },
 				})
 				setOrder(response.data.data)

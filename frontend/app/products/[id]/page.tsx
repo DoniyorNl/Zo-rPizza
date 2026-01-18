@@ -8,8 +8,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { api } from '@/lib/apiClient'
 import { useCartStore } from '@/store/cartStore'
-import axios from 'axios'
 import { AlertCircle, ArrowLeft, Clock, Flame, Pizza, Plus } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -90,7 +90,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 	useEffect(() => {
 		const fetchProduct = async () => {
 			try {
-				const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${id}`)
+				const response = await api.get(`/api/products/${id}`)
 				const productData = response.data.data
 
 				// JSON parsing (o'zgarishsiz)
@@ -135,8 +135,8 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 		const fetchExtras = async () => {
 			try {
 				const [toppingsResponse, productsResponse] = await Promise.all([
-					axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/toppings`),
-					axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/products`, { params: { isActive: true } }),
+					api.get('/api/toppings'),
+					api.get('/api/products', { params: { isActive: true } }),
 				])
 				setToppings(toppingsResponse.data.data)
 				setHalfProducts(productsResponse.data.data)

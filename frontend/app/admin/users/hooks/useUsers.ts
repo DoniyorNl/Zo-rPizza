@@ -4,7 +4,8 @@
 // 📝 UPDATED: 2025-01-11 - FIXED
 // =====================================
 
-import { useState, useEffect } from 'react'
+import { apiFetch } from '@/lib/apiFetch'
+import { useEffect, useState } from 'react'
 import { UserData, UserStatistics } from '../types/user.types'
 import { ITEMS_PER_PAGE } from '../utils/userConstants'
 
@@ -61,12 +62,10 @@ export const useUsers = ({
 				...(searchTerm && { search: searchTerm }),
 			})
 
-			console.log('🔍 Fetching users:', {
-				url: `${process.env.NEXT_PUBLIC_API_URL}/api/users?${queryParams}`,
-				userId: userId,
-			})
+			const path = `/api/users?${queryParams}`
+			console.log('🔍 Fetching users:', { url: path, userId: userId })
 
-			const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users?${queryParams}`, {
+			const response = await apiFetch(path, {
 				headers: {
 					'x-user-id': userId,
 				},

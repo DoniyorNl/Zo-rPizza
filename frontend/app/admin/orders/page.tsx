@@ -4,13 +4,11 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { api } from '@/lib/apiClient'
 import { useAuth } from '@/lib/AuthContext'
 import axios from 'axios'
 import { format } from 'date-fns'
 import { useEffect, useState } from 'react'
-
-const API_BASE_URL =
-	process.env.NEXT_PUBLIC_API_URL || 'https://zo-rpizza-production.up.railway.app'
 
 interface Order {
 	id: string
@@ -43,7 +41,7 @@ export default function AdminOrdersPage() {
 
 		const fetchOrders = async () => {
 			try {
-				const response = await axios.get(`${API_BASE_URL}/api/orders/admin/all`, {
+				const response = await api.get('/api/orders/admin/all', {
 					headers: {
 						'x-user-id': user.uid,
 					},
@@ -64,8 +62,8 @@ export default function AdminOrdersPage() {
 
 	const updateStatus = async (orderId: string, newStatus: string) => {
 		try {
-			await axios.patch(
-				`${API_BASE_URL}/api/orders/admin/${orderId}/status`,
+			await api.patch(
+				`/api/orders/admin/${orderId}/status`,
 				{ status: newStatus },
 				{
 					headers: {
