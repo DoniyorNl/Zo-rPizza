@@ -8,11 +8,13 @@ import morgan from 'morgan'
 import prisma from './lib/prisma'
 
 // ============================================================================
-// RATE LIMIT IMPORT (Fixed)
+// RATE LIMIT IMPORT
 // ============================================================================
 import { rateLimit } from 'express-rate-limit'
 
-// Routes
+// ============================================================================
+// ROUTES IMPORT
+// ============================================================================
 import analyticsRoutes from './routes/analytics.routes'
 import categoriesRoutes from './routes/categories.routes'
 import couponsRoutes from './routes/coupons.routes'
@@ -22,6 +24,9 @@ import ordersRoutes from './routes/orders.routes'
 import productsRoutes from './routes/products.routes'
 import toppingsRoutes from './routes/toppings.routes'
 import usersRoutes from './routes/users.routes'
+
+// 🆕 FIREBASE AUTH ROUTES
+import firebaseAuthRoutes from './routes/firebase-auth.routes'
 
 const app: Express = express()
 const PORT = process.env.PORT || 5001
@@ -46,11 +51,10 @@ const isLocalhostOrigin = (origin: string) =>
 app.use(
 	cors({
 		origin: (origin, callback) => {
-			// Log untuk debugging
 			console.log('🔍 CORS check - Origin:', origin)
 			console.log('🔍 Allowed origins:', normalizedAllowedOrigins)
 			console.log('🔍 Allow localhost:', allowLocalhostOrigin)
-			
+
 			if (!origin) return callback(null, true)
 			if (allowedOrigins.length === 0 && process.env.NODE_ENV !== 'production') {
 				console.log('✅ Dev mode - allowing all origins')
@@ -75,13 +79,13 @@ app.use(
 )
 
 // ============================================================================
-// RATE LIMITING (Fixed)
+// RATE LIMITING
 // ============================================================================
 
 // Dashboard limiter
 const dashboardLimiter = rateLimit({
 	windowMs: 1 * 60 * 1000, // 1 minute
-	max: 120, // 120 requests per minute
+	max: 120,
 	message: { success: false, message: 'Dashboard limit exceeded' },
 	standardHeaders: true,
 	legacyHeaders: false,
@@ -92,6 +96,15 @@ const analyticsLimiter = rateLimit({
 	windowMs: 1 * 60 * 1000,
 	max: 500,
 	message: { success: false, message: 'Analytics limit exceeded' },
+	standardHeaders: true,
+	legacyHeaders: false,
+})
+
+// Auth limiter (Firebase auth endpoints uchun)
+const authLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000, // 15 minutes
+	max: 100, // 100 requests per 15 minutes
+	message: { success: false, message: 'Too many auth requests, please try again later' },
 	standardHeaders: true,
 	legacyHeaders: false,
 })
@@ -136,6 +149,7 @@ app.get('/', (_req: Request, res: Response) => {
 		endpoints: {
 			health: '/health',
 			api: '/api',
+			auth: '/api/auth',
 			dashboard: '/api/dashboard',
 			analytics: '/api/analytics',
 			products: '/api/products',
@@ -155,15 +169,18 @@ app.get('/api', (_req: Request, res: Response) => {
 		success: true,
 		message: 'Zor Pizza API v1.0',
 		availableEndpoints: [
-			{ method: 'GET', path: '/api/dashboard', description: 'Real-time dashboard' },
-			{ method: 'GET', path: '/api/analytics', description: 'Analytics' },
-			{ method: 'GET', path: '/api/products', description: 'Products' },
-			{ method: 'GET', path: '/api/orders', description: 'Orders' },
-			{ method: 'GET', path: '/api/users', description: 'Users' },
-			{ method: 'GET', path: '/api/categories', description: 'Categories' },
-			{ method: 'GET', path: '/api/toppings', description: 'Toppings' },
-			{ method: 'GET', path: '/api/coupons', description: 'Coupons' },
-			{ method: 'GET', path: '/api/deals', description: 'Deals' },
+			{ method: 'GET', path: '/api/auth/me', description: 'Get current user', protected: true },
+			{ method: 'GET', path: '/api/auth/verify-token', description: 'Verify Firebase token', protected: true },
+			{ method: 'POST', path: '/api/auth/set-admin', description: 'Set admin role', protected: true, admin: true },
+			{ method: 'GET', path: '/api/dashboard', description: 'Real-time dashboard', protected: false },
+			{ method: 'GET', path: '/api/analytics', description: 'Analytics', protected: false },
+			{ method: 'GET', path: '/api/products', description: 'Products', protected: false },
+			{ method: 'GET', path: '/api/orders', description: 'Orders', protected: true },
+			{ method: 'GET', path: '/api/users', description: 'Users', protected: true },
+			{ method: 'GET', path: '/api/categories', description: 'Categories', protected: false },
+			{ method: 'GET', path: '/api/toppings', description: 'Toppings', protected: false },
+			{ method: 'GET', path: '/api/coupons', description: 'Coupons', protected: false },
+			{ method: 'GET', path: '/api/deals', description: 'Deals', protected: false },
 		],
 		timestamp: new Date().toISOString(),
 	})
@@ -174,9 +191,18 @@ app.get('/favicon.ico', (_req: Request, res: Response) => {
 	res.status(204).end()
 })
 
-// API Routes
+// ============================================
+// API ROUTES
+// ============================================
+
+// 🆕 Firebase Authentication Routes (Auth limiter bilan)
+app.use('/api/auth', authLimiter, firebaseAuthRoutes)
+
+// Dashboard & Analytics
 app.use('/api/dashboard', dashboardLimiter, dashboardRoutes)
 app.use('/api/analytics', analyticsLimiter, analyticsRoutes)
+
+// General API Routes
 app.use('/api/categories', generalLimiter, categoriesRoutes)
 app.use('/api/deals', generalLimiter, dealsRoutes)
 app.use('/api/coupons', generalLimiter, couponsRoutes)
@@ -222,21 +248,43 @@ app.use((err: AppError, _req: Request, res: Response, _next: NextFunction) => {
 
 const startServer = async () => {
 	try {
+		// 1. Database ulanish
 		await prisma.$connect()
 		console.log('✅ Database connected')
 
+		// 2. Firebase Admin SDK tekshirish
+		try {
+			const { auth } = await import('./config/firebase')
+			await auth.listUsers(1) // Test call
+			console.log('✅ Firebase Admin SDK initialized')
+		} catch (firebaseError) {
+			console.error('⚠️  Firebase Admin SDK initialization warning:', firebaseError)
+			console.log('⚠️  Server will continue without Firebase Auth')
+		}
+
+		// 3. Server ishga tushirish
 		const server = app.listen(Number(PORT), '0.0.0.0', () => {
 			const baseUrl = `http://localhost:${PORT}`
 			console.log(`
-      🚀 Server muvaffaqiyatli ishga tushdi!
-      📍 Port: ${PORT}
-      📍 Mode: ${process.env.NODE_ENV || 'development'}
-      🍕 API Base: ${baseUrl}/api
-      📊 Dashboard: ${baseUrl}/api/dashboard
-      💚 Health: ${baseUrl}/health
+╔══════════════════════════════════════════════════════════════╗
+║  🍕 ZOR PIZZA API SERVER                                     ║
+╠══════════════════════════════════════════════════════════════╣
+║  Status:     ✅ Running                                      ║
+║  Port:       ${PORT}                                            ║
+║  Mode:       ${process.env.NODE_ENV || 'development'}                                   ║
+║  Base URL:   ${baseUrl}                       ║
+╠══════════════════════════════════════════════════════════════╣
+║  📍 ENDPOINTS                                                ║
+║  Health:     ${baseUrl}/health                 ║
+║  API List:   ${baseUrl}/api                    ║
+║  Auth:       ${baseUrl}/api/auth               ║
+║  Dashboard:  ${baseUrl}/api/dashboard          ║
+║  Products:   ${baseUrl}/api/products           ║
+╚══════════════════════════════════════════════════════════════╝
       `)
 		})
 
+		// 4. Unhandled rejection handler
 		process.on('unhandledRejection', err => {
 			console.log('❌ UNHANDLED REJECTION! Shutting down...')
 			console.error(err)
@@ -253,10 +301,18 @@ const startServer = async () => {
 
 startServer()
 
-// Graceful Shutdown
+// ============================================
+// GRACEFUL SHUTDOWN
+// ============================================
+
 const shutdown = async (signal: string) => {
-	console.log(`\n👋 ${signal} qabul qilindi. Yopilmoqda...`)
-	await prisma.$disconnect()
+	console.log(`\n👋 ${signal} qabul qilindi. Server yopilmoqda...`)
+	try {
+		await prisma.$disconnect()
+		console.log('✅ Database disconnected')
+	} catch (error) {
+		console.error('❌ Database disconnect error:', error)
+	}
 	process.exit(0)
 }
 
