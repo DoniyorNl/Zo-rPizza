@@ -46,15 +46,23 @@ const isLocalhostOrigin = (origin: string) =>
 app.use(
 	cors({
 		origin: (origin, callback) => {
+			// Log untuk debugging
+			console.log('🔍 CORS check - Origin:', origin)
+			console.log('🔍 Allowed origins:', normalizedAllowedOrigins)
+			console.log('🔍 Allow localhost:', allowLocalhostOrigin)
+			
 			if (!origin) return callback(null, true)
 			if (allowedOrigins.length === 0 && process.env.NODE_ENV !== 'production') {
+				console.log('✅ Dev mode - allowing all origins')
 				return callback(null, true)
 			}
 			const normalizedOrigin = normalizeOrigin(origin)
 			if (normalizedAllowedOrigins.includes(normalizedOrigin)) {
+				console.log('✅ Allowed origin:', normalizedOrigin)
 				return callback(null, true)
 			}
 			if (allowLocalhostOrigin && isLocalhostOrigin(origin)) {
+				console.log('✅ Localhost origin allowed:', origin)
 				return callback(null, true)
 			}
 			console.log('❌ CORS blocked origin:', origin)
