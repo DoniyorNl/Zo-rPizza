@@ -8,9 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 // Real-time components (NEW)
 import { useDashboardData } from './hooks/useDashboardData'
 import { useRealTimeUpdates } from './hooks/useRealTimeUpdates'
-import { useDashboardAlerts } from './hooks/useDashboardAlerts'
 import { RefreshIndicator } from './components/RefreshIndicator'
-import { AlertsPanel } from './components/AlertsPanel'
 import { QuickStats } from './components/QuickStats'
 import { TodayRevenueChart } from './components/TodayRevenueChart'
 import { LiveOrdersFeed } from './components/LiveOrdersFeed'
@@ -46,11 +44,6 @@ export default function DashboardPage() {
 			},
 		})
 
-	const { alerts, unreadCount, markAsRead, markAllAsRead, dismissAlert, clearAll } =
-		useDashboardAlerts({
-			stats,
-			liveOrders,
-		})
 
 	// ========================================================================
 	// ERROR HANDLING
@@ -142,17 +135,6 @@ export default function DashboardPage() {
 							lastUpdated={lastUpdated}
 						/>
 
-						{/* Alerts Panel */}
-						{alerts.length > 0 && (
-							<AlertsPanel
-								alerts={alerts}
-								unreadCount={unreadCount}
-								onMarkAsRead={markAsRead}
-								onMarkAllAsRead={markAllAsRead}
-								onDismiss={dismissAlert}
-								onClearAll={clearAll}
-							/>
-						)}
 
 						{/* Quick Stats */}
 						{stats && <QuickStats stats={stats} isLoading={isLoadingToday} />}

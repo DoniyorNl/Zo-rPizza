@@ -2,6 +2,7 @@
 'use client'
 
 import { useAuth } from '@/lib/AuthContext'
+import { AdminHeader } from '@/components/admin/AdminHeader'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
@@ -31,9 +32,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
 	return (
 		<div className='min-h-screen bg-gray-100'>
-			<div className='flex'>
+			{/* Header */}
+			<AdminHeader />
+
+			<div className='flex pt-16'>
 				{/* Sidebar */}
-				<aside className='w-64 bg-gray-900 text-white min-h-screen p-6 fixed'>
+				<aside className='w-64 bg-gray-900 text-white min-h-[calc(100vh-4rem)] p-6 fixed top-16'>
 					<h2 className='text-2xl font-bold mb-8'>🍕 Admin Panel</h2>
 
 					<nav className='space-y-2'>
