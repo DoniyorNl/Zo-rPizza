@@ -1,6 +1,3 @@
-// backend/prisma/schema.prisma
-// 🍕 ZOR PIZZA - COMPLETE DATABASE SCHEMA
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,186 +7,128 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================
-// USER MODEL - Foydalanuvchilar
-// ============================================
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
-  password  String?  // Optional (Firebase users may not have password)
+  password  String?
   name      String?
   phone     String?
   role      UserRole @default(CUSTOMER)
-  isBlocked Boolean  @default(false)
-  
-  orders    Order[]
-  reviews   Review[]
-  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  isBlocked Boolean  @default(false)
+  orders        Order[]
+  reviews       Review[]
+  notifications Notification[]
 
   @@map("users")
 }
 
-enum UserRole {
-  CUSTOMER
-  ADMIN
-}
-
-// ============================================
-// CATEGORY MODEL - Kategoriyalar
-// ============================================
 model Category {
   id          String    @id @default(uuid())
   name        String    @unique
   description String?
   imageUrl    String?
   isActive    Boolean   @default(true)
-  
-  products    Product[]
-  
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  products    Product[]
 
   @@map("categories")
 }
 
-// ============================================
-// PRODUCT MODEL - Mahsulotlar
-// ============================================
 model Product {
-  id          String   @id @default(uuid())
-  name        String
-  description String
-  basePrice   Float    // Base price (actual prices in variations)
-  imageUrl    String?
-  prepTime    Int      // daqiqalarda
-  categoryId  String
-  isActive    Boolean  @default(true)
-  
-  // ✅ Recipe & Cooking Details
-  ingredients Json?     // [{name: "Un", amount: "500g", icon: "🌾"}, ...]
-  recipe      String?   @db.Text
-  cookingTemp Int?      // °C
-  cookingTime Int?      // daqiqa
-  cookingSteps Json?    // [{step: 1, title: "...", description: "..."}, ...]
-  
-  // ✅ Nutrition Info
-  calories    Int?
-  protein     Float?
-  carbs       Float?
-  fat         Float?
-  
-  // ✅ Additional Info
-  difficulty  String?
-  servings    Int?
-  allergens   String[]
-  images      String[]
-  
-  // ✅ NEW: Variations (Sizes)
-  variations  ProductVariation[]
-  
-  // Relations
-  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  ingredientsRel ProductIngredient[]
-  orderItems  OrderItem[]
-  reviews     Review[]
-  dealItems   DealItem[]
+  id              String              @id @default(uuid())
+  name            String
+  description     String
+  imageUrl        String?
+  prepTime        Int
+  isActive        Boolean             @default(true)
+  categoryId      String
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  allergens       String[]
+  calories        Int?
+  carbs           Float?
+  cookingSteps    Json?
+  cookingTemp     Int?
+  cookingTime     Int?
+  difficulty      String?
+  fat             Float?
+  images          String[]
+  ingredients     Json?
+  protein         Float?
+  recipe          String?
+  servings        Int?
+  basePrice       Float
+  dealItems       DealItem[]
+  halfLeftItems   OrderItemHalf[]     @relation("HalfLeft")
+  halfRightItems  OrderItemHalf[]     @relation("HalfRight")
+  orderItems      OrderItem[]
+  ingredientsRel  ProductIngredient[]
   productToppings ProductTopping[]
-  halfLeftItems OrderItemHalf[] @relation("HalfLeft")
-  halfRightItems OrderItemHalf[] @relation("HalfRight")
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  variations      ProductVariation[]
+  category        Category            @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  reviews         Review[]
 
   @@map("products")
 }
 
-// ============================================
-// ✅ NEW: PRODUCT VARIATION MODEL - Sizes
-// ============================================
 model ProductVariation {
-  id          String   @id @default(uuid())
-  productId   String
-  size        String   // "Small", "Medium", "Large", "XL"
-  price       Float
-  diameter    Int?     // cm
-  slices      Int?
-  weight      Int?     // gram
-  
-  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(uuid())
+  productId String
+  size      String
+  price     Float
+  diameter  Int?
+  slices    Int?
+  weight    Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([productId, size])
   @@map("product_variations")
 }
 
-// ============================================
-// INGREDIENT MODEL (Advanced - optional)
-// ============================================
 model Ingredient {
-  id          String   @id @default(uuid())
-  name        String   @unique
+  id          String              @id @default(uuid())
+  name        String              @unique
   unit        String
   costPerUnit Float
   stockQty    Float
-  minStock    Float    @default(10)
-  
+  minStock    Float               @default(10)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
   products    ProductIngredient[]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
 
   @@map("ingredients")
 }
 
-// ============================================
-// PRODUCT-INGREDIENT RELATION (Advanced)
-// ============================================
 model ProductIngredient {
   id           String     @id @default(uuid())
   productId    String
-  product      Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
   ingredientId String
-  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
   quantity     Float
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  product      Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([productId, ingredientId])
   @@map("product_ingredients")
 }
 
-// ============================================
-// DEALS & COUPONS
-// ============================================
-
-enum DiscountType {
-  PERCENT
-  FIXED
-}
-
-enum DealItemType {
-  PIZZA
-  DRINK
-  SIDE
-}
-
 model Deal {
-  id            String        @id @default(uuid())
+  id            String       @id @default(uuid())
   title         String
   description   String?
   imageUrl      String?
   discountType  DiscountType
   discountValue Float
-  isActive      Boolean       @default(true)
+  isActive      Boolean      @default(true)
   startsAt      DateTime?
   endsAt        DateTime?
-
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
   items         DealItem[]
-
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
 
   @@map("deals")
 }
@@ -200,7 +139,6 @@ model DealItem {
   productId String
   itemType  DealItemType
   quantity  Int          @default(1)
-
   deal      Deal         @relation(fields: [dealId], references: [id], onDelete: Cascade)
   product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
 
@@ -219,40 +157,129 @@ model Coupon {
   endsAt        DateTime?
   usageLimit    Int?
   perUserLimit  Int?
-
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
   @@map("coupons")
 }
 
-// ============================================
-// ORDER MODEL
-// ============================================
 model Order {
-  id              String      @id @default(uuid())
-  orderNumber     String      @unique
+  id              String        @id @default(uuid())
+  orderNumber     String        @unique
   userId          String
-  user            User        @relation(fields: [userId], references: [id])
-  
-  status          OrderStatus @default(PENDING)
+  status          OrderStatus   @default(PENDING)
   totalPrice      Float
   paymentMethod   PaymentMethod
   paymentStatus   PaymentStatus @default(PENDING)
-  
   deliveryAddress String
   deliveryPhone   String
-  deliveryLat     Float?      // GPS coordinates (optional)
+  deliveryLat     Float?
   deliveryLng     Float?
-  estimatedTime   Int?        // minutes
-  
+  estimatedTime   Int?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
   items           OrderItem[]
-  reviews         Review[]
-  
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  user            User          @relation(fields: [userId], references: [id])
+  reviews         Review?
 
   @@map("orders")
+}
+
+model OrderItem {
+  id          String             @id @default(uuid())
+  orderId     String
+  productId   String?
+  quantity    Int
+  price       Float
+  createdAt   DateTime           @default(now())
+  size        String?
+  variationId String?
+  halfHalf    OrderItemHalf?
+  toppings    OrderItemTopping[]
+  order       Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product?           @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+model Topping {
+  id                String             @id @default(uuid())
+  name              String             @unique
+  price             Float
+  isActive          Boolean            @default(true)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  orderItemToppings OrderItemTopping[]
+  productToppings   ProductTopping[]
+
+  @@map("toppings")
+}
+
+model ProductTopping {
+  id        String  @id @default(uuid())
+  productId String
+  toppingId String
+  isDefault Boolean @default(true)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  topping   Topping @relation(fields: [toppingId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, toppingId])
+  @@map("product_toppings")
+}
+
+model OrderItemTopping {
+  id          String    @id @default(uuid())
+  orderItemId String
+  toppingId   String
+  isRemoved   Boolean   @default(false)
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  topping     Topping   @relation(fields: [toppingId], references: [id], onDelete: Cascade)
+
+  @@unique([orderItemId, toppingId, isRemoved])
+  @@map("order_item_toppings")
+}
+
+model OrderItemHalf {
+  id             String    @id @default(uuid())
+  orderItemId    String    @unique
+  leftProductId  String
+  rightProductId String
+  leftProduct    Product   @relation("HalfLeft", fields: [leftProductId], references: [id], onDelete: Cascade)
+  orderItem      OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  rightProduct   Product   @relation("HalfRight", fields: [rightProductId], references: [id], onDelete: Cascade)
+
+  @@map("order_item_half")
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  orderId   String   @unique
+  productId String?
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product? @relation(fields: [productId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("reviews")
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED
+}
+
+enum DealItemType {
+  PIZZA
+  DRINK
+  SIDE
 }
 
 enum OrderStatus {
@@ -278,105 +305,29 @@ enum PaymentStatus {
 }
 
 // ============================================
-// ORDER ITEM MODEL
+// NOTIFICATION MODEL - Ogohlantirishlar
 // ============================================
-model OrderItem {
-  id          String   @id @default(uuid())
-  orderId     String
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId   String?
-  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
-  
-  // ✅ NEW: Size information
-  variationId String?  // Which size variation
-  size        String?  // "Small", "Medium", "Large", "XL"
-  
-  quantity    Int
-  price       Float
-  toppings    OrderItemTopping[]
-  halfHalf    OrderItemHalf?
-  
-  createdAt   DateTime @default(now())
-
-  @@map("order_items")
-}
-
-// ============================================
-// TOPPINGS & CUSTOMIZATION
-// ============================================
-
-model Topping {
-  id        String   @id @default(uuid())
-  name      String   @unique
-  price     Float
-  isActive  Boolean  @default(true)
-
-  productToppings ProductTopping[]
-  orderItemToppings OrderItemTopping[]
-
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  title     String
+  message   String
+  type      NotificationType @default(INFO)
+  isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@map("toppings")
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([isRead])
+  @@map("Notification")
 }
 
-model ProductTopping {
-  id        String   @id @default(uuid())
-  productId String
-  toppingId String
-  isDefault Boolean  @default(true)
-
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  topping   Topping  @relation(fields: [toppingId], references: [id], onDelete: Cascade)
-
-  @@unique([productId, toppingId])
-  @@map("product_toppings")
-}
-
-model OrderItemTopping {
-  id          String   @id @default(uuid())
-  orderItemId String
-  toppingId   String
-  isRemoved   Boolean  @default(false)
-
-  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
-  topping     Topping   @relation(fields: [toppingId], references: [id], onDelete: Cascade)
-
-  @@unique([orderItemId, toppingId, isRemoved])
-  @@map("order_item_toppings")
-}
-
-model OrderItemHalf {
-  id           String   @id @default(uuid())
-  orderItemId  String   @unique
-  leftProductId  String
-  rightProductId String
-
-  orderItem    OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
-  leftProduct  Product   @relation("HalfLeft", fields: [leftProductId], references: [id], onDelete: Cascade)
-  rightProduct Product   @relation("HalfRight", fields: [rightProductId], references: [id], onDelete: Cascade)
-
-  @@map("order_item_half")
-}
-
-// ============================================
-// REVIEW MODEL
-// ============================================
-model Review {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  
-  orderId   String   @unique
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  
-  productId String?
-  product   Product? @relation(fields: [productId], references: [id])
-  
-  rating    Int      // 1-5
-  comment   String?
-  
-  createdAt DateTime @default(now())
-
-  @@map("reviews")
+enum NotificationType {
+  INFO
+  WARNING
+  SUCCESS
+  ERROR
+  ORDER
 }

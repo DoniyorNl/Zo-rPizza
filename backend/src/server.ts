@@ -6,6 +6,7 @@ import express, { Express, NextFunction, Request, Response } from 'express'
 import helmet from 'helmet'
 import morgan from 'morgan'
 import prisma from './lib/prisma'
+import notificationsRoutes from './routes/notifications.routes'
 
 // ============================================================================
 // RATE LIMIT IMPORT
@@ -210,6 +211,7 @@ app.use('/api/products', generalLimiter, productsRoutes)
 app.use('/api/toppings', generalLimiter, toppingsRoutes)
 app.use('/api/orders', generalLimiter, ordersRoutes)
 app.use('/api/users', generalLimiter, usersRoutes)
+app.use('/api/notifications', generalLimiter, notificationsRoutes)
 
 // ============================================
 // ERROR HANDLING
