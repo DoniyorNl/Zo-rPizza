@@ -12,3 +12,9 @@ dist/
 
 # Firebase
 firebase-service-account.json
+firebase-base64.txt
+
+# Package locks (using pnpm)
+package-lock.json
+package-lock*.json
+yarn.lock

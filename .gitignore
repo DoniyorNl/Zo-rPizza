@@ -47,3 +47,8 @@ coverage/
 playwright-report/
 test-results/
 *.spec.js.snap
+
+# Package locks (using pnpm)
+package-lock.json
+package-lock*.json
+yarn.lock

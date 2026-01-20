@@ -1,16 +1,18 @@
 // frontend/app/page.tsx
-// 🍕 ZOR PIZZA - HOME PAGE (Updated with Variations Support)
+// 🍕 ZOR PIZZA - HOME PAGE
+// Completely redesigned with NYP style - minimal, clean, user-friendly
 
 'use client'
 
+import { CategoryNav } from '@/components/home/CategoryNav'
+import { DealsSection } from '@/components/home/DealsSection'
+import { DeliveryToggle } from '@/components/home/DeliveryToggle'
+import { HeroSection } from '@/components/home/HeroSection'
+import { MemberSection } from '@/components/home/MemberSection'
+import { PopularProducts } from '@/components/home/PopularProducts'
 import { Header } from '@/components/layout/Header'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
+import { ProductCard } from '@/components/products/ProductCard'
 import { api } from '@/lib/apiClient'
-import { ChefHat, Clock, Plus } from 'lucide-react'
-import Image from 'next/image'
-import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 // ============================================
@@ -30,13 +32,14 @@ interface Product {
 	id: string
 	name: string
 	description: string
-	basePrice: number // ✅ Changed from 'price' to 'basePrice'
+	basePrice: number
 	imageUrl: string
 	prepTime: number
 	difficulty?: string
 	calories?: number
 	isActive?: boolean
-	variations: ProductVariation[] // ✅ NEW: Size variations
+	categoryId?: string
+	variations: ProductVariation[]
 }
 
 // ============================================
@@ -45,8 +48,9 @@ interface Product {
 
 export default function HomePage() {
 	const [products, setProducts] = useState<Product[]>([])
+	const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
 	const [loading, setLoading] = useState(true)
-	const router = useRouter()
+	const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
 
 	// ============================================
 	// DATA FETCHING
@@ -57,7 +61,9 @@ export default function HomePage() {
 			try {
 				const response = await api.get('/api/products')
 				console.log('✅ Products loaded:', response.data.data.length)
-				setProducts(response.data.data)
+				const fetchedProducts = response.data.data
+				setProducts(fetchedProducts)
+				setFilteredProducts(fetchedProducts)
 			} catch (error) {
 				console.error('❌ Error fetching products:', error)
 			} finally {
@@ -69,12 +75,31 @@ export default function HomePage() {
 	}, [])
 
 	// ============================================
-	// HANDLERS
+	// CATEGORY FILTER LISTENER
 	// ============================================
 
-	const handleViewDetails = (productId: string) => {
-		router.push(`/products/${productId}`)
-	}
+	useEffect(() => {
+		const handleCategoryFilter = (event: Event) => {
+			const customEvent = event as CustomEvent<{ categoryId: string | null }>
+			const categoryId = customEvent.detail.categoryId
+			setSelectedCategoryId(categoryId)
+
+			if (!categoryId) {
+				// Show all products
+				setFilteredProducts(products)
+			} else {
+				// Filter by category
+				const filtered = products.filter(p => p.categoryId === categoryId)
+				setFilteredProducts(filtered)
+			}
+		}
+
+		window.addEventListener('categoryFilter', handleCategoryFilter as EventListener)
+
+		return () => {
+			window.removeEventListener('categoryFilter', handleCategoryFilter as EventListener)
+		}
+	}, [products])
 
 	// ============================================
 	// LOADING STATE
@@ -82,7 +107,7 @@ export default function HomePage() {
 
 	if (loading) {
 		return (
-			<main className='min-h-screen bg-gradient-to-b from-orange-50 to-white'>
+			<main className='min-h-screen bg-white'>
 				<Header />
 				<div className='container mx-auto px-4 py-12'>
 					<div className='text-center'>
@@ -99,120 +124,89 @@ export default function HomePage() {
 	// ============================================
 
 	return (
-		<main className='min-h-screen bg-gradient-to-b from-orange-50 to-white'>
+		<main className='min-h-screen bg-white'>
+			{/* Header */}
 			<Header />
 
+			{/* Delivery/Pickup Toggle */}
+			<DeliveryToggle />
+
 			{/* Hero Section */}
-			<section className='container mx-auto px-4 py-12'>
-				<div className='text-center mb-12'>
-					<h1 className='text-4xl md:text-5xl font-bold text-gray-900 mb-4'>🍕 Zor Pizza</h1>
-					<p className='text-xl text-gray-600'>
-						Eng mazali pitsalar - tez va sifatli yetkazib berish
+			<HeroSection />
+
+			{/* Deals Section */}
+			<DealsSection />
+
+			{/* Category Navigation (Sticky) */}
+			<CategoryNav />
+
+			{/* Popular Products Section */}
+			<PopularProducts />
+
+			{/* All Products Section */}
+			<section id='products-section' className='py-16 bg-gradient-to-b from-white to-orange-50'>
+				<div className='container mx-auto px-4'>
+					{/* Section Header */}
+					<div className='text-center mb-10'>
+						<h2 className='text-3xl md:text-4xl font-bold text-gray-900 mb-3'>
+							{selectedCategoryId ? 'Tanlangan Kategoriya' : 'Barcha Mahsulotlar'}
+						</h2>
+						<p className='text-gray-600'>
+							{selectedCategoryId
+								? `${filteredProducts.length} ta mahsulot topildi`
+								: 'Bizning eng mazali pitsalar va boshqa mahsulotlar'}
+						</p>
+					</div>
+
+					{/* Products Grid - 4 per row */}
+					<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
+						{filteredProducts
+							.filter(product => product.isActive)
+							.map(product => (
+								<div
+									key={product.id}
+									className='transform transition-all duration-300'
+								>
+									<ProductCard product={product} />
+								</div>
+							))}
+					</div>
+
+					{/* Empty State */}
+					{filteredProducts.length === 0 && !loading && (
+						<div className='text-center py-12'>
+							<p className='text-xl text-gray-600'>
+								{selectedCategoryId
+									? 'Bu kategoriyada mahsulotlar topilmadi'
+									: 'Hozircha mahsulotlar yo\'q'}
+							</p>
+							{selectedCategoryId && (
+								<button
+									onClick={() => {
+										setSelectedCategoryId(null)
+										setFilteredProducts(products)
+									}}
+									className='mt-4 text-orange-600 hover:underline'
+								>
+									Barcha mahsulotlarni ko'rish
+								</button>
+							)}
+						</div>
+					)}
+				</div>
+			</section>
+
+			{/* Member Section */}
+			<MemberSection />
+
+			{/* Footer (Optional - can be added later) */}
+			<footer className='bg-gray-900 text-white py-12'>
+				<div className='container mx-auto px-4 text-center'>
+					<p className='text-gray-400'>
+						© 2026 Zor Pizza. Barcha huquqlar himoyalangan.
 					</p>
 				</div>
-
-				{/* Products Grid - 4 per row */}
-				<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
-					{products
-						.filter(product => product.isActive)
-						.map(product => {
-							// ✅ Calculate cheapest price from variations
-							const cheapestPrice =
-								product.variations && product.variations.length > 0
-									? Math.min(...product.variations.map(v => v.price))
-									: product.basePrice
-
-							const hasMultipleSizes = product.variations && product.variations.length > 1
-
-							return (
-								<Card
-									key={product.id}
-									className='group cursor-pointer hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 overflow-hidden'
-									onClick={() => handleViewDetails(product.id)}
-								>
-									{/* Image */}
-									<div className='relative h-48 overflow-hidden bg-gray-100'>
-										<Image
-											src={product.imageUrl}
-											alt={product.name}
-											fill
-											className='object-cover group-hover:scale-110 transition-transform duration-300'
-											sizes='(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw'
-										/>
-
-										{/* Badges */}
-										<div className='absolute top-3 left-3 flex gap-2'>
-											{product.difficulty && (
-												<Badge className='bg-white/90 text-gray-800 border-0'>
-													<ChefHat className='w-3 h-3 mr-1' />
-													{product.difficulty}
-												</Badge>
-											)}
-										</div>
-
-										{product.calories && (
-											<Badge className='absolute top-3 right-3 bg-orange-600 border-0'>
-												{product.calories} kkal
-											</Badge>
-										)}
-									</div>
-
-									{/* Content */}
-									<CardHeader className='pb-3'>
-										<h3 className='font-bold text-lg line-clamp-1'>{product.name}</h3>
-										<p className='text-sm text-gray-600 line-clamp-2 mt-1'>
-											{product.description}
-										</p>
-									</CardHeader>
-
-									<CardContent className='pb-3'>
-										<div className='flex items-center justify-between'>
-											<div className='flex items-center gap-2 text-sm text-gray-500'>
-												<Clock className='w-4 h-4' />
-												<span>{product.prepTime} daqiqa</span>
-											</div>
-
-											{/* ✅ NEW: Size indicator */}
-											{hasMultipleSizes && (
-												<span className='text-xs text-gray-500'>
-													{product.variations.length} ta o&apos;lcham
-												</span>
-											)}
-										</div>
-									</CardContent>
-
-									{/* Footer */}
-									<CardFooter className='flex items-center justify-between pt-3 border-t'>
-										<div>
-											<div className='text-2xl font-bold text-orange-600'>
-												{cheapestPrice.toLocaleString()} so&apos;m
-											</div>
-											{/* ✅ NEW: "dan boshlab" text if multiple sizes */}
-											{hasMultipleSizes && (
-												<p className='text-xs text-gray-500 mt-0.5'>dan boshlab</p>
-											)}
-										</div>
-
-										<Button
-											size='sm'
-											className='bg-orange-600 hover:bg-orange-700'
-										>
-											<Plus className='w-4 h-4 mr-1' />
-											Tanlash
-										</Button>
-									</CardFooter>
-								</Card>
-							)
-						})}
-				</div>
-
-				{/* Empty State */}
-				{products.length === 0 && !loading && (
-					<div className='text-center py-12'>
-						<p className='text-xl text-gray-600'>Hozircha mahsulotlar yoq</p>
-					</div>
-				)}
-			</section>
+			</footer>
 		</main>
 	)
 }
