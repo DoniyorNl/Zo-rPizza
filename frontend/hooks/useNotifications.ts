@@ -1,6 +1,6 @@
 // =====================================
 // 📁 FILE PATH: frontend/hooks/useNotifications.ts
-// 🔔 NOTIFICATIONS HOOK
+// 🔔 NOTIFICATIONS HOOK (Optimized with caching)
 // =====================================
 
 import { api } from '@/lib/apiClient'
@@ -24,15 +24,53 @@ export const useNotifications = () => {
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
 
-	// Notificationlarni yuklash
+	// Notificationlarni yuklash (with caching)
 	const fetchNotifications = async () => {
+		// Check cache first (2 minutes TTL for notifications)
+		const cacheKey = 'notifications_cache'
+		const cacheTTL = 2 * 60 * 1000 // 2 minutes
+		
+		if (typeof window !== 'undefined') {
+			const cached = localStorage.getItem(cacheKey)
+			if (cached) {
+				try {
+					const { data, timestamp } = JSON.parse(cached)
+					const age = Date.now() - timestamp
+					
+					if (age < cacheTTL) {
+						// Use cached data
+						setNotifications(data.notifications || [])
+						setUnreadCount(data.unreadCount || 0)
+						setLoading(false)
+						return
+					}
+				} catch (e) {
+					// Invalid cache, continue to fetch
+				}
+			}
+		}
+
 		try {
 			setLoading(true)
 			const response = await api.get('/api/notifications')
 
 			if (response.data.success) {
-				setNotifications(response.data.data.notifications)
-				setUnreadCount(response.data.data.unreadCount)
+				const notifData = response.data.data
+				setNotifications(notifData.notifications || [])
+				setUnreadCount(notifData.unreadCount || 0)
+
+				// Cache the results
+				if (typeof window !== 'undefined') {
+					try {
+						const cacheData = {
+							data: notifData,
+							timestamp: Date.now(),
+						}
+						localStorage.setItem(cacheKey, JSON.stringify(cacheData))
+					} catch (e) {
+						// localStorage error, ignore
+					}
+				}
 			}
 		} catch (err: unknown) {
 			console.error('❌ Fetch notifications error:', err)
@@ -40,6 +78,13 @@ export const useNotifications = () => {
 			setError(errorMessage)
 		} finally {
 			setLoading(false)
+		}
+	}
+
+	// Clear cache helper
+	const clearCache = () => {
+		if (typeof window !== 'undefined') {
+			localStorage.removeItem('notifications_cache')
 		}
 	}
 
@@ -52,6 +97,8 @@ export const useNotifications = () => {
 				// Local state yangilash
 				setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
 				setUnreadCount(0)
+				// Clear cache
+				clearCache()
 				return true
 			}
 			return false
@@ -74,6 +121,8 @@ export const useNotifications = () => {
 					prev.map(n => (n.id === id ? { ...n, isRead: true } : n))
 				)
 				setUnreadCount(prev => Math.max(0, prev - 1))
+				// Clear cache
+				clearCache()
 				return true
 			}
 			return false
@@ -100,6 +149,8 @@ export const useNotifications = () => {
 					setUnreadCount(prev => Math.max(0, prev - 1))
 				}
 
+				// Clear cache
+				clearCache()
 				return true
 			}
 			return false
@@ -119,6 +170,8 @@ export const useNotifications = () => {
 			if (response.data.success) {
 				setNotifications([])
 				setUnreadCount(0)
+				// Clear cache
+				clearCache()
 				return true
 			}
 			return false
@@ -133,7 +186,8 @@ export const useNotifications = () => {
 	// Component mount bo'lganda notificationlarni yuklash
 	useEffect(() => {
 		fetchNotifications()
-	}, [])
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []) // Only run once on mount
 
 	return {
 		notifications,

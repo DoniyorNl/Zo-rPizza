@@ -5,8 +5,12 @@ const getSmartApiUrl = (): string => {
 	// Production URL
 	const productionUrl = process.env.NEXT_PUBLIC_API_URL || 'https://zo-rpizza-production.up.railway.app'
 	
-	// If running on localhost in browser, use local backend
-	if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+	// Check if user wants to force production API
+	const useProductionApi = process.env.NEXT_PUBLIC_USE_PRODUCTION_API === 'true'
+	
+	// If running on localhost in browser, use local backend (unless forced to production)
+	if (typeof window !== 'undefined' && window.location.hostname === 'localhost' && !useProductionApi) {
+		// Check if local backend is running, otherwise fallback to production
 		return 'http://localhost:5001'
 	}
 	
