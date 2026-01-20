@@ -6,8 +6,8 @@ import express, { Express, NextFunction, Request, Response } from 'express'
 import helmet from 'helmet'
 import morgan from 'morgan'
 import prisma from './lib/prisma'
-import notificationsRoutes from './routes/notifications.routes'
 import errorsRoutes from './routes/errors.routes'
+import notificationsRoutes from './routes/notifications.routes'
 
 // ============================================================================
 // RATE LIMIT IMPORT
@@ -33,6 +33,8 @@ import firebaseAuthRoutes from './routes/firebase-auth.routes'
 export const app: Express = express()
 const PORT = process.env.PORT || 5001
 
+app.set('trust proxy', 1) // 🆕 Trust proxy settings (required for rate limiting behind proxies like Nginx/Railway)
+
 // ============================================
 // MIDDLEWARE & SECURITY
 // ============================================
@@ -53,22 +55,17 @@ const isLocalhostOrigin = (origin: string) =>
 app.use(
 	cors({
 		origin: (origin, callback) => {
-			console.log('🔍 CORS check - Origin:', origin)
-			console.log('🔍 Allowed origins:', normalizedAllowedOrigins)
-			console.log('🔍 Allow localhost:', allowLocalhostOrigin)
-
+			// console.log('🔍 CORS check - Origin:', origin)
+			
 			if (!origin) return callback(null, true)
 			if (allowedOrigins.length === 0 && process.env.NODE_ENV !== 'production') {
-				console.log('✅ Dev mode - allowing all origins')
 				return callback(null, true)
 			}
 			const normalizedOrigin = normalizeOrigin(origin)
 			if (normalizedAllowedOrigins.includes(normalizedOrigin)) {
-				console.log('✅ Allowed origin:', normalizedOrigin)
 				return callback(null, true)
 			}
 			if (allowLocalhostOrigin && isLocalhostOrigin(origin)) {
-				console.log('✅ Localhost origin allowed:', origin)
 				return callback(null, true)
 			}
 			console.log('❌ CORS blocked origin:', origin)
@@ -84,10 +81,12 @@ app.use(
 // RATE LIMITING
 // ============================================================================
 
+const isDevelopment = process.env.NODE_ENV === 'development'
+
 // Dashboard limiter
 const dashboardLimiter = rateLimit({
-	windowMs: 1 * 60 * 1000, // 1 minute
-	max: 120,
+	windowMs: 1 * 60 * 1000, 
+	max: isDevelopment ? 1000 : 120, // Dev mode: relaxed limits
 	message: { success: false, message: 'Dashboard limit exceeded' },
 	standardHeaders: true,
 	legacyHeaders: false,
@@ -96,7 +95,7 @@ const dashboardLimiter = rateLimit({
 // Analytics limiter
 const analyticsLimiter = rateLimit({
 	windowMs: 1 * 60 * 1000,
-	max: 500,
+	max: isDevelopment ? 1000 : 500,
 	message: { success: false, message: 'Analytics limit exceeded' },
 	standardHeaders: true,
 	legacyHeaders: false,
@@ -104,8 +103,8 @@ const analyticsLimiter = rateLimit({
 
 // Auth limiter (Firebase auth endpoints uchun)
 const authLimiter = rateLimit({
-	windowMs: 15 * 60 * 1000, // 15 minutes
-	max: 100, // 100 requests per 15 minutes
+	windowMs: 15 * 60 * 1000, 
+	max: isDevelopment ? 500 : 100,
 	message: { success: false, message: 'Too many auth requests, please try again later' },
 	standardHeaders: true,
 	legacyHeaders: false,
@@ -113,8 +112,8 @@ const authLimiter = rateLimit({
 
 // General limiter
 const generalLimiter = rateLimit({
-	windowMs: 15 * 60 * 1000, // 15 minutes
-	max: 1000,
+	windowMs: 15 * 60 * 1000,
+	max: isDevelopment ? 10000 : 2000, // Significantly increased for dev to avoid 429
 	message: { success: false, message: 'Too many requests, try again later' },
 	standardHeaders: true,
 	legacyHeaders: false,
