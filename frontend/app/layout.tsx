@@ -2,6 +2,7 @@
 // 🍕 ROOT LAYOUT
 
 import { AuthProvider } from '@/lib/AuthContext'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
@@ -37,7 +38,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 				<link rel='apple-touch-icon' href='/icons/icon-192.png' />
 			</head>
 			<body className={inter.className}>
-				<AuthProvider>{children}</AuthProvider>
+				<ErrorBoundary>
+					<AuthProvider>{children}</AuthProvider>
+				</ErrorBoundary>
 				<SpeedInsights />
 			</body>
 		</html>
