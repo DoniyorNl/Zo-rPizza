@@ -7,6 +7,7 @@ import helmet from 'helmet'
 import morgan from 'morgan'
 import prisma from './lib/prisma'
 import notificationsRoutes from './routes/notifications.routes'
+import errorsRoutes from './routes/errors.routes'
 
 // ============================================================================
 // RATE LIMIT IMPORT
@@ -29,7 +30,7 @@ import usersRoutes from './routes/users.routes'
 // 🆕 FIREBASE AUTH ROUTES
 import firebaseAuthRoutes from './routes/firebase-auth.routes'
 
-const app: Express = express()
+export const app: Express = express()
 const PORT = process.env.PORT || 5001
 
 // ============================================
@@ -212,6 +213,7 @@ app.use('/api/toppings', generalLimiter, toppingsRoutes)
 app.use('/api/orders', generalLimiter, ordersRoutes)
 app.use('/api/users', generalLimiter, usersRoutes)
 app.use('/api/notifications', generalLimiter, notificationsRoutes)
+app.use('/api/errors', generalLimiter, errorsRoutes)
 
 // ============================================
 // ERROR HANDLING
@@ -301,7 +303,12 @@ const startServer = async () => {
 	}
 }
 
-startServer()
+// Start server only when this file is run directly (not imported for tests)
+if (require.main === module) {
+if (process.env.NODE_ENV !== 'test') {
+	startServer()
+}
+}
 
 // ============================================
 // GRACEFUL SHUTDOWN
