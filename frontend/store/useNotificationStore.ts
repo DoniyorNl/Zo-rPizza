@@ -102,9 +102,17 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 			}
 		} catch (err: unknown) {
 			console.error('❌ Fetch notifications error:', err)
-			const errorMessage = axios.isAxiosError(err) 
-				? err.response?.data?.message 
-				: err instanceof Error ? err.message : 'Notificationlarni yuklashda xatolik'
+			let errorMessage = 'Notificationlarni yuklashda xatolik'
+
+			if (axios.isAxiosError(err)) {
+				if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') {
+					errorMessage = "Server bilan aloqa yo'q. Iltimos, backend server ishlayotganini tekshiring."
+				} else {
+					errorMessage = err.response?.data?.message || err.message || errorMessage
+				}
+			} else if (err instanceof Error) {
+				errorMessage = err.message
+			}
 			
 			set({ error: errorMessage, loading: false })
 		}
