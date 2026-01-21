@@ -153,7 +153,7 @@ export function DeliveryToggle() {
 							<Button
 								onClick={() => setIsLocationModalOpen(false)}
 								variant='outline'
-								className='flex-1'
+								className='flex-1 text-gray-700 border-gray-300 hover:bg-gray-100'
 							>
 								Bekor qilish
 							</Button>
