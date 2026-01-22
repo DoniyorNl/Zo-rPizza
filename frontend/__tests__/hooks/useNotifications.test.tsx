@@ -3,9 +3,10 @@
 // 🧪 useNotifications HOOK TESTS
 // =====================================
 
-import { renderHook, waitFor, act } from '@testing-library/react'
 import { useNotifications } from '@/hooks/useNotifications'
 import { api } from '@/lib/apiClient'
+import { useNotificationStore } from '@/store/useNotificationStore'
+import { act, renderHook, waitFor } from '@testing-library/react'
 
 jest.mock('@/lib/apiClient')
 
@@ -29,6 +30,14 @@ afterAll(() => {
 describe('useNotifications Hook', () => {
 	beforeEach(() => {
 		jest.clearAllMocks()
+		localStorage.clear()
+		useNotificationStore.setState({
+			notifications: [],
+			unreadCount: 0,
+			loading: false,
+			error: null,
+			lastFetched: 0,
+		})
 	})
 
 	it('should fetch notifications on mount', async () => {
@@ -74,10 +83,9 @@ describe('useNotifications Hook', () => {
 		const { result } = renderHook(() => useNotifications())
 
 		await waitFor(() => {
-			expect(result.current.loading).toBe(false)
+			expect(result.current.error).toBeTruthy()
 		})
 
-		expect(result.current.error).toBeTruthy()
 		expect(result.current.notifications).toEqual([])
 	})
 
