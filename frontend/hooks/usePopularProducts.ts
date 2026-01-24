@@ -130,8 +130,7 @@ export function usePopularProducts(limit: number = 6) {
 	 */
 	useEffect(() => {
 		fetchPopularProducts()
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []) // Only run once on mount
+	}, [fetchPopularProducts])
 
 	/**
 	 * Auto-refresh every 10 minutes
@@ -142,8 +141,7 @@ export function usePopularProducts(limit: number = 6) {
 		}, 10 * 60 * 1000) // 10 minutes
 
 		return () => clearInterval(interval)
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [])
+	}, [fetchPopularProducts])
 
 	return {
 		popularProducts,

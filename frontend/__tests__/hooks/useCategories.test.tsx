@@ -52,7 +52,7 @@ describe('useCategories Hook', () => {
 			data: { data: mockCategories },
 		})
 
-		const { result } = renderHook(() => useCategories())
+		const { result } = renderHook(() => useCategories({ isActive: undefined }))
 
 		expect(result.current.loading).toBe(true)
 
