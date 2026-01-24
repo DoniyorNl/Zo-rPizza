@@ -65,12 +65,12 @@ export function useDeals(options?: DealFilterOptions) {
 			// ============================================
 
 			// 1. Filter by active status
-			if (options?.isActive !== false) {
+			if (options?.isActive === true) {
 				fetchedDeals = fetchedDeals.filter(deal => deal.isActive)
 			}
 
 			// 2. Filter by date (available now)
-			if (options?.availableNow !== false) {
+			if (options?.availableNow === true) {
 				const now = new Date()
 				fetchedDeals = fetchedDeals.filter(deal => {
 					const startDate = new Date(deal.startDate)
@@ -80,7 +80,7 @@ export function useDeals(options?: DealFilterOptions) {
 			}
 
 			// 3. Filter by usage limit
-			if (options?.hasStock !== false) {
+			if (options?.hasStock === true) {
 				fetchedDeals = fetchedDeals.filter(deal => {
 					if (!deal.usageLimit) return true
 					return (deal.usageCount || 0) < deal.usageLimit
@@ -145,15 +145,14 @@ export function useDeals(options?: DealFilterOptions) {
 		} finally {
 			setLoading(false)
 		}
-	}, []) // Remove options dependency
+	}, [options])
 
 	/**
 	 * Initial fetch
 	 */
 	useEffect(() => {
 		fetchDeals()
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []) // Only run once on mount
+	}, [fetchDeals])
 
 	/**
 	 * Auto-refresh every 5 minutes
@@ -164,8 +163,7 @@ export function useDeals(options?: DealFilterOptions) {
 		}, 5 * 60 * 1000) // 5 minutes
 
 		return () => clearInterval(interval)
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [])
+	}, [fetchDeals])
 
 	return {
 		deals,

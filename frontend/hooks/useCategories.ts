@@ -65,7 +65,7 @@ export function useCategories(options?: CategoryFilterOptions) {
 			// ============================================
 
 			// 1. Filter by active status
-			if (options?.isActive !== false) {
+			if (options?.isActive === true) {
 				fetchedCategories = fetchedCategories.filter(cat => cat.isActive)
 			}
 
@@ -134,64 +134,14 @@ export function useCategories(options?: CategoryFilterOptions) {
 		} finally {
 			setLoading(false)
 		}
-	}, []) // Remove options dependency to prevent infinite loop
+	}, [options])
 
 	/**
 	 * Initial fetch
 	 */
 	useEffect(() => {
 		fetchCategories()
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []) // Only run once on mount
-
-	/**
-	 * Apply filters when categories or options change
-	 */
-	useEffect(() => {
-		if (categories.length === 0) return
-
-		let filtered = [...categories]
-
-		// Apply filters
-		if (options?.isActive !== false) {
-			filtered = filtered.filter(cat => cat.isActive)
-		}
-		if (options?.hasProducts) {
-			filtered = filtered.filter(cat => (cat.productCount || 0) > 0)
-		}
-		if (options?.search) {
-			const searchLower = options.search.toLowerCase()
-			filtered = filtered.filter(cat =>
-				cat.name.toLowerCase().includes(searchLower)
-			)
-		}
-
-		// Apply sorting
-		const sortBy = options?.sortBy || 'displayOrder'
-		const sortOrder = options?.sortOrder || 'asc'
-		filtered.sort((a, b) => {
-			let comparison = 0
-			switch (sortBy) {
-				case 'name':
-					comparison = a.name.localeCompare(b.name)
-					break
-				case 'displayOrder':
-					comparison = (a.displayOrder || 999) - (b.displayOrder || 999)
-					break
-				case 'productCount':
-					comparison = (b.productCount || 0) - (a.productCount || 0)
-					break
-				case 'createdAt':
-					comparison =
-						new Date(a.createdAt || 0).getTime() -
-						new Date(b.createdAt || 0).getTime()
-					break
-			}
-			return sortOrder === 'asc' ? comparison : -comparison
-		})
-
-		setCategories(filtered)
-	}, [options, categories])
+	}, [fetchCategories])
 
 	return {
 		categories,
