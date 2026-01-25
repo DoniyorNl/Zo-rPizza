@@ -7,15 +7,14 @@
 
 'use client'
 
-import { api } from '@/lib/apiClient'
-import { createContext, useContext, useEffect, useState } from 'react'
 import {
 	User,
 	createUserWithEmailAndPassword,
+	onAuthStateChanged,
 	signInWithEmailAndPassword,
 	signOut,
-	onAuthStateChanged,
 } from 'firebase/auth'
+import { createContext, useContext, useEffect, useState } from 'react'
 import { auth } from './firebase'
 
 interface AuthContextType {
@@ -46,22 +45,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			// 1. Firebase token olish
 			const token = await firebaseUser.getIdToken()
 
-			// 2. Backend /api/auth/sync endpointga request
-			const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/sync`, {
-				method: 'POST',
-				headers: {
-					'Authorization': `Bearer ${token}`,
-					'Content-Type': 'application/json',
+			// 2. Backend /api/auth/sync endpointga request (apiClient ishlatish)
+			const { api } = await import('@/lib/apiClient')
+			const response = await api.post(
+				'/api/auth/sync',
+				{},
+				{
+					headers: {
+						Authorization: `Bearer ${token}`,
+					},
 				},
-			})
+			)
 
-			const data = await response.json()
-
-			if (data.success) {
-				console.log('✅ User synced with backend:', data.data)
-				return data.data
+			if (response.data.success) {
+				console.log('✅ User synced with backend:', response.data.data)
+				return response.data.data
 			} else {
-				console.warn('⚠️ Backend sync warning:', data.message)
+				console.warn('⚠️ Backend sync warning:', response.data.message)
 			}
 		} catch (error) {
 			console.error('❌ Backend sync error:', error)

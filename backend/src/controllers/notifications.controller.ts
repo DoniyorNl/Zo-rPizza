@@ -27,9 +27,13 @@ export const notificationController = {
 			})
 
 			if (!dbUser) {
-				return res.status(404).json({
-					success: false,
-					message: 'User topilmadi',
+				// User database'da yo'q bo'lsa, bo'sh notifications qaytarish
+				return res.status(200).json({
+					success: true,
+					data: {
+						notifications: [],
+						unreadCount: 0,
+					},
 				})
 			}
 
