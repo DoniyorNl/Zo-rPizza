@@ -6,7 +6,7 @@
 
 import { api } from '@/lib/apiClient'
 import { Category, CategoryFilterOptions } from '@/types/category.types'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 /**
  * useCategories Hook
@@ -26,15 +26,24 @@ export function useCategories(options?: CategoryFilterOptions) {
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
 
+	// Stabilize options to prevent infinite loops
+	const stableOptions = useMemo(() => options, [
+		options?.isActive,
+		options?.hasProducts,
+		options?.search,
+		options?.sortBy,
+		options?.sortOrder,
+	])
+
 	/**
 	 * Fetch categories from backend
 	 */
-	const fetchCategories = useCallback(async () => {
+	const fetchCategories = useCallback(async (force = false) => {
 		// Check cache first (5 minutes TTL)
 		const cacheKey = 'categories_cache'
 		const cacheTTL = 5 * 60 * 1000 // 5 minutes
 		
-		if (typeof window !== 'undefined') {
+		if (!force && typeof window !== 'undefined') {
 			const cached = localStorage.getItem(cacheKey)
 			if (cached) {
 				try {
@@ -65,20 +74,20 @@ export function useCategories(options?: CategoryFilterOptions) {
 			// ============================================
 
 			// 1. Filter by active status
-			if (options?.isActive === true) {
+			if (stableOptions?.isActive === true) {
 				fetchedCategories = fetchedCategories.filter(cat => cat.isActive)
 			}
 
 			// 2. Filter by products (has products)
-			if (options?.hasProducts) {
+			if (stableOptions?.hasProducts) {
 				fetchedCategories = fetchedCategories.filter(
 					cat => (cat.productCount || 0) > 0
 				)
 			}
 
 			// 3. Search by name
-			if (options?.search) {
-				const searchLower = options.search.toLowerCase()
+			if (stableOptions?.search) {
+				const searchLower = stableOptions.search.toLowerCase()
 				fetchedCategories = fetchedCategories.filter(cat =>
 					cat.name.toLowerCase().includes(searchLower)
 				)
@@ -88,8 +97,8 @@ export function useCategories(options?: CategoryFilterOptions) {
 			// SORTING
 			// ============================================
 
-			const sortBy = options?.sortBy || 'displayOrder'
-			const sortOrder = options?.sortOrder || 'asc'
+			const sortBy = stableOptions?.sortBy || 'displayOrder'
+			const sortOrder = stableOptions?.sortOrder || 'asc'
 
 			fetchedCategories.sort((a, b) => {
 				let comparison = 0
@@ -134,7 +143,7 @@ export function useCategories(options?: CategoryFilterOptions) {
 		} finally {
 			setLoading(false)
 		}
-	}, [options])
+	}, [stableOptions])
 
 	/**
 	 * Initial fetch
@@ -147,7 +156,7 @@ export function useCategories(options?: CategoryFilterOptions) {
 		categories,
 		loading,
 		error,
-		refetch: fetchCategories,
+		refetch: () => fetchCategories(true), // Force refresh on manual refetch
 	}
 }
 

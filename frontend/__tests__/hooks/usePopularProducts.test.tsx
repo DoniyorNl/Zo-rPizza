@@ -5,7 +5,7 @@
 
 import { usePopularProducts } from '@/hooks/usePopularProducts'
 import { api } from '@/lib/apiClient'
-import { renderHook, waitFor } from '@testing-library/react'
+import { act, renderHook, waitFor } from '@testing-library/react'
 
 // Mock API client
 jest.mock('@/lib/apiClient')
@@ -70,6 +70,9 @@ describe('usePopularProducts Hook', () => {
 	})
 
 	afterEach(() => {
+		act(() => {
+			jest.runOnlyPendingTimers()
+		})
 		jest.useRealTimers()
 	})
 
@@ -186,8 +189,10 @@ describe('usePopularProducts Hook', () => {
 		// Initial fetch
 		expect(mockedApi.get).toHaveBeenCalledTimes(1)
 
-		// Fast-forward 10 minutes
-		jest.advanceTimersByTime(10 * 60 * 1000)
+		// Fast-forward 10 minutes - wrapped in act()
+		await act(async () => {
+			jest.advanceTimersByTime(10 * 60 * 1000)
+		})
 
 		await waitFor(() => {
 			expect(mockedApi.get).toHaveBeenCalledTimes(2)
