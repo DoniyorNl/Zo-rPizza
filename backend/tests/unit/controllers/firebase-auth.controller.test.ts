@@ -3,10 +3,10 @@
 
 import { Response } from 'express'
 import { DeepMockProxy, mockDeep, mockReset } from 'jest-mock-extended'
-import { AuthRequest } from '../../../src/middleware/auth.middleware'
-import { firebaseAuthController } from '../../../src/controllers/firebase-auth.controller'
 import { auth } from '../../../src/config/firebase'
+import { firebaseAuthController } from '../../../src/controllers/firebase-auth.controller'
 import prisma from '../../../src/lib/prisma'
+import { AuthRequest } from '../../../src/middleware/auth.middleware'
 
 // Mock Firebase and Prisma
 jest.mock('../../../src/config/firebase', () => ({
@@ -61,7 +61,8 @@ const generateMockFirebaseUser = (overrides: any = {}) => ({
 })
 
 const generateMockDbUser = (overrides: any = {}) => ({
-	id: 'firebase-123',
+	id: 'db-uuid-123',
+	firebaseUid: 'firebase-123',
 	email: 'test@example.com',
 	name: 'Test User',
 	phone: '+998901234567',
@@ -157,7 +158,8 @@ describe('Firebase Auth Controller', () => {
 						email: 'test@example.com',
 					}),
 					database: expect.objectContaining({
-						id: 'firebase-123',
+						id: 'db-uuid-123',
+						firebaseUid: 'firebase-123',
 						role: 'CUSTOMER',
 					}),
 				},
@@ -171,7 +173,7 @@ describe('Firebase Auth Controller', () => {
 			const res = mockResponse() as Response
 
 			const mockFirebaseUser = generateMockFirebaseUser({ uid: 'firebase-new' })
-			const newDbUser = generateMockDbUser({ id: 'firebase-new' })
+			const newDbUser = generateMockDbUser({ firebaseUid: 'firebase-new' })
 
 			;(auth.getUser as jest.Mock).mockResolvedValue(mockFirebaseUser)
 			prismaMock.user.findUnique.mockResolvedValue(null)
@@ -182,7 +184,7 @@ describe('Firebase Auth Controller', () => {
 			expect(prismaMock.user.create).toHaveBeenCalledWith(
 				expect.objectContaining({
 					data: expect.objectContaining({
-						id: 'firebase-new',
+						firebaseUid: 'firebase-new',
 						email: mockFirebaseUser.email,
 						role: 'CUSTOMER',
 					}),
@@ -285,7 +287,7 @@ describe('Firebase Auth Controller', () => {
 			}) as AuthRequest
 			const res = mockResponse() as Response
 
-			const updatedUser = generateMockDbUser({ id: 'user-123', role: 'ADMIN' })
+			const updatedUser = generateMockDbUser({ firebaseUid: 'user-123', role: 'ADMIN' })
 
 			;(auth.setCustomUserClaims as jest.Mock).mockResolvedValue(undefined)
 			prismaMock.user.update.mockResolvedValue(updatedUser as any)
@@ -297,7 +299,7 @@ describe('Firebase Auth Controller', () => {
 				role: 'admin',
 			})
 			expect(prismaMock.user.update).toHaveBeenCalledWith({
-				where: { id: 'user-123' },
+				where: { firebaseUid: 'user-123' },
 				data: { role: 'ADMIN' },
 			})
 			expect(res.status).toHaveBeenCalledWith(200)
@@ -325,7 +327,7 @@ describe('Firebase Auth Controller', () => {
 			}) as AuthRequest
 			const res = mockResponse() as Response
 
-			const updatedUser = generateMockDbUser({ id: 'user-123', role: 'CUSTOMER' })
+			const updatedUser = generateMockDbUser({ firebaseUid: 'user-123', role: 'CUSTOMER' })
 
 			;(auth.setCustomUserClaims as jest.Mock).mockResolvedValue(undefined)
 			prismaMock.user.update.mockResolvedValue(updatedUser as any)
@@ -337,7 +339,7 @@ describe('Firebase Auth Controller', () => {
 				role: 'customer',
 			})
 			expect(prismaMock.user.update).toHaveBeenCalledWith({
-				where: { id: 'user-123' },
+				where: { firebaseUid: 'user-123' },
 				data: { role: 'CUSTOMER' },
 			})
 			expect(res.status).toHaveBeenCalledWith(200)
