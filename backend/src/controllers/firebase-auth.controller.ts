@@ -175,15 +175,28 @@ export const firebaseAuthController = {
 					data: dbUser,
 				})
 			} else {
-				// Mavjud user ma'lumotlarini yangilash
-				dbUser = await prisma.user.update({
-					where: { firebaseUid: req.userId },
-					data: {
-						email: firebaseUser.email || dbUser.email,
-						name: firebaseUser.displayName || dbUser.name,
-						phone: firebaseUser.phoneNumber || dbUser.phone,
-					},
-				})
+				// Mavjud user ma'lumotlarini yangilash (faqat o'zgargan ma'lumotlar)
+				const updateData: any = {}
+
+				if (firebaseUser.displayName && firebaseUser.displayName !== dbUser.name) {
+					updateData.name = firebaseUser.displayName
+				}
+				if (firebaseUser.phoneNumber && firebaseUser.phoneNumber !== dbUser.phone) {
+					updateData.phone = firebaseUser.phoneNumber
+				}
+
+				// Agar o'zgarishlar bo'lsa, update qilish
+				if (Object.keys(updateData).length > 0) {
+					try {
+						dbUser = await prisma.user.update({
+							where: { firebaseUid: req.userId },
+							data: updateData,
+						})
+					} catch (updateError: any) {
+						// Email unique constraint xatosini ignore qilish
+						console.warn('⚠️ User update warning:', updateError.message)
+					}
+				}
 
 				return res.status(200).json({
 					success: true,
