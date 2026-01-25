@@ -29,15 +29,15 @@ export interface Deal {
 	imageUrl?: string
 	discountType: 'PERCENTAGE' | 'FIXED_AMOUNT' | 'BUY_X_GET_Y'
 	discountValue: number
-	minOrderAmount?: number
-	maxDiscountAmount?: number
+	minOrderAmount?: number | null
+	maxDiscountAmount?: number | null
 	startDate: string | Date
 	endDate: string | Date
 	isActive: boolean
-	usageLimit?: number
-	usageCount?: number
-	terms?: string
-	priority?: number // Display order (lower = higher priority)
+	usageLimit?: number | null
+	usageCount?: number | null
+	terms?: string | null
+	priority?: number | null // Display order (lower = higher priority)
 	items?: DealItem[]
 	createdAt?: string | Date
 	updatedAt?: string | Date

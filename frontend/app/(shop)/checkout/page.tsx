@@ -6,7 +6,7 @@
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { api } from '@/lib/apiClient'
+import api from '@/lib/api'
 import { useAuth } from '@/lib/AuthContext'
 import { useCartStore } from '@/store/cartStore'
 import axios from 'axios'
@@ -51,6 +51,9 @@ export default function CheckoutPage() {
 		setLoading(true)
 
 		try {
+			// Firebase token olish
+			const token = await user.getIdToken()
+
 			// Buyurtma yaratish
 			const orderData = {
 				userId: user.uid,
@@ -68,7 +71,11 @@ export default function CheckoutPage() {
 				deliveryPhone,
 			}
 
-			const response = await api.post('/api/orders', orderData)
+			const response = await api.post('/api/orders', orderData, {
+				headers: {
+					Authorization: `Bearer ${token}`,
+				},
+			})
 
 			// Muvaffaqiyatli - cart tozalash
 			clearCart()

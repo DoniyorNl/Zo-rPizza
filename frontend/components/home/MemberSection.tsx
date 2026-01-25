@@ -16,12 +16,12 @@ const MEMBER_BENEFITS = [
 	{
 		icon: Star,
 		title: 'Har safar ballar',
-		description: '1000 so\'m = 1 ball',
+		description: "1000 so'm = 1 ball",
 	},
 	{
 		icon: Gift,
 		title: 'Maxsus takliflar',
-		description: 'Faqat a\'zolar uchun',
+		description: "Faqat a'zolar uchun",
 	},
 	{
 		icon: Zap,
@@ -30,7 +30,7 @@ const MEMBER_BENEFITS = [
 	},
 	{
 		icon: Trophy,
-		title: 'Tug\'ilgan kun sovg\'asi',
+		title: "Tug'ilgan kun sovg'asi",
 		description: 'Bepul pitsa!',
 	},
 ]
@@ -64,7 +64,7 @@ const EXCLUSIVE_DEALS = [
 
 /**
  * MemberSection Component
- * 
+ *
  * Displays member/loyalty program information
  * Features:
  * - Benefits showcase
@@ -87,8 +87,8 @@ export function MemberSection() {
 						A'zo Bo'ling va Bonuslardan Foydalaning!
 					</h2>
 					<p className='text-gray-600 max-w-2xl mx-auto'>
-						Har safar buyurtma qiling va ballar to'plang. Ballaringizni maxsus
-						takliflarga almashtiring!
+						Har safar buyurtma qiling va ballar to'plang. Ballaringizni maxsus takliflarga
+						almashtiring!
 					</p>
 				</div>
 
@@ -113,9 +113,7 @@ export function MemberSection() {
 
 				{/* Exclusive Deals */}
 				<div className='mb-12'>
-					<h3 className='text-2xl font-bold text-center mb-6'>
-						Maxsus A'zolar Takliflari
-					</h3>
+					<h3 className='text-2xl font-bold text-center mb-6'>Maxsus A'zolar Takliflari</h3>
 					<div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
 						{EXCLUSIVE_DEALS.map(deal => (
 							<Card
@@ -131,9 +129,7 @@ export function MemberSection() {
 									<h4 className='font-bold text-lg mb-2'>{deal.title}</h4>
 									<div className='flex items-center justify-between mb-4'>
 										<Badge className='bg-purple-600'>{deal.discount}</Badge>
-										<span className='text-sm text-gray-600'>
-											{deal.points} ball
-										</span>
+										<span className='text-sm text-gray-600'>{deal.points} ball</span>
 									</div>
 									<Button
 										onClick={() => router.push('/register')}
@@ -149,9 +145,7 @@ export function MemberSection() {
 
 				{/* CTA Section */}
 				<Card className='p-8 md:p-12 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-center'>
-					<h3 className='text-3xl font-bold mb-4'>
-						Hoziroq A'zo Bo'ling va Bonuslar Oling!
-					</h3>
+					<h3 className='text-3xl font-bold mb-4'>Hoziroq A'zo Bo'ling va Bonuslar Oling!</h3>
 					<p className='text-lg mb-6 opacity-90'>
 						Ro'yxatdan o'ting va birinchi buyurtmangizda 100 bonus ball oling! 🎁
 					</p>
@@ -159,7 +153,7 @@ export function MemberSection() {
 						<Button
 							onClick={() => router.push('/register')}
 							size='lg'
-							className='bg-white text-purple-600 hover:bg-gray-100 font-bold shadow-xl'
+							className='bg-white text-purple-600 hover:bg-purple-50 hover:scale-105 font-bold shadow-xl transition-all duration-300 border-2 border-white'
 						>
 							Bepul Ro'yxatdan O'tish
 						</Button>
@@ -167,7 +161,7 @@ export function MemberSection() {
 							onClick={() => router.push('/login')}
 							size='lg'
 							variant='outline'
-							className='border-2 border-white text-white hover:bg-white/10'
+							className='border-2 border-white text-white bg-transparent hover:bg-white hover:text-purple-600 font-semibold transition-all duration-300'
 						>
 							Kirish
 						</Button>
@@ -181,36 +175,28 @@ export function MemberSection() {
 
 				{/* How it Works */}
 				<div className='mt-12 max-w-3xl mx-auto'>
-					<h3 className='text-2xl font-bold text-center mb-6'>
-						Qanday Ishlaydi?
-					</h3>
+					<h3 className='text-2xl font-bold text-center mb-6'>Qanday Ishlaydi?</h3>
 					<div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
 						<div className='text-center'>
 							<div className='w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold'>
 								1
 							</div>
 							<h4 className='font-semibold mb-2'>Ro'yxatdan O'ting</h4>
-							<p className='text-sm text-gray-600'>
-								Email yoki telefon raqam bilan
-							</p>
+							<p className='text-sm text-gray-600'>Email yoki telefon raqam bilan</p>
 						</div>
 						<div className='text-center'>
 							<div className='w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold'>
 								2
 							</div>
 							<h4 className='font-semibold mb-2'>Buyurtma Qiling</h4>
-							<p className='text-sm text-gray-600'>
-								Har 1000 so'mdan 1 ball oling
-							</p>
+							<p className='text-sm text-gray-600'>Har 1000 so'mdan 1 ball oling</p>
 						</div>
 						<div className='text-center'>
 							<div className='w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold'>
 								3
 							</div>
 							<h4 className='font-semibold mb-2'>Bonuslardan Foydalaning</h4>
-							<p className='text-sm text-gray-600'>
-								Ballarni chegirmalarga almashtiring
-							</p>
+							<p className='text-sm text-gray-600'>Ballarni chegirmalarga almashtiring</p>
 						</div>
 					</div>
 				</div>

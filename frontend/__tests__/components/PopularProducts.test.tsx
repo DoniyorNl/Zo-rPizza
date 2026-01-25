@@ -62,6 +62,7 @@ describe('PopularProducts Component', () => {
 			popularProducts: mockProducts,
 			loading: false,
 			error: null,
+			refetch: jest.fn(),
 		})
 
 		render(<PopularProducts />)
@@ -75,6 +76,7 @@ describe('PopularProducts Component', () => {
 			popularProducts: [],
 			loading: true,
 			error: null,
+			refetch: jest.fn(),
 		})
 
 		const { container } = render(<PopularProducts />)
@@ -89,6 +91,7 @@ describe('PopularProducts Component', () => {
 			popularProducts: [],
 			loading: false,
 			error: 'Failed to load',
+			refetch: jest.fn(),
 		})
 
 		const { container } = render(<PopularProducts />)
@@ -101,6 +104,7 @@ describe('PopularProducts Component', () => {
 			popularProducts: [],
 			loading: false,
 			error: null,
+			refetch: jest.fn(),
 		})
 
 		const { container } = render(<PopularProducts />)
@@ -113,6 +117,7 @@ describe('PopularProducts Component', () => {
 			popularProducts: mockProducts,
 			loading: false,
 			error: null,
+			refetch: jest.fn(),
 		})
 
 		render(<PopularProducts />)
@@ -126,6 +131,7 @@ describe('PopularProducts Component', () => {
 			popularProducts: mockProducts,
 			loading: false,
 			error: null,
+			refetch: jest.fn(),
 		})
 
 		render(<PopularProducts />)
@@ -139,6 +145,7 @@ describe('PopularProducts Component', () => {
 			popularProducts: mockProducts,
 			loading: false,
 			error: null,
+			refetch: jest.fn(),
 		})
 
 		render(<PopularProducts />)

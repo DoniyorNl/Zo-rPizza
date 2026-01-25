@@ -1,3 +1,5 @@
+import axios from 'axios'
+
 // Smart API URL detection for both localhost and production
 const getSmartApiUrl = (): string => {
 	// Production URL
@@ -26,3 +28,13 @@ export const buildApiUrl = (path: string): string => {
 	const normalizedPath = path.startsWith('/') ? path : `/${path}`
 	return `${base}${normalizedPath}`
 }
+
+// Axios instance
+const api = axios.create({
+	baseURL: API_BASE_URL,
+	headers: {
+		'Content-Type': 'application/json',
+	},
+})
+
+export default api

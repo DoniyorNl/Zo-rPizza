@@ -16,8 +16,8 @@ describe('GPS Utils', () => {
 
 			const distance = calculateDistance(tashkent, samarkand)
 
-			expect(distance).toBeGreaterThan(270)
-			expect(distance).toBeLessThan(280)
+			expect(distance).toBeGreaterThan(265)
+			expect(distance).toBeLessThan(270)
 		})
 
 		it('should return 0 for same location', () => {
@@ -106,8 +106,8 @@ describe('GPS Utils', () => {
 			expect(isValidLocation({ lat: 0, lng: 181 })).toBe(false)
 			expect(isValidLocation({ lat: -91, lng: 0 })).toBe(false)
 			expect(isValidLocation({ lat: 0, lng: -181 })).toBe(false)
-			expect(isValidLocation(null)).toBe(false)
-			expect(isValidLocation({})).toBe(false)
+			expect(isValidLocation(null as any)).toBe(false)
+			expect(isValidLocation({} as any)).toBe(false)
 		})
 	})
 

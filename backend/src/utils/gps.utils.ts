@@ -70,8 +70,10 @@ export function formatETA(minutes: number): string {
 }
 
 export function isValidLocation(location: any): location is Location {
+	if (!location || typeof location !== 'object') {
+		return false
+	}
 	return (
-		location &&
 		typeof location.lat === 'number' &&
 		typeof location.lng === 'number' &&
 		location.lat >= -90 &&

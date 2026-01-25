@@ -11,6 +11,7 @@ import {
 	getUserOrders,
 } from '@/controllers/orders.controller'
 import { adminOnly } from '../middleware/admin.middleware'
+import { authenticateFirebaseToken } from '../middleware/firebase-auth.middleware'
 
 const router = Router()
 
@@ -19,9 +20,9 @@ router.get('/admin/all', adminOnly, getAllOrders) // Admin - barcha buyurtmalar
 router.patch('/admin/:id/status', adminOnly, updateOrderStatus) // Admin - status o'zgartirish
 
 // ✅ USER ROUTES
-router.get('/user/:userId', getUserOrders) // User buyurtmalari
-router.get('/:id', getOrderById) // Bitta buyurtma
-router.post('/', createOrder) // Yangi buyurtma
-router.delete('/:id', deleteOrder) // Buyurtma o'chirish
+router.get('/user/:userId', authenticateFirebaseToken, getUserOrders) // User buyurtmalari
+router.get('/:id', authenticateFirebaseToken, getOrderById) // Bitta buyurtma
+router.post('/', authenticateFirebaseToken, createOrder) // Yangi buyurtma
+router.delete('/:id', authenticateFirebaseToken, deleteOrder) // Buyurtma o'chirish
 
 export default router

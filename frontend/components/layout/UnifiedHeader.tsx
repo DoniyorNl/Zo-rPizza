@@ -18,9 +18,10 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/lib/AuthContext'
 import { useCartStore } from '@/store/cartStore'
-import { CircleUser, Home, LogOut, Settings, ShoppingCart, User } from 'lucide-react'
+import { CircleUser, Home, LogOut, MapPin, Settings, ShoppingCart, User } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import api from '@/lib/api'
 
 interface UnifiedHeaderProps {
 	variant?: 'user' | 'admin'
@@ -31,11 +32,39 @@ export function UnifiedHeader({ variant = 'user' }: UnifiedHeaderProps) {
 	const router = useRouter()
 	const pathname = usePathname()
 	const totalItems = useCartStore(state => state.getTotalItems())
+	const [activeOrderId, setActiveOrderId] = useState<string | null>(null)
 
 	// Admin yoki user ekanligini pathname'dan aniqlash
 	const isAdmin = useMemo(() => {
 		return variant === 'admin' || pathname.startsWith('/admin')
 	}, [variant, pathname])
+
+	// Active order tekshirish - faqat user uchun
+	useEffect(() => {
+		if (!user || isAdmin) return
+
+		const checkActiveOrder = async () => {
+			try {
+				const token = await user.getIdToken()
+				const response = await api.get('/api/orders/user/' + user.uid, {
+					headers: { Authorization: `Bearer ${token}` }
+				})
+				
+				if (response.data.success) {
+					const activeOrder = response.data.data.find((order: any) => 
+						['PREPARING', 'OUT_FOR_DELIVERY'].includes(order.status)
+					)
+					setActiveOrderId(activeOrder?.id || null)
+				}
+			} catch (error) {
+				console.error('Active order check error:', error)
+			}
+		}
+
+		checkActiveOrder()
+		const interval = setInterval(checkActiveOrder, 30000)
+		return () => clearInterval(interval)
+	}, [user, isAdmin])
 
 	const handleLogout = async () => {
 		try {
@@ -89,6 +118,24 @@ export function UnifiedHeader({ variant = 'user' }: UnifiedHeaderProps) {
 									{totalItems}
 								</Badge>
 							)}
+						</button>
+					)}
+
+					{/* Tracking Button - Faqat user uchun va active order bo'lganda */}
+					{!isAdmin && activeOrderId && (
+						<button
+							onClick={() => router.push(`/tracking/${activeOrderId}`)}
+							className='relative flex items-center justify-center w-10 h-10 rounded-full
+							bg-green-500 hover:bg-green-600
+							transition-all duration-200
+							hover:shadow-lg active:scale-95 cursor-pointer
+							animate-pulse'
+							title='Track your order'
+						>
+							<MapPin className='w-5 h-5' />
+							<Badge className='absolute -top-1.5 -right-1.5 bg-green-700 text-white px-1.5 py-0.5 text-xs shadow'>
+								Live
+							</Badge>
 						</button>
 					)}
 

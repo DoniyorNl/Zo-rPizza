@@ -13,7 +13,7 @@ export const firebaseAuthController = {
 		try {
 			return res.status(200).json({
 				success: true,
-				message: 'Token to\'g\'ri va yaroqli',
+				message: "Token to'g'ri va yaroqli",
 				data: {
 					userId: req.userId,
 					email: req.userEmail,
@@ -45,9 +45,9 @@ export const firebaseAuthController = {
 			// 1. Firebase dan user ma'lumotlarini olish
 			const firebaseUser = await auth.getUser(req.userId)
 
-			// 2. Database dan user ma'lumotlarini olish (id = Firebase UID)
+			// 2. Database dan user ma'lumotlarini olish (firebaseUid bilan)
 			let dbUser = await prisma.user.findUnique({
-				where: { id: req.userId },
+				where: { firebaseUid: req.userId },
 				select: {
 					id: true,
 					email: true,
@@ -65,7 +65,7 @@ export const firebaseAuthController = {
 				console.log(`🆕 Creating new user in database: ${req.userId}`)
 				dbUser = await prisma.user.create({
 					data: {
-						id: req.userId,
+						firebaseUid: req.userId,
 						email: firebaseUser.email || '',
 						name: firebaseUser.displayName || 'User',
 						phone: firebaseUser.phoneNumber || null,
@@ -111,7 +111,7 @@ export const firebaseAuthController = {
 			console.error('❌ getCurrentUser Error:', error.message)
 			return res.status(500).json({
 				success: false,
-				message: 'Foydalanuvchi ma\'lumotlarini olishda xatolik.',
+				message: "Foydalanuvchi ma'lumotlarini olishda xatolik.",
 				error: process.env.NODE_ENV === 'development' ? error.message : undefined,
 			})
 		}
@@ -133,16 +133,16 @@ export const firebaseAuthController = {
 			// Firebase dan user ma'lumotlarini olish
 			const firebaseUser = await auth.getUser(req.userId)
 
-			// Database da user bor-yo'qligini tekshirish (id = Firebase UID)
+			// Database da user bor-yo'qligini tekshirish (firebaseUid bilan)
 			let dbUser = await prisma.user.findUnique({
-				where: { id: req.userId },
+				where: { firebaseUid: req.userId },
 			})
 
 			if (!dbUser) {
 				// Yangi user yaratish
 				dbUser = await prisma.user.create({
 					data: {
-						id: req.userId,
+						firebaseUid: req.userId,
 						email: firebaseUser.email || '',
 						name: firebaseUser.displayName || 'User',
 						phone: firebaseUser.phoneNumber || null,
@@ -160,7 +160,7 @@ export const firebaseAuthController = {
 			} else {
 				// Mavjud user ma'lumotlarini yangilash
 				dbUser = await prisma.user.update({
-					where: { id: req.userId },
+					where: { firebaseUid: req.userId },
 					data: {
 						email: firebaseUser.email || dbUser.email,
 						name: firebaseUser.displayName || dbUser.name,
@@ -170,7 +170,7 @@ export const firebaseAuthController = {
 
 				return res.status(200).json({
 					success: true,
-					message: 'User ma\'lumotlari yangilandi',
+					message: "User ma'lumotlari yangilandi",
 					data: dbUser,
 				})
 			}
@@ -205,9 +205,9 @@ export const firebaseAuthController = {
 				role: 'admin',
 			})
 
-			// 2. Database da ham rolni yangilash (id = Firebase UID)
+			// 2. Database da ham rolni yangilash (firebaseUid bilan)
 			const updatedUser = await prisma.user.update({
-				where: { id: uid },
+				where: { firebaseUid: uid },
 				data: { role: 'ADMIN' },
 			})
 
@@ -247,9 +247,9 @@ export const firebaseAuthController = {
 				role: 'customer',
 			})
 
-			// 2. Database da ham rolni yangilash (id = Firebase UID)
+			// 2. Database da ham rolni yangilash (firebaseUid bilan)
 			const updatedUser = await prisma.user.update({
-				where: { id: uid },
+				where: { firebaseUid: uid },
 				data: { role: 'CUSTOMER' },
 			})
 
@@ -308,5 +308,3 @@ export const firebaseAuthController = {
 		}
 	},
 }
-
-

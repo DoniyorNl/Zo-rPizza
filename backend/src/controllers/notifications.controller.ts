@@ -21,9 +21,9 @@ export const notificationController = {
 				})
 			}
 
-			// Database dan user topish
+			// Database dan user topish - firebaseUid bilan
 			const dbUser = await prisma.user.findUnique({
-				where: { id: req.userId },
+				where: { firebaseUid: req.userId },
 			})
 
 			if (!dbUser) {
@@ -56,13 +56,14 @@ export const notificationController = {
 			})
 		} catch (error: unknown) {
 			console.error('❌ getAllNotifications Error:', error)
-			const errorMessage = error instanceof Error ? error.message : 'Notificationlarni olishda xatolik'
+			const errorMessage =
+				error instanceof Error ? error.message : 'Notificationlarni olishda xatolik'
 			console.error('Full error:', error)
 			return res.status(500).json({
 				success: false,
 				message: errorMessage,
-				...(process.env.NODE_ENV === 'development' && { 
-					error: error instanceof Error ? error.stack : String(error) 
+				...(process.env.NODE_ENV === 'development' && {
+					error: error instanceof Error ? error.stack : String(error),
 				}),
 			})
 		}
@@ -81,9 +82,9 @@ export const notificationController = {
 				})
 			}
 
-			// Database dan user topish
+			// Database dan user topish - firebaseUid bilan
 			const dbUser = await prisma.user.findUnique({
-				where: { id: req.userId },
+				where: { firebaseUid: req.userId },
 			})
 
 			if (!dbUser) {
@@ -107,7 +108,7 @@ export const notificationController = {
 
 			return res.status(200).json({
 				success: true,
-				message: 'Barcha notificationlar o\'qilgan qilindi',
+				message: "Barcha notificationlar o'qilgan qilindi",
 				data: {
 					updatedCount: result.count,
 				},
@@ -116,7 +117,7 @@ export const notificationController = {
 			console.error('❌ markAllAsRead Error:', error.message)
 			return res.status(500).json({
 				success: false,
-				message: 'Notificationlarni o\'qilgan qilishda xatolik',
+				message: "Notificationlarni o'qilgan qilishda xatolik",
 			})
 		}
 	},
@@ -137,9 +138,9 @@ export const notificationController = {
 				})
 			}
 
-			// Database dan user topish
+			// Database dan user topish - firebaseUid bilan
 			const dbUser = await prisma.user.findUnique({
-				where: { id: req.userId },
+				where: { firebaseUid: req.userId },
 			})
 
 			if (!dbUser) {
@@ -175,14 +176,14 @@ export const notificationController = {
 
 			return res.status(200).json({
 				success: true,
-				message: 'Notification o\'qilgan qilindi',
+				message: "Notification o'qilgan qilindi",
 				data: updated,
 			})
 		} catch (error: any) {
 			console.error('❌ markAsRead Error:', error.message)
 			return res.status(500).json({
 				success: false,
-				message: 'Notification o\'qilgan qilishda xatolik',
+				message: "Notification o'qilgan qilishda xatolik",
 			})
 		}
 	},
@@ -203,9 +204,9 @@ export const notificationController = {
 				})
 			}
 
-			// Database dan user topish
+			// Database dan user topish - firebaseUid bilan
 			const dbUser = await prisma.user.findUnique({
-				where: { id: req.userId },
+				where: { firebaseUid: req.userId },
 			})
 
 			if (!dbUser) {
@@ -237,13 +238,13 @@ export const notificationController = {
 
 			return res.status(200).json({
 				success: true,
-				message: 'Notification o\'chirildi',
+				message: "Notification o'chirildi",
 			})
 		} catch (error: any) {
 			console.error('❌ deleteNotification Error:', error.message)
 			return res.status(500).json({
 				success: false,
-				message: 'Notification o\'chirishda xatolik',
+				message: "Notification o'chirishda xatolik",
 			})
 		}
 	},
@@ -261,9 +262,9 @@ export const notificationController = {
 				})
 			}
 
-			// Database dan user topish
+			// Database dan user topish - firebaseUid bilan
 			const dbUser = await prisma.user.findUnique({
-				where: { id: req.userId },
+				where: { firebaseUid: req.userId },
 			})
 
 			if (!dbUser) {
@@ -280,7 +281,7 @@ export const notificationController = {
 
 			return res.status(200).json({
 				success: true,
-				message: 'Barcha notificationlar o\'chirildi',
+				message: "Barcha notificationlar o'chirildi",
 				data: {
 					deletedCount: result.count,
 				},
@@ -289,7 +290,7 @@ export const notificationController = {
 			console.error('❌ clearAll Error:', error.message)
 			return res.status(500).json({
 				success: false,
-				message: 'Notificationlarni o\'chirishda xatolik',
+				message: "Notificationlarni o'chirishda xatolik",
 			})
 		}
 	},
