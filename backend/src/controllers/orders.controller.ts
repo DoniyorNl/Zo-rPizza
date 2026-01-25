@@ -175,16 +175,41 @@ export const createOrder = async (req: Request, res: Response) => {
 			})
 		}
 
-		// User mavjudligini tekshirish
-		const user = await prisma.user.findUnique({
-			where: { id: userId },
+		// User mavjudligini tekshirish (firebaseUid bilan)
+		let user = await prisma.user.findUnique({
+			where: { firebaseUid: userId },
 		})
 
 		if (!user) {
-			return res.status(404).json({
-				success: false,
-				message: 'User not found',
-			})
+			// Email bilan ham tekshirish (agar email mavjud bo'lsa, firebaseUid ni update qilish)
+			const email = req.body.email || ''
+			const existingUser = email ? await prisma.user.findUnique({ where: { email } }) : null
+
+			if (existingUser) {
+				// Mavjud user'ga firebaseUid qo'shish
+				user = await prisma.user.update({
+					where: { id: existingUser.id },
+					data: {
+						firebaseUid: userId,
+						name: req.body.name || existingUser.name,
+						phone: deliveryPhone || existingUser.phone,
+					},
+				})
+			} else {
+				// Agar user database'da yo'q bo'lsa, avtomatik yaratish
+				console.log(` Creating user in database: ${userId}`)
+				user = await prisma.user.create({
+					data: {
+						firebaseUid: userId,
+						email,
+						name: req.body.name || 'User',
+						phone: deliveryPhone,
+						password: null,
+						role: 'CUSTOMER',
+						isBlocked: false,
+					},
+				})
+			}
 		}
 
 		// Mahsulotlar narxlarini hisoblash
@@ -324,13 +349,13 @@ export const createOrder = async (req: Request, res: Response) => {
 				},
 				...(halfProductId
 					? {
-						halfHalf: {
-							create: {
-								leftProductId: product.id,
-								rightProductId: halfProductId,
+							halfHalf: {
+								create: {
+									leftProductId: product.id,
+									rightProductId: halfProductId,
+								},
 							},
-						},
-					}
+						}
 					: {}),
 			})
 		}
@@ -341,8 +366,8 @@ export const createOrder = async (req: Request, res: Response) => {
 		})
 
 		const orderNumber = lastOrder
-			? `${(parseInt(lastOrder.orderNumber.slice(1)) + 1).toString().padStart(4, '0')}`
-			: '0001'
+			? `#${(parseInt(lastOrder.orderNumber.slice(1)) + 1).toString().padStart(4, '0')}`
+			: '#0001'
 
 		// Buyurtma yaratish
 		const order = await prisma.order.create({

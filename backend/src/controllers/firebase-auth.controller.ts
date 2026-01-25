@@ -139,18 +139,35 @@ export const firebaseAuthController = {
 			})
 
 			if (!dbUser) {
-				// Yangi user yaratish
-				dbUser = await prisma.user.create({
-					data: {
-						firebaseUid: req.userId,
-						email: firebaseUser.email || '',
-						name: firebaseUser.displayName || 'User',
-						phone: firebaseUser.phoneNumber || null,
-						password: null,
-						role: 'CUSTOMER',
-						isBlocked: false,
-					},
-				})
+				// Email bilan ham tekshirish (agar email mavjud bo'lsa, firebaseUid ni update qilish)
+				const existingUser = firebaseUser.email
+					? await prisma.user.findUnique({ where: { email: firebaseUser.email } })
+					: null
+
+				if (existingUser) {
+					// Mavjud user'ga firebaseUid qo'shish
+					dbUser = await prisma.user.update({
+						where: { id: existingUser.id },
+						data: {
+							firebaseUid: req.userId,
+							name: firebaseUser.displayName || existingUser.name,
+							phone: firebaseUser.phoneNumber || existingUser.phone,
+						},
+					})
+				} else {
+					// Yangi user yaratish
+					dbUser = await prisma.user.create({
+						data: {
+							firebaseUid: req.userId,
+							email: firebaseUser.email || '',
+							name: firebaseUser.displayName || 'User',
+							phone: firebaseUser.phoneNumber || null,
+							password: null,
+							role: 'CUSTOMER',
+							isBlocked: false,
+						},
+					})
+				}
 
 				return res.status(201).json({
 					success: true,
