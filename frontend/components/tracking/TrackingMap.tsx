@@ -36,6 +36,7 @@ export default function TrackingMap({
 
 		const initMap = async () => {
 			L = (await import('leaflet')).default
+			// @ts-ignore - CSS import for leaflet
 			await import('leaflet/dist/leaflet.css')
 
 			// Fix default marker icons

@@ -1,5 +1,21 @@
 {
-	"devDependencies": {
-		"@playwright/test": "^1.57.0"
+	"name": "zor-pizza",
+	"version": "1.0.0",
+	"private": true,
+	"scripts": {
+		"dev": "pnpm --filter frontend dev",
+		"dev:backend": "pnpm --filter backend dev",
+		"dev:both": "pnpm -r --parallel dev",
+		"build": "pnpm -r build",
+		"test": "pnpm -r test",
+		"test:frontend": "pnpm --filter frontend test",
+		"test:backend": "pnpm --filter backend test",
+		"test:frontend:watch": "pnpm --filter frontend test:watch",
+		"test:backend:watch": "pnpm --filter backend test:watch",
+		"test:frontend:coverage": "pnpm --filter frontend test:coverage",
+		"test:backend:coverage": "pnpm --filter backend test:coverage",
+		"test:e2e": "pnpm --filter frontend test:e2e",
+		"test:e2e:ui": "pnpm --filter frontend test:e2e:ui",
+		"test:all": "pnpm -r test && pnpm --filter frontend test:e2e"
 	}
 }

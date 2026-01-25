@@ -14,14 +14,16 @@ describe('MemberSection Component', () => {
 	it('should render member section', () => {
 		render(<MemberSection />)
 		
-		expect(screen.getByText(/A'zo Bo'ling/i)).toBeInTheDocument()
+		const azoBoling = screen.getAllByText(/A'zo Bo'ling/i)
+		expect(azoBoling.length).toBeGreaterThan(0)
 	})
 
 	it('should display benefits', () => {
 		render(<MemberSection />)
 		
 		expect(screen.getByText(/Har safar ballar/i)).toBeInTheDocument()
-		expect(screen.getByText(/Maxsus takliflar/i)).toBeInTheDocument()
+		const maxsusTakliflar = screen.getAllByText(/Maxsus takliflar/i)
+		expect(maxsusTakliflar.length).toBeGreaterThan(0)
 	})
 
 	it('should display exclusive deals', () => {

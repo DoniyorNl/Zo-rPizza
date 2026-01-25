@@ -16,11 +16,11 @@ export async function updateDriverLocation(req: Request, res: Response) {
     const { lat, lng } = req.body;
 
     if (!userId) {
-      throw new AppError('User not authenticated', 401);
+      throw new AppError(401, 'User not authenticated', 'UNAUTHORIZED');
     }
 
     if (!lat || !lng || !isValidLocation({ lat, lng })) {
-      throw new AppError('Invalid location coordinates', 400);
+      throw new AppError(400, 'Invalid location coordinates', 'INVALID_LOCATION');
     }
 
     const driver = await prisma.user.update({
@@ -89,7 +89,7 @@ export async function getOrderTracking(req: Request, res: Response) {
     const userId = req.user?.id;
 
     const order = await prisma.order.findUnique({
-      where: { id: orderId },
+      where: { id: String(orderId) },
       include: {
         user: {
           select: {
@@ -102,11 +102,11 @@ export async function getOrderTracking(req: Request, res: Response) {
     });
 
     if (!order) {
-      throw new AppError('Order not found', 404);
+      throw new AppError(404, 'Order not found', 'ORDER_NOT_FOUND');
     }
 
     if (order.userId !== userId && req.user?.role !== 'ADMIN') {
-      throw new AppError('Not authorized to track this order', 403);
+      throw new AppError(403, 'Not authorized to track this order', 'UNAUTHORIZED');
     }
 
     let driver = null;
@@ -150,7 +150,7 @@ export async function getOrderTracking(req: Request, res: Response) {
         order: {
           id: order.id,
           status: order.status,
-          totalAmount: order.totalAmount,
+          totalPrice: order.totalPrice,
           deliveryAddress: order.deliveryAddress,
           createdAt: order.createdAt,
           trackingStartedAt: order.trackingStartedAt,
@@ -174,25 +174,25 @@ export async function startDeliveryTracking(req: Request, res: Response) {
     const { deliveryLocation } = req.body;
 
     if (!deliveryLocation || !isValidLocation(deliveryLocation)) {
-      throw new AppError('Invalid delivery location', 400);
+      throw new AppError(400, 'Invalid delivery location', 'INVALID_LOCATION');
     }
 
     const order = await prisma.order.findUnique({
-      where: { id: orderId },
+      where: { id: String(orderId) },
     });
 
     if (!order) {
-      throw new AppError('Order not found', 404);
+      throw new AppError(404, 'Order not found', 'ORDER_NOT_FOUND');
     }
 
     if (order.driverId !== userId && req.user?.role !== 'ADMIN') {
-      throw new AppError('Not authorized', 403);
+      throw new AppError(403, 'Not authorized', 'UNAUTHORIZED');
     }
 
     const updatedOrder = await prisma.order.update({
-      where: { id: orderId },
+      where: { id: String(orderId) },
       data: {
-        deliveryLocation,
+        deliveryLocation: deliveryLocation as any,
         trackingStartedAt: new Date(),
         deliveryStartedAt: new Date(),
         status: 'OUT_FOR_DELIVERY',
@@ -214,7 +214,7 @@ export async function startDeliveryTracking(req: Request, res: Response) {
     }
 
     await prisma.order.update({
-      where: { id: orderId },
+      where: { id: String(orderId) },
       data: {
         estimatedTime: eta,
       },
@@ -251,19 +251,19 @@ export async function completeDelivery(req: Request, res: Response) {
     const userId = req.user?.id;
 
     const order = await prisma.order.findUnique({
-      where: { id: orderId },
+      where: { id: String(orderId) },
     });
 
     if (!order) {
-      throw new AppError('Order not found', 404);
+      throw new AppError(404, 'Order not found', 'ORDER_NOT_FOUND');
     }
 
     if (order.driverId !== userId && req.user?.role !== 'ADMIN') {
-      throw new AppError('Not authorized', 403);
+      throw new AppError(403, 'Not authorized', 'UNAUTHORIZED');
     }
 
     await prisma.order.update({
-      where: { id: orderId },
+      where: { id: String(orderId) },
       data: {
         status: 'DELIVERED',
         deliveryCompletedAt: new Date(),

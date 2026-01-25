@@ -160,6 +160,8 @@ app.get('/', (_req: Request, res: Response) => {
 			toppings: '/api/toppings',
 			coupons: '/api/coupons',
 			deals: '/api/deals',
+			tracking: '/api/tracking',
+			notifications: '/api/notifications',
 		},
 	})
 })

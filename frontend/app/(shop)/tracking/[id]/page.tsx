@@ -177,24 +177,79 @@ export default function OrderTrackingPage() {
 										showRoute={true}
 									/>
 
+									{/* Stats Grid */}
 									<div className='grid grid-cols-3 gap-4 mt-6'>
 										<div className='text-center p-4 bg-blue-50 rounded-lg'>
 											<div className='text-2xl font-bold text-blue-600'>
 												{tracking.distance.toFixed(1)} km
 											</div>
-											<div className='text-sm text-gray-600'>Distance</div>
+											<div className='text-sm text-gray-600'>Masofa</div>
 										</div>
 										<div className='text-center p-4 bg-orange-50 rounded-lg'>
 											<div className='text-2xl font-bold text-orange-600'>
 												{formatETA(tracking.eta)}
 											</div>
-											<div className='text-sm text-gray-600'>ETA</div>
+											<div className='text-sm text-gray-600'>Taxminiy vaqt</div>
 										</div>
 										<div className='text-center p-4 bg-green-50 rounded-lg'>
 											<div className='text-2xl font-bold text-green-600'>
 												{tracking.isNearby ? '✓' : '○'}
 											</div>
-											<div className='text-sm text-gray-600'>Nearby</div>
+											<div className='text-sm text-gray-600'>Yaqinlashdi</div>
+										</div>
+									</div>
+
+									{/* ETA Progress Bar */}
+									<div className='mt-6 p-6 bg-gradient-to-r from-orange-50 to-pink-50 rounded-lg'>
+										<div className='flex items-center justify-between mb-3'>
+											<h3 className='text-lg font-bold text-gray-800'>Yetkazib berish jarayoni</h3>
+											<span className='text-sm font-semibold text-orange-600'>
+												{formatETA(tracking.eta)} qoldi
+											</span>
+										</div>
+										
+										{/* Progress Bar */}
+										<div className='relative h-4 bg-gray-200 rounded-full overflow-hidden'>
+											<div 
+												className='absolute top-0 left-0 h-full bg-gradient-to-r from-orange-500 to-pink-500 transition-all duration-500 rounded-full'
+												style={{ 
+													width: `${Math.min(100, Math.max(0, 100 - (tracking.distance * 10)))}%` 
+												}}
+											>
+												<div className='absolute inset-0 bg-white/20 animate-pulse'></div>
+											</div>
+										</div>
+
+										{/* Timeline */}
+										<div className='flex justify-between mt-4 text-xs text-gray-600'>
+											<div className='flex flex-col items-center'>
+												<div className='w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white mb-1'>
+													✓
+												</div>
+												<span>Boshlandi</span>
+											</div>
+											<div className='flex flex-col items-center'>
+												<div className={`w-8 h-8 rounded-full flex items-center justify-center text-white mb-1 ${
+													tracking.distance < 5 ? 'bg-orange-500 animate-bounce' : 'bg-gray-300'
+												}`}>
+													🏍️
+												</div>
+												<span>Yo'lda</span>
+											</div>
+											<div className='flex flex-col items-center'>
+												<div className={`w-8 h-8 rounded-full flex items-center justify-center text-white mb-1 ${
+													tracking.isNearby ? 'bg-green-500 animate-pulse' : 'bg-gray-300'
+												}`}>
+													{tracking.isNearby ? '✓' : '○'}
+												</div>
+												<span>Yaqinlashdi</span>
+											</div>
+											<div className='flex flex-col items-center'>
+												<div className='w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-white mb-1'>
+													🏠
+												</div>
+												<span>Yetkazildi</span>
+											</div>
 										</div>
 									</div>
 								</>

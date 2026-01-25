@@ -45,7 +45,7 @@ describe('Tracking Controller', () => {
 	describe('updateDriverLocation', () => {
 		beforeEach(() => {
 			mockReq = {
-				user: { id: 'driver-1', role: 'DRIVER' },
+				user: { id: 'driver-1', email: 'driver@test.com', role: 'DRIVER', name: 'Driver Test' },
 				body: { lat: 41.3, lng: 69.24 },
 			}
 		})
@@ -125,7 +125,7 @@ describe('Tracking Controller', () => {
 		beforeEach(() => {
 			mockReq = {
 				params: { orderId: 'order-1' },
-				user: { id: 'user-1', role: 'USER' },
+				user: { id: 'user-1', email: 'user@test.com', role: 'USER', name: 'User Test' },
 			}
 		})
 
@@ -185,7 +185,7 @@ describe('Tracking Controller', () => {
 			}
 
 			;(prisma.order.findUnique as jest.Mock).mockResolvedValue(mockOrder)
-			mockReq.user = { id: 'user-1', role: 'USER' }
+			mockReq.user = { id: 'user-1', email: 'user@test.com', role: 'USER', name: 'User Test' }
 
 			await expect(getOrderTracking(mockReq as Request, mockRes as Response)).rejects.toThrow(
 				'Not authorized to track this order',
@@ -197,8 +197,10 @@ describe('Tracking Controller', () => {
 		beforeEach(() => {
 			mockReq = {
 				params: { orderId: 'order-1' },
-				user: { id: 'driver-1', role: 'DRIVER' },
-				body: { deliveryLocation: { lat: 41.31, lng: 69.25 } },
+				user: { id: 'driver-1', email: 'driver@test.com', role: 'DRIVER', name: 'Driver Test' },
+				body: {
+					deliveryLocation: { lat: 41.31, lng: 69.25 },
+				},
 			}
 		})
 
@@ -255,7 +257,7 @@ describe('Tracking Controller', () => {
 		beforeEach(() => {
 			mockReq = {
 				params: { orderId: 'order-1' },
-				user: { id: 'driver-1', role: 'DRIVER' },
+				user: { id: 'driver-1', email: 'driver@test.com', role: 'DRIVER', name: 'Driver Test' },
 			}
 		})
 
@@ -296,7 +298,7 @@ describe('Tracking Controller', () => {
 	describe('getActiveDeliveries', () => {
 		beforeEach(() => {
 			mockReq = {
-				user: { id: 'admin-1', role: 'ADMIN' },
+				user: { id: 'admin-1', email: 'admin@test.com', role: 'ADMIN', name: 'Admin Test' },
 			}
 		})
 

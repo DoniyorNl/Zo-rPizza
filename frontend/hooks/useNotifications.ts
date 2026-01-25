@@ -3,11 +3,13 @@
 // 🔔 NOTIFICATIONS HOOK (Optimized with Zustand Store)
 // =====================================
 
+import { useAuth } from '@/lib/AuthContext'
 import { useNotificationStore } from '@/store/useNotificationStore'
 import { useEffect } from 'react'
 export type { Notification } from '@/store/useNotificationStore'
 
 export const useNotifications = () => {
+	const { user } = useAuth()
 	const {
 		notifications,
 		unreadCount,
@@ -17,14 +19,15 @@ export const useNotifications = () => {
 		markAllAsRead,
 		markAsRead,
 		deleteNotification,
-		clearAll
+		clearAll,
 	} = useNotificationStore()
 
-	// Initial fetch on mount
+	// Initial fetch on mount - only if user is authenticated
 	useEffect(() => {
-		// The store handles deduplication and caching internally
-		fetchNotifications()
-	}, [fetchNotifications])
+		if (user) {
+			fetchNotifications()
+		}
+	}, [user, fetchNotifications])
 
 	return {
 		notifications,
@@ -38,4 +41,3 @@ export const useNotifications = () => {
 		clearAll,
 	}
 }
-

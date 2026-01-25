@@ -8,15 +8,16 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String?
-  name      String?
-  phone     String?
-  role      UserRole @default(CUSTOMER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  isBlocked Boolean  @default(false)
+  id          String   @id @default(uuid())
+  firebaseUid String?  @unique
+  email       String   @unique
+  password    String?
+  name        String?
+  phone       String?
+  role        UserRole @default(CUSTOMER)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isBlocked   Boolean  @default(false)
   orders        Order[]
   reviews       Review[]
   notifications Notification[]
@@ -181,13 +182,13 @@ model Order {
   deliveryPhone   String
   deliveryLat     Float?
   deliveryLng     Float?
-  estimatedTime   Int?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   items           OrderItem[]
   user            User          @relation(fields: [userId], references: [id])
   reviews         Review?
   // GPS Tracking fields
+  driverId            String?        // Driver assigned to this order
   deliveryLocation    Json?          // { lat, lng, address }
   driverLocation      Json?          // { lat, lng, timestamp }
   estimatedTime       Int?           // minutes
@@ -301,6 +302,7 @@ enum OrderStatus {
   CONFIRMED
   PREPARING
   READY
+  OUT_FOR_DELIVERY
   DELIVERING
   DELIVERED
   CANCELLED
@@ -328,6 +330,7 @@ model Notification {
   message   String
   type      NotificationType @default(INFO)
   isRead    Boolean  @default(false)
+  orderId   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
@@ -344,4 +347,5 @@ enum NotificationType {
   SUCCESS
   ERROR
   ORDER
+  ORDER_UPDATE
 }

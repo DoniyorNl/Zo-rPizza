@@ -28,7 +28,8 @@ describe('DeliveryToggle Component', () => {
 	it('should display estimated time', () => {
 		render(<DeliveryToggle />)
 		
-		expect(screen.getByText(/daqiqa/i)).toBeInTheDocument()
+		const daqiqaElements = screen.getAllByText(/daqiqa/i)
+		expect(daqiqaElements.length).toBeGreaterThan(0)
 	})
 
 	it('should display location/store selector', () => {

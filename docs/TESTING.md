@@ -1,327 +1,322 @@
-# 🧪 Testing Documentation
+# 🧪 Testing Guide - Test Qo'llanma
 
-## Loyiha uchun test strategiyasi
-
-### Test turlari
-
-1. **Unit Tests** — Alohida funksiya/component testlari
-2. **Integration Tests** — API endpoint testlari
-3. **E2E Tests** — To'liq user flow testlari
+Bu qo'llanmada Zo'r Pizza loyihasida testlarni qanday ishlatish haqida ma'lumot berilgan.
 
 ---
 
-## Backend Testing
+## 📋 Mavjud Test Turlari
 
-### Setup
+### Frontend Tests
+
+- **Unit Tests** - Komponentlar va funksiyalar testi (Jest)
+- **Integration Tests** - Store va API integration testlari
+- **E2E Tests** - To'liq foydalanuvchi oqimi testlari (Playwright)
+
+### Backend Tests
+
+- **Unit Tests** - Controller va service testlari
+- **Integration Tests** - API endpoint testlari
+
+---
+
+## 🚀 Test Commandlari
+
+### Root Papkadan (Barcha Testlar)
+
+#### 1️⃣ Barcha testlarni ishga tushirish
 
 ```bash
-cd backend
-npm install
-```
-
-### Test dependencies
-
-- `jest` - Test framework
-- `ts-jest` - TypeScript support
-- `supertest` - API testing
-- `jest-mock-extended` - Prisma mocking
-
-### Running tests
-
-```bash
-# Barcha testlar
 npm test
-
-# Watch mode (development)
-npm run test:watch
-
-# Faqat unit tests
-npm run test:unit
-
-# Faqat integration tests
-npm run test:integration
-
-# Coverage report
-npm test -- --coverage
+# yoki
+pnpm test
 ```
 
-### Test fayllari
+Bu command **frontend va backend** testlarini ketma-ket ishga tushiradi.
 
-- `tests/setup.ts` - Global setup, mocks
-- `tests/unit/controllers/` - Controller unit testlari
-- `tests/integration/` - API integration testlari
+#### 2️⃣ To'liq test suite (unit + e2e)
 
-### Example: Unit Test
-
-```typescript
-import { createProduct } from '../../../src/controllers/products.controller'
-import { prismaMock } from '../../setup'
-
-describe('createProduct', () => {
-  it('should create product successfully', async () => {
-    const mockProduct = { id: '1', name: 'Pizza' }
-    prismaMock.product.create.mockResolvedValue(mockProduct)
-
-    await createProduct(mockReq, mockRes)
-
-    expect(mockRes.status).toHaveBeenCalledWith(201)
-  })
-})
+```bash
+npm run test:all
+# yoki
+pnpm test:all
 ```
 
-### Coverage Target
-
-- **Lines**: 70%+
-- **Functions**: 70%+
-- **Branches**: 70%+
+Bu command barcha unit testlar + E2E testlarni ishga tushiradi.
 
 ---
 
-## Frontend Testing
+### Frontend Testlari
 
-### Setup
+#### Alohida frontend testlari
 
 ```bash
+# Root papkadan
+npm run test:frontend
+
+# Yoki frontend papkasida
 cd frontend
-npm install
+npm test
 ```
 
-### Test dependencies
-
-- `jest` - Test framework
-- `@testing-library/react` - Component testing
-- `@testing-library/jest-dom` - DOM matchers
-- `@testing-library/user-event` - User interactions
-
-### Running tests
+#### Watch mode (o'zgarishlarni kuzatish)
 
 ```bash
-# Barcha testlar
-npm test
+# Root papkadan
+npm run test:frontend:watch
 
-# Watch mode
+# Frontend papkasida
+cd frontend
 npm run test:watch
+```
 
-# Coverage
+#### Coverage bilan (qamrov hisoboti)
+
+```bash
+# Root papkadan
+npm run test:frontend:coverage
+
+# Frontend papkasida
+cd frontend
 npm run test:coverage
 ```
 
-### Test fayllari
+#### E2E testlar (Playwright)
 
-- `jest.setup.js` - Global setup
-- `__tests__/hooks/` - Hook testlari
-- `__tests__/components/` - Component testlari
+```bash
+# Root papkadan
+npm run test:e2e
 
-### Example: Hook Test
+# Frontend papkasida
+cd frontend
+npm run test:e2e
+```
+
+#### E2E testlar UI mode bilan
+
+```bash
+# Root papkadan
+npm run test:e2e:ui
+
+# Frontend papkasida
+cd frontend
+npm run test:e2e:ui
+```
+
+---
+
+### Backend Testlari
+
+#### Alohida backend testlari
+
+```bash
+# Root papkadan
+npm run test:backend
+
+# Backend papkasida
+cd backend
+npm test
+```
+
+#### Watch mode
+
+```bash
+# Root papkadan
+npm run test:backend:watch
+
+# Backend papkasida
+cd backend
+npm run test:watch
+```
+
+#### Coverage bilan
+
+```bash
+# Root papkadan
+npm run test:backend:coverage
+
+# Backend papkasida
+cd backend
+npm test
+```
+
+#### Faqat unit testlar
+
+```bash
+cd backend
+npm run test:unit
+```
+
+#### Faqat integration testlar
+
+```bash
+cd backend
+npm run test:integration
+```
+
+---
+
+## 📊 Test Natijalarini Tushunish
+
+### Jest Output
+
+```
+PASS  __tests__/components/Header.test.tsx
+  ✓ Header renders correctly (25ms)
+  ✓ Shows user menu when logged in (15ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       2 passed, 2 total
+```
+
+### Coverage Report
+
+```
+File                | % Stmts | % Branch | % Funcs | % Lines |
+--------------------|---------|----------|---------|---------|
+components/Header   |   85.5  |   75.0   |   90.0  |   85.5  |
+```
+
+- **% Stmts** - Kod qatorlari qamrovi
+- **% Branch** - If/else shoxobchalar qamrovi
+- **% Funcs** - Funksiyalar qamrovi
+- **% Lines** - Kod satrlari qamrovi
+
+---
+
+## 💡 Maslahatlar
+
+### 1. Development paytida
+
+Watch mode ishlatish tavsiya etiladi:
+
+```bash
+npm run test:frontend:watch
+```
+
+### 2. Commit qilishdan oldin
+
+Barcha testlarni ishga tushiring:
+
+```bash
+npm run test:all
+```
+
+### 3. CI/CD uchun
+
+Coverage bilan testlarni ishga tushiring:
+
+```bash
+npm run test:frontend:coverage
+npm run test:backend:coverage
+```
+
+### 4. Debugging uchun
+
+E2E testlarni UI mode bilan ishga tushiring:
+
+```bash
+npm run test:e2e:ui
+```
+
+---
+
+## 🔧 Test Konfiguratsiyalari
+
+### Frontend
+
+- **Jest Config**: `frontend/jest.config.cjs`
+- **Playwright Config**: `e2e/playwright.config.ts`
+- **Test Files**: `frontend/__tests__/**/*.test.tsx`
+
+### Backend
+
+- **Jest Config**: `backend/jest.config.js`
+- **Test Files**: `backend/tests/**/*.test.ts`
+
+---
+
+## 📝 Yangi Test Yozish
+
+### Frontend Component Test
 
 ```typescript
-import { renderHook, waitFor } from '@testing-library/react'
-import { useNotifications } from '@/hooks/useNotifications'
+// __tests__/components/MyComponent.test.tsx
+import { render, screen } from '@testing-library/react'
+import MyComponent from '@/components/MyComponent'
 
-describe('useNotifications', () => {
-  it('should fetch notifications', async () => {
-    const { result } = renderHook(() => useNotifications())
-
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false)
-    })
-
-    expect(result.current.notifications).toBeDefined()
+describe('MyComponent', () => {
+  it('renders correctly', () => {
+    render(<MyComponent />)
+    expect(screen.getByText('Hello')).toBeInTheDocument()
   })
 })
 ```
 
-### Coverage Target
-
-- **Lines**: 50%+
-- **Functions**: 50%+
-- **Branches**: 50%+
-
----
-
-## E2E Testing
-
-### Setup
-
-```bash
-# Root directory'da
-npm install -D @playwright/test
-npx playwright install
-```
-
-### Running E2E tests
-
-```bash
-# Barcha E2E testlar
-npm run test:e2e
-
-# UI mode (interactive)
-npm run test:e2e:ui
-
-# Specific test
-npx playwright test e2e/order-flow.spec.ts
-
-# Debug mode
-npx playwright test --debug
-```
-
-### Test fayllari
-
-- `e2e/order-flow.spec.ts` - Buyurtma flow
-- `e2e/admin-operations.spec.ts` - Admin operatsiyalar
-- `playwright.config.ts` - Playwright configuration
-
-### Browsers
-
-- Chromium (Chrome)
-- Firefox
-- WebKit (Safari)
-- Mobile Chrome
-
----
-
-## Error Handling
-
-### Backend Error Classes
+### Backend Controller Test
 
 ```typescript
-import { BadRequestError, NotFoundError, UnauthorizedError } from '@/utils/errors'
+// tests/unit/myController.test.ts
+import { myController } from '@/controllers/myController'
 
-// Example usage
-throw new BadRequestError('Invalid input')
-throw new NotFoundError('Product')
-throw new UnauthorizedError()
+describe('MyController', () => {
+	it('returns correct data', async () => {
+		const result = await myController.getData()
+		expect(result).toBeDefined()
+	})
+})
 ```
 
-### Frontend Error Boundary
-
-```tsx
-import { ErrorBoundary } from '@/components/ErrorBoundary'
-
-<ErrorBoundary>
-  <YourComponent />
-</ErrorBoundary>
-```
-
-### Error Tracking
+### E2E Test
 
 ```typescript
-import { logError, getAxiosErrorMessage } from '@/lib/errorTracking'
+// e2e/tests/my-flow.spec.ts
+import { test, expect } from '@playwright/test'
 
-try {
-  // Your code
-} catch (error) {
-  logError(error, { context: 'additional info' })
-  const message = getAxiosErrorMessage(error)
-  showToast(message)
-}
+test('user can login', async ({ page }) => {
+	await page.goto('http://localhost:3000')
+	await page.click('text=Login')
+	await expect(page).toHaveURL(/.*login/)
+})
 ```
 
 ---
 
-## CI/CD Integration
+## 🐛 Troubleshooting
 
-### GitHub Actions Example
+### Test ishlamasa:
 
-```yaml
-name: Tests
+1. Dependencies o'rnatilganini tekshiring:
 
-on: [push, pull_request]
+   ```bash
+   pnpm install
+   ```
 
-jobs:
-  backend-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - run: cd backend && npm install
-      - run: cd backend && npm test
+2. Database ishga tushganini tekshiring (backend testlar uchun)
 
-  frontend-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - run: cd frontend && npm install
-      - run: cd frontend && npm test
+3. Environment variables to'g'ri sozlanganini tekshiring:
+   - `frontend/.env.local`
+   - `backend/.env`
 
-  e2e-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - run: npx playwright install
-      - run: npm run test:e2e
-```
+4. Cache tozalang:
+
+   ```bash
+   # Frontend
+   cd frontend
+   rm -rf .next
+
+   # Backend
+   cd backend
+   rm -rf node_modules/.cache
+   ```
 
 ---
 
-## Best Practices
+## 📚 Qo'shimcha Resurslar
 
-1. **Test nomi aniq bo'lsin**: `should return 200 when user is authenticated`
-2. **AAA pattern**: Arrange, Act, Assert
-3. **Mock external dependencies**: Database, Firebase, API calls
-4. **Test edge cases**: null, undefined, empty arrays, errors
-5. **Keep tests isolated**: Har bir test mustaqil
-6. **Use data generators**: `generateMockUser()`, `generateMockProduct()`
-7. **Cleanup after tests**: `beforeEach`, `afterEach`
+- [Jest Documentation](https://jestjs.io/)
+- [Playwright Documentation](https://playwright.dev/)
+- [Testing Library](https://testing-library.com/)
 
 ---
 
-## Troubleshooting
-
-### Backend test xatolari
-
-```bash
-# Prisma client regenerate
-cd backend && npx prisma generate
-
-# Clear Jest cache
-cd backend && npx jest --clearCache
-```
-
-### Frontend test xatolari
-
-```bash
-# Clear Next.js cache
-cd frontend && rm -rf .next
-
-# Clear Jest cache
-cd frontend && npx jest --clearCache
-```
-
-### E2E test xatolari
-
-```bash
-# Reinstall browsers
-npx playwright install --with-deps
-
-# Check if dev server is running
-curl http://localhost:3000
-```
-
----
-
-## Coverage Reports
-
-Coverage hisobotlari `coverage/` papkasida saqlanadi:
-
-```bash
-# Backend
-cd backend && npm test -- --coverage
-open coverage/lcov-report/index.html
-
-# Frontend
-cd frontend && npm test -- --coverage
-open coverage/lcov-report/index.html
-```
-
----
-
-## Next Steps
-
-1. ✅ Test environment sozlash
-2. ✅ Unit tests yozish
-3. ✅ Integration tests yozish
-4. ✅ E2E tests yozish
-5. ⏳ CI/CD pipeline qo'shish
-6. ⏳ Coverage 70%+ ga yetkazish
-7. ⏳ Pre-commit hooks (Husky)
-8. ⏳ Test documentation to'ldirish
+**Savollar bo'lsa, development team bilan bog'laning! 🚀**

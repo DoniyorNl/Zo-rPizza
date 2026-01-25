@@ -1,7 +1,7 @@
 // backend/src/routes/tracking.routes.ts
 import express from 'express'
-import { authenticateToken } from '../middleware/firebase-auth.middleware'
-import { isAdmin } from '../middleware/admin.middleware'
+import { authenticateFirebaseToken } from '../middleware/firebase-auth.middleware'
+import { adminOnly } from '../middleware/admin.middleware'
 import {
 	updateDriverLocation,
 	getOrderTracking,
@@ -13,18 +13,18 @@ import {
 const router = express.Router()
 
 // Driver location update
-router.post('/driver/location', authenticateToken, updateDriverLocation)
+router.post('/driver/location', authenticateFirebaseToken, updateDriverLocation)
 
 // Get order tracking
-router.get('/order/:orderId', authenticateToken, getOrderTracking)
+router.get('/order/:orderId', authenticateFirebaseToken, getOrderTracking)
 
 // Start delivery tracking
-router.post('/order/:orderId/start', authenticateToken, startDeliveryTracking)
+router.post('/order/:orderId/start', authenticateFirebaseToken, startDeliveryTracking)
 
 // Complete delivery
-router.post('/order/:orderId/complete', authenticateToken, completeDelivery)
+router.post('/order/:orderId/complete', authenticateFirebaseToken, completeDelivery)
 
 // Get active deliveries (admin only)
-router.get('/active', authenticateToken, isAdmin, getActiveDeliveries)
+router.get('/active', adminOnly, getActiveDeliveries)
 
 export default router

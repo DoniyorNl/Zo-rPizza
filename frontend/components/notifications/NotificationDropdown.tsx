@@ -5,9 +5,6 @@
 
 'use client'
 
-import { useNotifications } from '@/hooks/useNotifications'
-import { Bell, Check, CheckCheck, Trash2, X } from 'lucide-react'
-import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
 	DropdownMenu,
@@ -16,24 +13,28 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useNotifications } from '@/hooks/useNotifications'
+import { useAuth } from '@/lib/AuthContext'
+import { Bell, CheckCheck, X } from 'lucide-react'
+import { useState } from 'react'
 
 export function NotificationDropdown() {
-	const {
-		notifications,
-		unreadCount,
-		loading,
-		markAllAsRead,
-		markAsRead,
-		deleteNotification,
-	} = useNotifications()
+	const { user } = useAuth()
+	const { notifications, unreadCount, loading, markAllAsRead, markAsRead, deleteNotification } =
+		useNotifications()
 
 	const [isOpen, setIsOpen] = useState(false)
+
+	// Don't render if user is not authenticated
+	if (!user) {
+		return null
+	}
 
 	// Barcha notificationlarni o'qilgan qilish
 	const handleMarkAllRead = async () => {
 		const success = await markAllAsRead()
 		if (success) {
-			console.log('✅ Barcha notificationlar o\'qilgan qilindi')
+			console.log("✅ Barcha notificationlar o'qilgan qilindi")
 		}
 	}
 
@@ -42,7 +43,7 @@ export function NotificationDropdown() {
 		e.stopPropagation() // Prevent dropdown close
 		const success = await deleteNotification(id)
 		if (success) {
-			console.log('✅ Notification o\'chirildi')
+			console.log("✅ Notification o'chirildi")
 		}
 	}
 
@@ -129,18 +130,14 @@ export function NotificationDropdown() {
 								{/* Notification Content */}
 								<div className='flex items-start gap-3 pr-6'>
 									{/* Type Icon */}
-									<div
-										className={`p-2 rounded-full ${getNotificationColor(notification.type)}`}
-									>
+									<div className={`p-2 rounded-full ${getNotificationColor(notification.type)}`}>
 										<Bell className='h-4 w-4' />
 									</div>
 
 									{/* Text Content */}
 									<div className='flex-1 min-w-0'>
 										<p className='font-semibold text-sm'>{notification.title}</p>
-										<p className='text-sm text-gray-600 line-clamp-2'>
-											{notification.message}
-										</p>
+										<p className='text-sm text-gray-600 line-clamp-2'>{notification.message}</p>
 										<p className='text-xs text-gray-400 mt-1'>
 											{new Date(notification.createdAt).toLocaleString('uz-UZ', {
 												day: 'numeric',

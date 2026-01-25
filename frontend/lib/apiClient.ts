@@ -3,18 +3,31 @@ import axios, { AxiosHeaders } from 'axios'
 // Smart API URL detection
 const getSmartApiUrl = (): string => {
 	// Production URL
-	const productionUrl = process.env.NEXT_PUBLIC_API_URL || 'https://zo-rpizza-production.up.railway.app'
-	
+	const productionUrl =
+		process.env.NEXT_PUBLIC_API_URL || 'https://zo-rpizza-production.up.railway.app'
+
 	// Check if user wants to force production API
 	const useProductionApi = process.env.NEXT_PUBLIC_USE_PRODUCTION_API === 'true'
-	
-	// If running on localhost in browser, use local backend (unless forced to production)
-	if (typeof window !== 'undefined' && window.location.hostname === 'localhost' && !useProductionApi) {
-		// Check if local backend is running, otherwise fallback to production
+
+	// Check if we're in development mode
+	const isDevelopment = process.env.NODE_ENV === 'development'
+
+	// ALWAYS use local backend in development (localhost)
+	if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+		if (useProductionApi) {
+			console.warn('⚠️ Using production API in development mode')
+			return productionUrl.replace(/\/+$/, '')
+		}
+		if (isDevelopment) {
+			console.log('🔧 Using local backend: http://localhost:5001')
+		}
 		return 'http://localhost:5001'
 	}
-	
-	// Otherwise use production
+
+	// Production mode
+	if (typeof window !== 'undefined') {
+		console.log('🚀 Using production backend:', productionUrl)
+	}
 	return productionUrl.replace(/\/+$/, '')
 }
 
@@ -30,20 +43,20 @@ api.interceptors.request.use(config => {
 	}
 	if (typeof window !== 'undefined') {
 		const headers = AxiosHeaders.from(config.headers ?? {})
-		
+
 		// 1. Firebase token (Authorization header) - localStorage'dan olish
 		const firebaseToken = localStorage.getItem('firebaseToken')
 		if (firebaseToken && !headers.has('Authorization')) {
 			headers.set('Authorization', `Bearer ${firebaseToken}`)
 		}
-		
+
 		// 2. User ID (x-user-id header) - backup/fallback
 		const firebaseUser = localStorage.getItem('firebaseUser')
 		const userId = firebaseUser ? JSON.parse(firebaseUser).uid : null
 		if (userId && !headers.has('x-user-id')) {
 			headers.set('x-user-id', userId)
 		}
-		
+
 		config.headers = headers
 	}
 	return config
@@ -64,16 +77,16 @@ api.interceptors.response.use(
 				if (typeof window !== 'undefined') {
 					const { auth } = await import('./firebase')
 					const currentUser = auth.currentUser
-					
+
 					if (currentUser) {
 						const newToken = await currentUser.getIdToken(true) // Force refresh
 						localStorage.setItem('firebaseToken', newToken)
-						
+
 						// Yangi token bilan requestni qayta yuborish
 						const headers = AxiosHeaders.from(originalRequest.headers ?? {})
 						headers.set('Authorization', `Bearer ${newToken}`)
 						originalRequest.headers = headers
-						
+
 						return api(originalRequest)
 					}
 				}
@@ -90,5 +103,5 @@ api.interceptors.response.use(
 		}
 
 		return Promise.reject(error)
-	}
+	},
 )
