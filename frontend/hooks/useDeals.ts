@@ -10,14 +10,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 /**
  * useDeals Hook
- * 
+ *
  * Public deals'ni fetch qiladi va manage qiladi
  * Features:
  * - Auto-refresh (5 minutes)
  * - Active deals only
  * - Date validation
  * - Cache support
- * 
+ *
  * @param options - Filter options
  * @returns deals, loading, error, refetch
  */
@@ -27,135 +27,139 @@ export function useDeals(options?: DealFilterOptions) {
 	const [error, setError] = useState<string | null>(null)
 
 	// Stabilize options to prevent infinite loops
-	const stableOptions = useMemo(() => options, [
-		options?.isActive,
-		options?.availableNow,
-		options?.hasStock,
-		options?.minDiscount,
-		options?.sortBy,
-		options?.sortOrder,
-	])
+	const stableOptions = useMemo(
+		() => options,
+		[
+			options?.isActive,
+			options?.availableNow,
+			options?.hasStock,
+			options?.minDiscount,
+			options?.sortBy,
+			options?.sortOrder,
+		],
+	)
 
 	/**
 	 * Fetch deals from backend
 	 */
-	const fetchDeals = useCallback(async (force = false) => {
-		// Check cache first (5 minutes TTL)
-		const cacheKey = 'deals_cache'
-		const cacheTTL = 5 * 60 * 1000 // 5 minutes
-		
-		if (!force && typeof window !== 'undefined') {
-			const cached = localStorage.getItem(cacheKey)
-			if (cached) {
-				try {
-					const { data, timestamp } = JSON.parse(cached)
-					const age = Date.now() - timestamp
-					
-					if (age < cacheTTL) {
-						// Use cached data
-						setDeals(data)
-						setLoading(false)
-						return
+	const fetchDeals = useCallback(
+		async (force = false) => {
+			// Check cache first (5 minutes TTL)
+			const cacheKey = 'deals_cache'
+			const cacheTTL = 5 * 60 * 1000 // 5 minutes
+
+			if (!force && typeof window !== 'undefined') {
+				const cached = localStorage.getItem(cacheKey)
+				if (cached) {
+					try {
+						const { data, timestamp } = JSON.parse(cached)
+						const age = Date.now() - timestamp
+
+						if (age < cacheTTL) {
+							// Use cached data
+							setDeals(data)
+							setLoading(false)
+							return
+						}
+					} catch (e) {
+						// Invalid cache, continue to fetch
 					}
-				} catch (e) {
-					// Invalid cache, continue to fetch
 				}
 			}
-		}
 
-		try {
-			setLoading(true)
-			setError(null)
+			try {
+				setLoading(true)
+				setError(null)
 
-			const response = await api.get('/api/deals')
-			let fetchedDeals: Deal[] = response.data.data || []
+				const response = await api.get('/api/deals')
+				let fetchedDeals: Deal[] = Array.isArray(response?.data?.data) ? response.data.data : []
 
-			// ============================================
-			// FILTERING
-			// ============================================
+				// ============================================
+				// FILTERING
+				// ============================================
 
-			// 1. Filter by active status
-			if (stableOptions?.isActive === true) {
-				fetchedDeals = fetchedDeals.filter(deal => deal.isActive)
-			}
-
-			// 2. Filter by date (available now)
-			if (stableOptions?.availableNow === true) {
-				const now = new Date()
-				fetchedDeals = fetchedDeals.filter(deal => {
-					const startDate = new Date(deal.startDate)
-					const endDate = new Date(deal.endDate)
-					return now >= startDate && now <= endDate
-				})
-			}
-
-			// 3. Filter by usage limit
-			if (stableOptions?.hasStock === true) {
-				fetchedDeals = fetchedDeals.filter(deal => {
-					if (!deal.usageLimit) return true
-					return (deal.usageCount || 0) < deal.usageLimit
-				})
-			}
-
-			// 4. Filter by minimum discount
-			if (stableOptions?.minDiscount) {
-				fetchedDeals = fetchedDeals.filter(
-					deal => deal.discountValue >= stableOptions.minDiscount!
-				)
-			}
-
-			// ============================================
-			// SORTING
-			// ============================================
-
-			const sortBy = stableOptions?.sortBy || 'priority'
-			const sortOrder = stableOptions?.sortOrder || 'asc'
-
-			fetchedDeals.sort((a, b) => {
-				let comparison = 0
-
-				switch (sortBy) {
-					case 'priority':
-						comparison = (a.priority || 999) - (b.priority || 999)
-						break
-					case 'discount':
-						comparison = b.discountValue - a.discountValue
-						break
-					case 'endDate':
-						comparison =
-							new Date(a.endDate).getTime() - new Date(b.endDate).getTime()
-						break
-					case 'createdAt':
-						comparison =
-							new Date(a.createdAt || 0).getTime() -
-							new Date(b.createdAt || 0).getTime()
-						break
+				// 1. Filter by active status
+				if (stableOptions?.isActive === true) {
+					fetchedDeals = fetchedDeals.filter(deal => deal.isActive)
 				}
 
-				return sortOrder === 'asc' ? comparison : -comparison
-			})
+				// 2. Filter by date (available now)
+				if (stableOptions?.availableNow === true) {
+					const now = new Date()
+					fetchedDeals = fetchedDeals.filter(deal => {
+						const startDate = new Date(deal.startDate)
+						const endDate = new Date(deal.endDate)
+						return now >= startDate && now <= endDate
+					})
+				}
 
-			setDeals(fetchedDeals)
+				// 3. Filter by usage limit
+				if (stableOptions?.hasStock === true) {
+					fetchedDeals = fetchedDeals.filter(deal => {
+						if (!deal.usageLimit) return true
+						return (deal.usageCount || 0) < deal.usageLimit
+					})
+				}
 
-			// Cache the results
-			if (typeof window !== 'undefined') {
-				try {
-					const cacheData = {
-						data: fetchedDeals,
-						timestamp: Date.now(),
+				// 4. Filter by minimum discount
+				if (stableOptions?.minDiscount) {
+					fetchedDeals = fetchedDeals.filter(
+						deal => deal.discountValue >= stableOptions.minDiscount!,
+					)
+				}
+
+				// ============================================
+				// SORTING
+				// ============================================
+
+				const sortBy = stableOptions?.sortBy || 'priority'
+				const sortOrder = stableOptions?.sortOrder || 'asc'
+
+				fetchedDeals.sort((a, b) => {
+					let comparison = 0
+
+					switch (sortBy) {
+						case 'priority':
+							comparison = (a.priority || 999) - (b.priority || 999)
+							break
+						case 'discount':
+							comparison = b.discountValue - a.discountValue
+							break
+						case 'endDate':
+							comparison = new Date(a.endDate).getTime() - new Date(b.endDate).getTime()
+							break
+						case 'createdAt':
+							comparison =
+								new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
+							break
 					}
-					localStorage.setItem('deals_cache', JSON.stringify(cacheData))
-				} catch (e) {
-					// localStorage error, ignore
+
+					return sortOrder === 'asc' ? comparison : -comparison
+				})
+
+				setDeals(fetchedDeals)
+
+				// Cache the results
+				if (typeof window !== 'undefined') {
+					try {
+						const cacheData = {
+							data: fetchedDeals,
+							timestamp: Date.now(),
+						}
+						localStorage.setItem('deals_cache', JSON.stringify(cacheData))
+					} catch (e) {
+						// localStorage error, ignore
+					}
 				}
+			} catch (err) {
+				console.error('❌ Error fetching deals:', err)
+				setError("Aksiyalar yuklanmadi. Iltimos qayta urinib ko'ring.")
+			} finally {
+				setLoading(false)
 			}
-		} catch (err) {
-			console.error('❌ Error fetching deals:', err)
-			setError('Aksiyalar yuklanmadi. Iltimos qayta urinib ko\'ring.')
-		} finally {
-			setLoading(false)
-		}
-	}, [stableOptions])
+		},
+		[stableOptions],
+	)
 
 	/**
 	 * Initial fetch
@@ -168,9 +172,12 @@ export function useDeals(options?: DealFilterOptions) {
 	 * Auto-refresh every 5 minutes
 	 */
 	useEffect(() => {
-		const interval = setInterval(() => {
-			fetchDeals(true) // Force refresh
-		}, 5 * 60 * 1000) // 5 minutes
+		const interval = setInterval(
+			() => {
+				fetchDeals(true) // Force refresh
+			},
+			5 * 60 * 1000,
+		) // 5 minutes
 
 		return () => clearInterval(interval)
 	}, [fetchDeals])
@@ -196,7 +203,7 @@ export function useDeal(dealId: string) {
 			try {
 				setLoading(true)
 				const response = await api.get(`/api/deals/${dealId}`)
-				setDeal(response.data.data)
+				setDeal(response?.data?.data ?? null)
 			} catch (err) {
 				console.error('❌ Error fetching deal:', err)
 				setError('Aksiya topilmadi')

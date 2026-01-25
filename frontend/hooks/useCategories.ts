@@ -10,14 +10,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 /**
  * useCategories Hook
- * 
+ *
  * Public kategoriyalarni fetch qiladi va manage qiladi
  * Features:
  * - Cache support (5 minutes)
  * - Active categories only
  * - Product count included
  * - Smart filtering
- * 
+ *
  * @param options - Filter options
  * @returns categories, loading, error, refetch
  */
@@ -27,123 +27,122 @@ export function useCategories(options?: CategoryFilterOptions) {
 	const [error, setError] = useState<string | null>(null)
 
 	// Stabilize options to prevent infinite loops
-	const stableOptions = useMemo(() => options, [
-		options?.isActive,
-		options?.hasProducts,
-		options?.search,
-		options?.sortBy,
-		options?.sortOrder,
-	])
+	const stableOptions = useMemo(
+		() => options,
+		[options?.isActive, options?.hasProducts, options?.search, options?.sortBy, options?.sortOrder],
+	)
 
 	/**
 	 * Fetch categories from backend
 	 */
-	const fetchCategories = useCallback(async (force = false) => {
-		// Check cache first (5 minutes TTL)
-		const cacheKey = 'categories_cache'
-		const cacheTTL = 5 * 60 * 1000 // 5 minutes
-		
-		if (!force && typeof window !== 'undefined') {
-			const cached = localStorage.getItem(cacheKey)
-			if (cached) {
-				try {
-					const { data, timestamp } = JSON.parse(cached)
-					const age = Date.now() - timestamp
-					
-					if (age < cacheTTL) {
-						// Use cached data
-						setCategories(data)
-						setLoading(false)
-						return
+	const fetchCategories = useCallback(
+		async (force = false) => {
+			// Check cache first (5 minutes TTL)
+			const cacheKey = 'categories_cache'
+			const cacheTTL = 5 * 60 * 1000 // 5 minutes
+
+			if (!force && typeof window !== 'undefined') {
+				const cached = localStorage.getItem(cacheKey)
+				if (cached) {
+					try {
+						const { data, timestamp } = JSON.parse(cached)
+						const age = Date.now() - timestamp
+
+						if (age < cacheTTL) {
+							// Use cached data
+							setCategories(data)
+							setLoading(false)
+							return
+						}
+					} catch (e) {
+						// Invalid cache, continue to fetch
 					}
-				} catch (e) {
-					// Invalid cache, continue to fetch
 				}
 			}
-		}
 
-		try {
-			setLoading(true)
-			setError(null)
+			try {
+				setLoading(true)
+				setError(null)
 
-			const response = await api.get('/api/categories')
-			let fetchedCategories: Category[] = response.data.data || []
+				const response = await api.get('/api/categories')
+				let fetchedCategories: Category[] = Array.isArray(response?.data?.data)
+					? response.data.data
+					: []
 
-			// ============================================
-			// FILTERING
-			// ============================================
+				// ============================================
+				// FILTERING
+				// ============================================
 
-			// 1. Filter by active status
-			if (stableOptions?.isActive === true) {
-				fetchedCategories = fetchedCategories.filter(cat => cat.isActive)
-			}
-
-			// 2. Filter by products (has products)
-			if (stableOptions?.hasProducts) {
-				fetchedCategories = fetchedCategories.filter(
-					cat => (cat.productCount || 0) > 0
-				)
-			}
-
-			// 3. Search by name
-			if (stableOptions?.search) {
-				const searchLower = stableOptions.search.toLowerCase()
-				fetchedCategories = fetchedCategories.filter(cat =>
-					cat.name.toLowerCase().includes(searchLower)
-				)
-			}
-
-			// ============================================
-			// SORTING
-			// ============================================
-
-			const sortBy = stableOptions?.sortBy || 'displayOrder'
-			const sortOrder = stableOptions?.sortOrder || 'asc'
-
-			fetchedCategories.sort((a, b) => {
-				let comparison = 0
-
-				switch (sortBy) {
-					case 'name':
-						comparison = a.name.localeCompare(b.name)
-						break
-					case 'displayOrder':
-						comparison = (a.displayOrder || 999) - (b.displayOrder || 999)
-						break
-					case 'productCount':
-						comparison = (b.productCount || 0) - (a.productCount || 0)
-						break
-					case 'createdAt':
-						comparison =
-							new Date(a.createdAt || 0).getTime() -
-							new Date(b.createdAt || 0).getTime()
-						break
+				// 1. Filter by active status
+				if (stableOptions?.isActive === true) {
+					fetchedCategories = fetchedCategories.filter(cat => cat.isActive)
 				}
 
-				return sortOrder === 'asc' ? comparison : -comparison
-			})
+				// 2. Filter by products (has products)
+				if (stableOptions?.hasProducts) {
+					fetchedCategories = fetchedCategories.filter(cat => (cat.productCount || 0) > 0)
+				}
 
-			setCategories(fetchedCategories)
+				// 3. Search by name
+				if (stableOptions?.search) {
+					const searchLower = stableOptions.search.toLowerCase()
+					fetchedCategories = fetchedCategories.filter(cat =>
+						cat.name.toLowerCase().includes(searchLower),
+					)
+				}
 
-			// Cache the filtered results
-			if (typeof window !== 'undefined') {
-				try {
-					const cacheData = {
-						data: fetchedCategories,
-						timestamp: Date.now(),
+				// ============================================
+				// SORTING
+				// ============================================
+
+				const sortBy = stableOptions?.sortBy || 'displayOrder'
+				const sortOrder = stableOptions?.sortOrder || 'asc'
+
+				fetchedCategories.sort((a, b) => {
+					let comparison = 0
+
+					switch (sortBy) {
+						case 'name':
+							comparison = a.name.localeCompare(b.name)
+							break
+						case 'displayOrder':
+							comparison = (a.displayOrder || 999) - (b.displayOrder || 999)
+							break
+						case 'productCount':
+							comparison = (b.productCount || 0) - (a.productCount || 0)
+							break
+						case 'createdAt':
+							comparison =
+								new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
+							break
 					}
-					localStorage.setItem('categories_cache', JSON.stringify(cacheData))
-				} catch (e) {
-					// localStorage error, ignore
+
+					return sortOrder === 'asc' ? comparison : -comparison
+				})
+
+				setCategories(fetchedCategories)
+
+				// Cache the filtered results
+				if (typeof window !== 'undefined') {
+					try {
+						const cacheData = {
+							data: fetchedCategories,
+							timestamp: Date.now(),
+						}
+						localStorage.setItem('categories_cache', JSON.stringify(cacheData))
+					} catch (e) {
+						// localStorage error, ignore
+					}
 				}
+			} catch (err) {
+				console.error('❌ Error fetching categories:', err)
+				setError("Kategoriyalar yuklanmadi. Iltimos qayta urinib ko'ring.")
+			} finally {
+				setLoading(false)
 			}
-		} catch (err) {
-			console.error('❌ Error fetching categories:', err)
-			setError('Kategoriyalar yuklanmadi. Iltimos qayta urinib ko\'ring.')
-		} finally {
-			setLoading(false)
-		}
-	}, [stableOptions])
+		},
+		[stableOptions],
+	)
 
 	/**
 	 * Initial fetch
@@ -173,7 +172,7 @@ export function useCategory(categoryId: string) {
 			try {
 				setLoading(true)
 				const response = await api.get(`/api/categories/${categoryId}`)
-				setCategory(response.data.data)
+				setCategory(response?.data?.data ?? null)
 			} catch (err) {
 				console.error('❌ Error fetching category:', err)
 				setError('Kategoriya topilmadi')
