@@ -171,31 +171,30 @@ model Coupon {
 }
 
 model Order {
-  id              String        @id @default(uuid())
-  orderNumber     String        @unique
-  userId          String
-  status          OrderStatus   @default(PENDING)
-  totalPrice      Float
-  paymentMethod   PaymentMethod
-  paymentStatus   PaymentStatus @default(PENDING)
-  deliveryAddress String
-  deliveryPhone   String
-  deliveryLat     Float?
-  deliveryLng     Float?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  items           OrderItem[]
-  user            User          @relation(fields: [userId], references: [id])
-  reviews         Review?
-  // GPS Tracking fields
-  driverId            String?        // Driver assigned to this order
-  deliveryLocation    Json?          // { lat, lng, address }
-  driverLocation      Json?          // { lat, lng, timestamp }
-  estimatedTime       Int?           // minutes
-  actualDistance      Float?         // kilometers
+  id                  String        @id @default(uuid())
+  orderNumber         String        @unique
+  userId              String
+  status              OrderStatus   @default(PENDING)
+  totalPrice          Float
+  paymentMethod       PaymentMethod
+  paymentStatus       PaymentStatus @default(PENDING)
+  deliveryAddress     String
+  deliveryPhone       String
+  deliveryLat         Float?
+  deliveryLng         Float?
+  driverId            String?
+  deliveryLocation    Json?
+  driverLocation      Json?
+  estimatedTime       Int?
+  actualDistance      Float?
   trackingStartedAt   DateTime?
   deliveryStartedAt   DateTime?
   deliveryCompletedAt DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  items               OrderItem[]
+  user                User          @relation(fields: [userId], references: [id])
+  reviews             Review?
 
   @@map("orders")
 }
