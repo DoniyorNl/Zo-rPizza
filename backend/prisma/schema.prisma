@@ -20,6 +20,12 @@ model User {
   orders        Order[]
   reviews       Review[]
   notifications Notification[]
+  // Driver specific fields
+  isDriver            Boolean        @default(false)
+  driverStatus        String?        // 'available', 'busy', 'offline'
+  currentLocation     Json?          // { lat, lng, timestamp }
+  vehicleType         String?        // 'bike', 'car', 'scooter'
+  vehicleNumber       String?
 
   @@map("users")
 }
@@ -181,6 +187,14 @@ model Order {
   items           OrderItem[]
   user            User          @relation(fields: [userId], references: [id])
   reviews         Review?
+  // GPS Tracking fields
+  deliveryLocation    Json?          // { lat, lng, address }
+  driverLocation      Json?          // { lat, lng, timestamp }
+  estimatedTime       Int?           // minutes
+  actualDistance      Float?         // kilometers
+  trackingStartedAt   DateTime?
+  deliveryStartedAt   DateTime?
+  deliveryCompletedAt DateTime?
 
   @@map("orders")
 }
