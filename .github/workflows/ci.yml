@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ['main']
   pull_request:
-    branches: [ "main" ]
+    branches: ['main']
 
 jobs:
   build:
@@ -15,38 +15,42 @@ jobs:
         node-version: [18.x]
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-        cache-dependency-path: '**/package-lock.json'
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
 
-    # Backend
-    - name: Install Backend Dependencies
-      run: |
-        cd backend
-        npm install
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
 
-    - name: Generate Prisma Client
-      run: |
-        cd backend
-        npx prisma generate
+      # Backend
+      - name: Install Backend Dependencies
+        run: |
+          cd backend
+          pnpm install
 
-    - name: Run Backend Tests
-      run: |
-        cd backend
-        npm test
+      - name: Generate Prisma Client
+        run: |
+          cd backend
+          pnpm prisma generate
 
-    # Frontend
-    - name: Install Frontend Dependencies
-      run: |
-        cd frontend
-        npm install
+      - name: Run Backend Tests
+        run: |
+          cd backend
+          pnpm test
 
-    - name: Run Frontend Tests
-      run: |
-        cd frontend
-        npm test
+      # Frontend
+      - name: Install Frontend Dependencies
+        run: |
+          cd frontend
+          pnpm install
+
+      - name: Run Frontend Tests
+        run: |
+          cd frontend
+          pnpm test
