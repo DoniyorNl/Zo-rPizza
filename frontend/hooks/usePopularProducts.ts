@@ -51,12 +51,12 @@ export function usePopularProducts(limit: number = 6) {
 	/**
 	 * Fetch popular products
 	 */
-	const fetchPopularProducts = useCallback(async () => {
+	const fetchPopularProducts = useCallback(async (force = false) => {
 		// Check cache first (10 minutes TTL)
 		const cacheKey = 'popular_products_cache'
 		const cacheTTL = 10 * 60 * 1000 // 10 minutes
 		
-		if (typeof window !== 'undefined') {
+		if (!force && typeof window !== 'undefined') {
 			const cached = localStorage.getItem(cacheKey)
 			if (cached) {
 				try {
@@ -137,7 +137,7 @@ export function usePopularProducts(limit: number = 6) {
 	 */
 	useEffect(() => {
 		const interval = setInterval(() => {
-			fetchPopularProducts()
+			fetchPopularProducts(true) // Force refresh
 		}, 10 * 60 * 1000) // 10 minutes
 
 		return () => clearInterval(interval)
@@ -147,6 +147,6 @@ export function usePopularProducts(limit: number = 6) {
 		popularProducts,
 		loading,
 		error,
-		refetch: fetchPopularProducts,
+		refetch: () => fetchPopularProducts(true), // Force refresh
 	}
 }

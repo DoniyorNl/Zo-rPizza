@@ -6,7 +6,7 @@
 
 import { api } from '@/lib/apiClient'
 import { Deal, DealFilterOptions } from '@/types/deal.types'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 /**
  * useDeals Hook
@@ -26,15 +26,25 @@ export function useDeals(options?: DealFilterOptions) {
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
 
+	// Stabilize options to prevent infinite loops
+	const stableOptions = useMemo(() => options, [
+		options?.isActive,
+		options?.availableNow,
+		options?.hasStock,
+		options?.minDiscount,
+		options?.sortBy,
+		options?.sortOrder,
+	])
+
 	/**
 	 * Fetch deals from backend
 	 */
-	const fetchDeals = useCallback(async () => {
+	const fetchDeals = useCallback(async (force = false) => {
 		// Check cache first (5 minutes TTL)
 		const cacheKey = 'deals_cache'
 		const cacheTTL = 5 * 60 * 1000 // 5 minutes
 		
-		if (typeof window !== 'undefined') {
+		if (!force && typeof window !== 'undefined') {
 			const cached = localStorage.getItem(cacheKey)
 			if (cached) {
 				try {
@@ -65,12 +75,12 @@ export function useDeals(options?: DealFilterOptions) {
 			// ============================================
 
 			// 1. Filter by active status
-			if (options?.isActive === true) {
+			if (stableOptions?.isActive === true) {
 				fetchedDeals = fetchedDeals.filter(deal => deal.isActive)
 			}
 
 			// 2. Filter by date (available now)
-			if (options?.availableNow === true) {
+			if (stableOptions?.availableNow === true) {
 				const now = new Date()
 				fetchedDeals = fetchedDeals.filter(deal => {
 					const startDate = new Date(deal.startDate)
@@ -80,7 +90,7 @@ export function useDeals(options?: DealFilterOptions) {
 			}
 
 			// 3. Filter by usage limit
-			if (options?.hasStock === true) {
+			if (stableOptions?.hasStock === true) {
 				fetchedDeals = fetchedDeals.filter(deal => {
 					if (!deal.usageLimit) return true
 					return (deal.usageCount || 0) < deal.usageLimit
@@ -88,9 +98,9 @@ export function useDeals(options?: DealFilterOptions) {
 			}
 
 			// 4. Filter by minimum discount
-			if (options?.minDiscount) {
+			if (stableOptions?.minDiscount) {
 				fetchedDeals = fetchedDeals.filter(
-					deal => deal.discountValue >= options.minDiscount!
+					deal => deal.discountValue >= stableOptions.minDiscount!
 				)
 			}
 
@@ -98,8 +108,8 @@ export function useDeals(options?: DealFilterOptions) {
 			// SORTING
 			// ============================================
 
-			const sortBy = options?.sortBy || 'priority'
-			const sortOrder = options?.sortOrder || 'asc'
+			const sortBy = stableOptions?.sortBy || 'priority'
+			const sortOrder = stableOptions?.sortOrder || 'asc'
 
 			fetchedDeals.sort((a, b) => {
 				let comparison = 0
@@ -145,7 +155,7 @@ export function useDeals(options?: DealFilterOptions) {
 		} finally {
 			setLoading(false)
 		}
-	}, [options])
+	}, [stableOptions])
 
 	/**
 	 * Initial fetch
@@ -159,7 +169,7 @@ export function useDeals(options?: DealFilterOptions) {
 	 */
 	useEffect(() => {
 		const interval = setInterval(() => {
-			fetchDeals()
+			fetchDeals(true) // Force refresh
 		}, 5 * 60 * 1000) // 5 minutes
 
 		return () => clearInterval(interval)
@@ -169,7 +179,7 @@ export function useDeals(options?: DealFilterOptions) {
 		deals,
 		loading,
 		error,
-		refetch: fetchDeals,
+		refetch: () => fetchDeals(true), // Force refresh on manual refetch
 	}
 }
 

@@ -1,0 +1,39 @@
+// frontend/__tests__/components/MemberSection.test.tsx
+// 👤 MEMBER SECTION TESTS
+
+import { render, screen } from '@testing-library/react'
+import { MemberSection } from '@/components/home/MemberSection'
+
+jest.mock('next/navigation', () => ({
+	useRouter: () => ({
+		push: jest.fn(),
+	}),
+}))
+
+describe('MemberSection Component', () => {
+	it('should render member section', () => {
+		render(<MemberSection />)
+		
+		expect(screen.getByText(/A'zo Bo'ling/i)).toBeInTheDocument()
+	})
+
+	it('should display benefits', () => {
+		render(<MemberSection />)
+		
+		expect(screen.getByText(/Har safar ballar/i)).toBeInTheDocument()
+		expect(screen.getByText(/Maxsus takliflar/i)).toBeInTheDocument()
+	})
+
+	it('should display exclusive deals', () => {
+		render(<MemberSection />)
+		
+		expect(screen.getByText(/Maxsus A'zolar Takliflari/i)).toBeInTheDocument()
+	})
+
+	it('should have sign up buttons', () => {
+		render(<MemberSection />)
+		
+		const signupButtons = screen.getAllByText(/A'zo Bo'lish/i)
+		expect(signupButtons.length).toBeGreaterThan(0)
+	})
+})
