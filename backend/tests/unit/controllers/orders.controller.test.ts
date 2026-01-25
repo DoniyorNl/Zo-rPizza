@@ -2,16 +2,15 @@
 // 🍕 ORDERS CONTROLLER TESTS - COMPLETE COVERAGE
 // Bu file Orders Controller'ning BARCHA funksiyalarini test qiladi
 
-import { Request, Response } from 'express'
-import prisma from '@/lib/prisma'
 import {
-	getAllOrders,
-	getUserOrders,
-	getOrderById,
 	createOrder,
-	updateOrderStatus,
 	deleteOrder,
+	getAllOrders,
+	getOrderById,
+	getUserOrders,
+	updateOrderStatus,
 } from '@/controllers/orders.controller'
+import { Request, Response } from 'express'
 import { prismaMock } from '../../setup'
 
 // ============================================
@@ -129,7 +128,7 @@ const mockResponse = (): Partial<Response> => {
 describe('Orders Controller - getAllOrders', () => {
 	/**
 	 * TEST 1: Barcha orders'ni muvaffaqiyatli olish
-	 * 
+	 *
 	 * Scenario: Admin barcha buyurtmalarni ko'rmoqchi
 	 * Expected: Barcha orders user va items bilan qaytadi
 	 */
@@ -168,7 +167,7 @@ describe('Orders Controller - getAllOrders', () => {
 
 	/**
 	 * TEST 2: Status filter bilan orders olish
-	 * 
+	 *
 	 * Scenario: Admin faqat PENDING orders'ni ko'rmoqchi
 	 * Expected: Faqat PENDING orders qaytadi
 	 */
@@ -193,14 +192,14 @@ describe('Orders Controller - getAllOrders', () => {
 				where: expect.objectContaining({
 					status: 'PENDING',
 				}),
-			})
+			}),
 		)
 		expect(res.status).toHaveBeenCalledWith(200)
 	})
 
 	/**
 	 * TEST 3: Payment status filter
-	 * 
+	 *
 	 * Scenario: Admin faqat to'langan orders'ni ko'rmoqchi
 	 * Expected: Faqat PAID orders qaytadi
 	 */
@@ -217,13 +216,13 @@ describe('Orders Controller - getAllOrders', () => {
 				where: expect.objectContaining({
 					paymentStatus: 'PAID',
 				}),
-			})
+			}),
 		)
 	})
 
 	/**
 	 * TEST 4: Database error handling
-	 * 
+	 *
 	 * Scenario: Database connection failed
 	 * Expected: 500 error qaytadi
 	 */
@@ -240,7 +239,7 @@ describe('Orders Controller - getAllOrders', () => {
 			expect.objectContaining({
 				success: false,
 				message: 'Server error',
-			})
+			}),
 		)
 	})
 })
@@ -252,7 +251,7 @@ describe('Orders Controller - getAllOrders', () => {
 describe('Orders Controller - getUserOrders', () => {
 	/**
 	 * TEST 5: User orders'ni olish
-	 * 
+	 *
 	 * Scenario: User o'zining buyurtmalarini ko'rmoqchi
 	 * Expected: Faqat shu user'ning orders'i qaytadi
 	 */
@@ -280,7 +279,7 @@ describe('Orders Controller - getUserOrders', () => {
 		expect(prismaMock.order.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { userId },
-			})
+			}),
 		)
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.json).toHaveBeenCalledWith({
@@ -292,7 +291,7 @@ describe('Orders Controller - getUserOrders', () => {
 
 	/**
 	 * TEST 6: Invalid userId
-	 * 
+	 *
 	 * Scenario: userId berilmagan
 	 * Expected: 400 error
 	 */
@@ -311,7 +310,7 @@ describe('Orders Controller - getUserOrders', () => {
 
 	/**
 	 * TEST 7: User orders yo'q
-	 * 
+	 *
 	 * Scenario: User hali buyurtma qilmagan
 	 * Expected: Bo'sh array qaytadi
 	 */
@@ -338,7 +337,7 @@ describe('Orders Controller - getUserOrders', () => {
 describe('Orders Controller - getOrderById', () => {
 	/**
 	 * TEST 8: Get order by ID successfully
-	 * 
+	 *
 	 * Scenario: User wants to view order details
 	 * Expected: Returns complete order with all relations
 	 */
@@ -375,7 +374,7 @@ describe('Orders Controller - getOrderById', () => {
 		expect(prismaMock.order.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { id: orderId },
-			})
+			}),
 		)
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.json).toHaveBeenCalledWith({
@@ -386,7 +385,7 @@ describe('Orders Controller - getOrderById', () => {
 
 	/**
 	 * TEST 9: Order not found
-	 * 
+	 *
 	 * Scenario: User tries to view non-existent order
 	 * Expected: 404 error
 	 */
@@ -407,7 +406,7 @@ describe('Orders Controller - getOrderById', () => {
 
 	/**
 	 * TEST 10: Invalid order ID
-	 * 
+	 *
 	 * Scenario: No ID provided
 	 * Expected: 400 error
 	 */
@@ -432,7 +431,7 @@ describe('Orders Controller - getOrderById', () => {
 describe('Orders Controller - createOrder', () => {
 	/**
 	 * TEST 11: Create order successfully
-	 * 
+	 *
 	 * Scenario: User places a valid order
 	 * Expected: Order created with correct pricing
 	 */
@@ -472,13 +471,13 @@ describe('Orders Controller - createOrder', () => {
 			expect.objectContaining({
 				success: true,
 				message: 'Order created successfully',
-			})
+			}),
 		)
 	})
 
 	/**
 	 * TEST 12: Missing required fields
-	 * 
+	 *
 	 * Scenario: Required fields not provided
 	 * Expected: 400 error
 	 */
@@ -503,36 +502,43 @@ describe('Orders Controller - createOrder', () => {
 	})
 
 	/**
-	 * TEST 13: User not found
-	 * 
-	 * Scenario: Order for non-existent user
-	 * Expected: 404 error
+	 * TEST 13: User auto-creation
+	 *
+	 * Scenario: Order for non-existent user (auto-creates user)
+	 * Expected: User created and order processed
 	 */
-	it('should return 404 if user not found', async () => {
+	it('should auto-create user if not found', async () => {
 		const req = mockRequest({
 			body: {
 				userId: 'user-999',
-				items: [{ productId: 'product-1', quantity: 1 }],
+				email: 'newuser@test.com',
+				items: [{ productId: 'product-1', quantity: 1, variationId: 'var-1' }],
 				deliveryAddress: '123 Main St',
 				deliveryPhone: '+998901234567',
 			},
 		})
 		const res = mockResponse()
 
-		prismaMock.user.findUnique.mockResolvedValue(null)
+		const newUser = generateMockUser({ id: 'user-999', firebaseUid: 'user-999' })
+		const product = generateMockProduct({ id: 'product-1', basePrice: 100 })
+		const variation = { id: 'var-1', price: 120, size: 'Medium' }
+
+		prismaMock.user.findUnique.mockResolvedValueOnce(null).mockResolvedValueOnce(null)
+		prismaMock.user.create.mockResolvedValue(newUser as any)
+		prismaMock.product.findUnique.mockResolvedValue({ ...product, variations: [variation] } as any)
+		prismaMock.productVariation.findUnique.mockResolvedValue(variation as any)
+		prismaMock.order.findFirst.mockResolvedValue(null)
+		prismaMock.order.create.mockResolvedValue(generateMockOrder() as any)
 
 		await createOrder(req as Request, res as Response)
 
-		expect(res.status).toHaveBeenCalledWith(404)
-		expect(res.json).toHaveBeenCalledWith({
-			success: false,
-			message: 'User not found',
-		})
+		expect(prismaMock.user.create).toHaveBeenCalled()
+		expect(res.status).toHaveBeenCalledWith(201)
 	})
 
 	/**
 	 * TEST 14: Product not found
-	 * 
+	 *
 	 * Scenario: Order contains non-existent product
 	 * Expected: 404 error
 	 */
@@ -559,13 +565,13 @@ describe('Orders Controller - createOrder', () => {
 			expect.objectContaining({
 				success: false,
 				message: expect.stringContaining('not found'),
-			})
+			}),
 		)
 	})
 
 	/**
 	 * TEST 15: Inactive product
-	 * 
+	 *
 	 * Scenario: Order contains inactive product
 	 * Expected: 400 error
 	 */
@@ -593,7 +599,7 @@ describe('Orders Controller - createOrder', () => {
 			expect.objectContaining({
 				success: false,
 				message: expect.stringContaining('not available'),
-			})
+			}),
 		)
 	})
 })
@@ -605,7 +611,7 @@ describe('Orders Controller - createOrder', () => {
 describe('Orders Controller - updateOrderStatus', () => {
 	/**
 	 * TEST 16: Update order status successfully
-	 * 
+	 *
 	 * Scenario: Admin updates order to DELIVERED
 	 * Expected: Status updated successfully
 	 */
@@ -636,7 +642,7 @@ describe('Orders Controller - updateOrderStatus', () => {
 					status: 'DELIVERED',
 					paymentStatus: 'PAID',
 				}),
-			})
+			}),
 		)
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.json).toHaveBeenCalledWith({
@@ -648,7 +654,7 @@ describe('Orders Controller - updateOrderStatus', () => {
 
 	/**
 	 * TEST 17: Order not found for update
-	 * 
+	 *
 	 * Scenario: Trying to update non-existent order
 	 * Expected: 404 error
 	 */
@@ -672,7 +678,7 @@ describe('Orders Controller - updateOrderStatus', () => {
 
 	/**
 	 * TEST 18: Invalid order ID for update
-	 * 
+	 *
 	 * Scenario: No ID provided
 	 * Expected: 400 error
 	 */
@@ -696,7 +702,7 @@ describe('Orders Controller - updateOrderStatus', () => {
 describe('Orders Controller - deleteOrder', () => {
 	/**
 	 * TEST 19: Delete pending order successfully
-	 * 
+	 *
 	 * Scenario: Admin deletes a PENDING order
 	 * Expected: Order deleted successfully
 	 */
@@ -724,7 +730,7 @@ describe('Orders Controller - deleteOrder', () => {
 
 	/**
 	 * TEST 20: Cannot delete non-pending order
-	 * 
+	 *
 	 * Scenario: Trying to delete DELIVERED order
 	 * Expected: 400 error
 	 */
@@ -752,7 +758,7 @@ describe('Orders Controller - deleteOrder', () => {
 
 	/**
 	 * TEST 21: Order not found for deletion
-	 * 
+	 *
 	 * Scenario: Trying to delete non-existent order
 	 * Expected: 404 error
 	 */
@@ -773,7 +779,7 @@ describe('Orders Controller - deleteOrder', () => {
 
 	/**
 	 * TEST 22: Invalid order ID for deletion
-	 * 
+	 *
 	 * Scenario: No ID provided
 	 * Expected: 400 error
 	 */

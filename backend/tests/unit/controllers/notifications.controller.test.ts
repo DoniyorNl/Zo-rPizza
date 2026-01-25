@@ -3,9 +3,9 @@
 
 import { Response } from 'express'
 import { DeepMockProxy, mockDeep, mockReset } from 'jest-mock-extended'
+import { notificationController } from '../../../src/controllers/notifications.controller'
 import prisma from '../../../src/lib/prisma'
 import { AuthRequest } from '../../../src/middleware/auth.middleware'
-import { notificationController } from '../../../src/controllers/notifications.controller'
 
 // ============================================================================
 // MOCK SETUP
@@ -131,7 +131,7 @@ describe('Notifications Controller', () => {
 			})
 		})
 
-		it('should return 404 if user not found in database', async () => {
+		it('should return empty notifications if user not found in database', async () => {
 			// Arrange
 			const req = mockAuthRequest({ userId: 'nonexistent-user' })
 			const res = mockResponse()
@@ -142,10 +142,13 @@ describe('Notifications Controller', () => {
 			await notificationController.getAllNotifications(req as AuthRequest, res as Response)
 
 			// Assert
-			expect(res.status).toHaveBeenCalledWith(404)
+			expect(res.status).toHaveBeenCalledWith(200)
 			expect(res.json).toHaveBeenCalledWith({
-				success: false,
-				message: 'User topilmadi',
+				success: true,
+				data: {
+					notifications: [],
+					unreadCount: 0,
+				},
 			})
 		})
 
