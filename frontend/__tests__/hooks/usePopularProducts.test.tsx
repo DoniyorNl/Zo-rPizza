@@ -87,8 +87,11 @@ describe('usePopularProducts Hook', () => {
 			result = hook.result
 		})
 
-		// Hook operations complete within act(), so loading should be false
-		expect(result.current.loading).toBe(false)
+		// Wait for all effects to complete
+		await waitFor(() => {
+			expect(result.current.loading).toBe(false)
+		})
+
 		expect(result.current.popularProducts.length).toBeGreaterThan(0)
 		expect(result.current.error).toBeNull()
 	})
@@ -104,7 +107,11 @@ describe('usePopularProducts Hook', () => {
 			result = hook.result
 		})
 
-		expect(result.current.loading).toBe(false)
+		// Wait for all effects to complete
+		await waitFor(() => {
+			expect(result.current.loading).toBe(false)
+		})
+
 		const hasInactive = result.current.popularProducts.some((p: any) => !p.isActive)
 		expect(hasInactive).toBe(false)
 	})
@@ -120,7 +127,11 @@ describe('usePopularProducts Hook', () => {
 			result = hook.result
 		})
 
-		expect(result.current.loading).toBe(false)
+		// Wait for all effects to complete
+		await waitFor(() => {
+			expect(result.current.loading).toBe(false)
+		})
+
 		// First product should have highest order count
 		if (result.current.popularProducts.length > 0) {
 			const firstProduct = result.current.popularProducts[0]
@@ -140,7 +151,11 @@ describe('usePopularProducts Hook', () => {
 			result = hook.result
 		})
 
-		expect(result.current.loading).toBe(false)
+		// Wait for all effects to complete
+		await waitFor(() => {
+			expect(result.current.loading).toBe(false)
+		})
+
 		expect(result.current.popularProducts.length).toBeLessThanOrEqual(limit)
 	})
 
@@ -153,7 +168,11 @@ describe('usePopularProducts Hook', () => {
 			result = hook.result
 		})
 
-		expect(result.current.loading).toBe(false)
+		// Wait for all effects to complete
+		await waitFor(() => {
+			expect(result.current.loading).toBe(false)
+		})
+
 		expect(result.current.error).toBeTruthy()
 		expect(result.current.popularProducts).toHaveLength(0)
 	})
@@ -172,7 +191,11 @@ describe('usePopularProducts Hook', () => {
 			result = hook.result
 		})
 
-		expect(result.current.loading).toBe(false)
+		// Wait for all effects to complete
+		await waitFor(() => {
+			expect(result.current.loading).toBe(false)
+		})
+
 		// Should not call API if cache is fresh
 		expect(mockedApi.get).not.toHaveBeenCalled()
 		expect(result.current.popularProducts).toHaveLength(3)
@@ -189,22 +212,27 @@ describe('usePopularProducts Hook', () => {
 			result = hook.result
 		})
 
-		expect(result.current.loading).toBe(false)
+		// Wait for initial effects to complete
+		await waitFor(() => {
+			expect(result.current.loading).toBe(false)
+		})
+
 		// Initial fetch
 		expect(mockedApi.get).toHaveBeenCalledTimes(1)
 
-		// Fast-forward 10 minutes
-		act(() => {
+		// Fast-forward 10 minutes inside act
+		await act(async () => {
 			jest.advanceTimersByTime(10 * 60 * 1000)
 		})
 
+		// Wait for refresh to complete
 		await waitFor(() => {
 			expect(mockedApi.get).toHaveBeenCalledTimes(2)
 		})
 	})
 
 	it('should handle products without order count (random shuffle)', async () => {
-		const productsWithoutCount = mockProducts.map(p => {
+		const productsWithoutCount = mockProducts.map((p: any) => {
 			const { _count, ...rest } = p
 			return rest
 		})
@@ -219,7 +247,11 @@ describe('usePopularProducts Hook', () => {
 			result = hook.result
 		})
 
-		expect(result.current.loading).toBe(false)
+		// Wait for all effects to complete
+		await waitFor(() => {
+			expect(result.current.loading).toBe(false)
+		})
+
 		// Should still return products even without order count
 		expect(result.current.popularProducts.length).toBeGreaterThan(0)
 	})
