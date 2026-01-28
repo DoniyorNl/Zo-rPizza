@@ -1,30 +1,23 @@
-// frontend/app/(shop)/orders/[id]/page.tsx
-// 🍕 ZOR PIZZA - ORDER DETAIL PAGE (Updated with Variations)
+// frontend/app/(shop)/orders/page.tsx
+// 🍕 ZOR PIZZA - ORDERS LIST PAGE
 
 'use client'
 
 import { Header } from '@/components/layout/Header'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { api } from '@/lib/apiClient'
-import { useCartStore } from '@/store/cartStore'
-import { ArrowLeft, CreditCard, MapPin, Package, ShoppingBag } from 'lucide-react'
+import { useAuth } from '@/lib/AuthContext'
+import { Clock, Package, ShoppingBag } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { use, useEffect, useState } from 'react'
-
-// ============================================
-// TYPES & INTERFACES
-// ============================================
+import { useEffect, useState } from 'react'
 
 interface OrderItem {
 	id: string
-	productId: string
-	variationId?: string
 	quantity: number
 	price: number
-	size?: string
 	product: {
 		id: string
 		name: string
@@ -37,16 +30,9 @@ interface Order {
 	orderNumber: string
 	status: string
 	totalPrice: number
-	paymentMethod: string
-	deliveryAddress: string
-	deliveryPhone: string
 	items: OrderItem[]
 	createdAt: string
 }
-
-// ============================================
-// STATUS CONFIG
-// ============================================
 
 const statusConfig = {
 	PENDING: { label: 'Kutilmoqda', color: 'bg-yellow-100 text-yellow-800' },
@@ -56,56 +42,32 @@ const statusConfig = {
 	CANCELLED: { label: 'Bekor qilindi', color: 'bg-red-100 text-red-800' },
 }
 
-// ============================================
-// MAIN COMPONENT
-// ============================================
-
-export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
-	const { id } = use(params)
+export default function OrdersPage() {
+	const { user } = useAuth()
 	const router = useRouter()
-	const { addItem } = useCartStore()
-	const [order, setOrder] = useState<Order | null>(null)
+	const [orders, setOrders] = useState<Order[]>([])
 	const [loading, setLoading] = useState(true)
 
 	useEffect(() => {
-		const fetchOrder = async () => {
+		if (!user) {
+			router.push('/login')
+			return
+		}
+
+		const fetchOrders = async () => {
 			try {
-				const token = localStorage.getItem('token')
-				const response = await api.get(`/api/orders/${id}`, {
-					headers: { Authorization: `Bearer ${token}` },
-				})
-				setOrder(response.data.data)
+				const response = await api.get(`/api/orders/user/${user.uid}`)
+				setOrders(response.data.data || [])
 			} catch (error) {
-				console.error('Error fetching order:', error)
+				console.error('Error fetching orders:', error)
+				setOrders([])
 			} finally {
 				setLoading(false)
 			}
 		}
 
-		fetchOrder()
-	}, [id])
-
-	const handleReorder = () => {
-		if (!order) return
-
-		order.items.forEach(item => {
-			const variationId = item.variationId || `${item.productId}-default`
-			const size = item.size || 'Medium'
-
-			addItem({
-				productId: item.productId,
-				variationId: variationId,
-				name: item.product.name,
-				size: size,
-				price: item.price,
-				imageUrl: item.product.imageUrl,
-				addedToppingIds: [],
-				removedToppingIds: [],
-			})
-		})
-
-		router.push('/cart')
-	}
+		fetchOrders()
+	}, [user, router])
 
 	if (loading) {
 		return (
@@ -118,138 +80,98 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 		)
 	}
 
-	if (!order) {
-		return (
-			<main className='min-h-screen bg-gradient-to-b from-orange-50 to-white'>
-				<Header />
-				<div className='container mx-auto px-4 py-12'>
-					<div className='text-center'>
-						<h1 className='text-2xl font-bold mb-4'>Buyurtma topilmadi</h1>
-						<Button onClick={() => router.push('/orders')}>Buyurtmalarga qaytish</Button>
-					</div>
-				</div>
-			</main>
-		)
-	}
-
-	const status = statusConfig[order.status as keyof typeof statusConfig]
-
 	return (
 		<main className='min-h-screen bg-gradient-to-b from-orange-50 to-white'>
 			<Header />
 
-			<div className='container mx-auto px-4 py-8 max-w-4xl'>
-				<Button variant='ghost' onClick={() => router.back()} className='mb-6'>
-					<ArrowLeft className='w-4 h-4 mr-2' />
-					Orqaga
-				</Button>
-
+			<div className='container mx-auto px-4 py-8 max-w-6xl'>
 				<div className='flex items-center justify-between mb-8'>
 					<div>
-						<h1 className='text-3xl font-bold mb-2'>Buyurtma #{order.orderNumber}</h1>
+						<h1 className='text-3xl font-bold mb-2'>Mening buyurtmalarim</h1>
 						<p className='text-gray-600'>
-							{new Date(order.createdAt).toLocaleDateString('uz-UZ', {
-								year: 'numeric',
-								month: 'long',
-								day: 'numeric',
-								hour: '2-digit',
-								minute: '2-digit',
-							})}
+							Barcha buyurtmalaringizni bu yerda ko&apos;rishingiz mumkin
 						</p>
 					</div>
-					<Badge className={`${status.color} text-lg px-4 py-2`}>{status.label}</Badge>
+					<Button onClick={() => router.push('/')} className='bg-orange-600 hover:bg-orange-700'>
+						<ShoppingBag className='w-4 h-4 mr-2' />
+						Yangi buyurtma
+					</Button>
 				</div>
 
-				<div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-					<div className='lg:col-span-2 space-y-4'>
-						<Card>
-							<CardHeader>
-								<CardTitle className='flex items-center gap-2'>
-									<ShoppingBag className='w-5 h-5 text-orange-600' />
-									Buyurtma tarkibi
-								</CardTitle>
-							</CardHeader>
-							<CardContent>
-								<div className='space-y-4'>
-									{order.items.map(item => (
-										<div key={item.id} className='flex items-center gap-4 p-4 bg-gray-50 rounded-lg'>
-											<div className='relative w-20 h-20 rounded-lg overflow-hidden bg-white flex-shrink-0'>
-												<Image
-													src={item.product.imageUrl}
-													alt={item.product.name}
-													fill
-													sizes='80px'
-													className='object-cover'
-												/>
-											</div>
-											<div className='flex-1'>
-												<h3 className='font-semibold text-lg'>{item.product.name}</h3>
-												{item.size && <p className='text-sm text-gray-600'>O&apos;lcham: {item.size}</p>}
-												<p className='text-sm text-gray-600'>Miqdor: {item.quantity} ta</p>
-											</div>
-											<div className='text-right'>
-												<p className='font-bold text-lg text-orange-600'>
-													{(item.price * item.quantity).toLocaleString()} so&apos;m
+				{orders.length === 0 ? (
+					<Card className='p-12'>
+						<div className='text-center'>
+							<Package className='w-16 h-16 mx-auto mb-4 text-gray-400' />
+							<h2 className='text-2xl font-semibold mb-2'>Buyurtmalar yo&apos;q</h2>
+							<p className='text-gray-600 mb-6'>Siz hali buyurtma bermagansiz</p>
+							<Button
+								onClick={() => router.push('/')}
+								className='bg-orange-600 hover:bg-orange-700'
+							>
+								Buyurtma berish
+							</Button>
+						</div>
+					</Card>
+				) : (
+					<div className='space-y-4'>
+						{orders.map(order => {
+							const status = statusConfig[order.status as keyof typeof statusConfig]
+							return (
+								<Card
+									key={order.id}
+									className='hover:shadow-lg transition-shadow cursor-pointer'
+									onClick={() => router.push(`/orders/${order.id}`)}
+								>
+									<CardContent className='p-6'>
+										<div className='flex items-start justify-between mb-4'>
+											<div>
+												<h3 className='text-xl font-bold mb-1'>Buyurtma {order.orderNumber}</h3>
+												<p className='text-sm text-gray-600 flex items-center gap-2'>
+													<Clock className='w-4 h-4' />
+													{new Date(order.createdAt).toLocaleDateString('uz-UZ', {
+														year: 'numeric',
+														month: 'long',
+														day: 'numeric',
+														hour: '2-digit',
+														minute: '2-digit',
+													})}
 												</p>
-												<p className='text-sm text-gray-500'>
-													{item.price.toLocaleString()} so&apos;m × {item.quantity}
-												</p>
+											</div>
+											<Badge className={`${status.color} text-sm px-3 py-1`}>{status.label}</Badge>
+										</div>
+
+										<div className='flex items-center gap-4 mb-4'>
+											{order.items.slice(0, 3).map(item => (
+												<div
+													key={item.id}
+													className='relative w-16 h-16 rounded-lg overflow-hidden bg-white flex-shrink-0'
+												>
+													<Image
+														src={item.product.imageUrl}
+														alt={item.product.name}
+														fill
+														sizes='64px'
+														className='object-cover'
+													/>
+												</div>
+											))}
+											{order.items.length > 3 && (
+												<div className='text-sm text-gray-600'>+{order.items.length - 3} ta</div>
+											)}
+										</div>
+
+										<div className='flex items-center justify-between pt-4 border-t'>
+											<div className='text-sm text-gray-600'>{order.items.length} ta mahsulot</div>
+											<div className='text-xl font-bold text-orange-600'>
+												{order.totalPrice.toLocaleString()} so&apos;m
 											</div>
 										</div>
-									))}
-								</div>
-							</CardContent>
-						</Card>
-
-						<Button onClick={handleReorder} className='w-full bg-orange-600 hover:bg-orange-700'>
-							<Package className='w-4 h-4 mr-2' />
-							Qayta buyurtma berish
-						</Button>
+									</CardContent>
+								</Card>
+							)
+						})}
 					</div>
-
-					<div className='space-y-4'>
-						<Card>
-							<CardHeader>
-								<CardTitle className='flex items-center gap-2'>
-									<MapPin className='w-5 h-5 text-orange-600' />
-									Yetkazib berish
-								</CardTitle>
-							</CardHeader>
-							<CardContent className='space-y-3'>
-								<div>
-									<p className='text-sm text-gray-600 mb-1'>Manzil:</p>
-									<p className='font-medium'>{order.deliveryAddress}</p>
-								</div>
-								<div>
-									<p className='text-sm text-gray-600 mb-1'>Telefon:</p>
-									<p className='font-medium'>{order.deliveryPhone}</p>
-								</div>
-							</CardContent>
-						</Card>
-
-						<Card>
-							<CardHeader>
-								<CardTitle className='flex items-center gap-2'>
-									<CreditCard className='w-5 h-5 text-orange-600' />
-								</CardTitle>
-							</CardHeader>
-							<CardContent className='space-y-3'>
-								<div>
-									<p className='text-sm text-gray-600 mb-1'>Usul:</p>
-									<p className='font-medium'>
-										{order.paymentMethod === 'CASH' ? 'Naqd pul' : 'Karta'}
-									</p>
-								</div>
-								<div className='pt-3 border-t'>
-									<p className='text-sm text-gray-600 mb-1'>Jami summa:</p>
-									<p className='text-2xl font-bold text-orange-600'>
-										{order.totalPrice.toLocaleString()} so&apos;m
-									</p>
-								</div>
-							</CardContent>
-						</Card>
-					</div>
-				</div>
+				)}
 			</div>
 		</main>
 	)
