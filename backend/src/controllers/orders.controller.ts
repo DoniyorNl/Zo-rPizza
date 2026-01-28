@@ -365,15 +365,19 @@ export const createOrder = async (req: Request, res: Response) => {
 			orderBy: { createdAt: 'desc' },
 		})
 
-		const orderNumber = lastOrder
-			? `#${(parseInt(lastOrder.orderNumber.slice(1)) + 1).toString().padStart(4, '0')}`
-			: '#0001'
+		let orderNumber = '#0001'
+		if (lastOrder && lastOrder.orderNumber) {
+			const lastNumber = parseInt(lastOrder.orderNumber.replace(/\D/g, ''))
+			if (!isNaN(lastNumber)) {
+				orderNumber = `#${(lastNumber + 1).toString().padStart(4, '0')}`
+			}
+		}
 
 		// Buyurtma yaratish
 		const order = await prisma.order.create({
 			data: {
 				orderNumber,
-				userId,
+				userId: user.id,
 				totalPrice,
 				paymentMethod: paymentMethod || 'CASH',
 				deliveryAddress,

@@ -24,6 +24,7 @@ import dashboardRoutes from './routes/dashboard.routes'
 import dealsRoutes from './routes/deals.routes'
 import ordersRoutes from './routes/orders.routes'
 import productsRoutes from './routes/products.routes'
+import profileRoutes from './routes/profile.routes'
 import toppingsRoutes from './routes/toppings.routes'
 import usersRoutes from './routes/users.routes'
 
@@ -56,7 +57,7 @@ app.use(
 	cors({
 		origin: (origin, callback) => {
 			// console.log('🔍 CORS check - Origin:', origin)
-			
+
 			if (!origin) return callback(null, true)
 			if (allowedOrigins.length === 0 && process.env.NODE_ENV !== 'production') {
 				return callback(null, true)
@@ -85,7 +86,7 @@ const isDevelopment = process.env.NODE_ENV === 'development'
 
 // Dashboard limiter
 const dashboardLimiter = rateLimit({
-	windowMs: 1 * 60 * 1000, 
+	windowMs: 1 * 60 * 1000,
 	max: isDevelopment ? 1000 : 120, // Dev mode: relaxed limits
 	message: { success: false, message: 'Dashboard limit exceeded' },
 	standardHeaders: true,
@@ -103,7 +104,7 @@ const analyticsLimiter = rateLimit({
 
 // Auth limiter (Firebase auth endpoints uchun)
 const authLimiter = rateLimit({
-	windowMs: 15 * 60 * 1000, 
+	windowMs: 15 * 60 * 1000,
 	max: isDevelopment ? 500 : 100,
 	message: { success: false, message: 'Too many auth requests, please try again later' },
 	standardHeaders: true,
@@ -173,9 +174,25 @@ app.get('/api', (_req: Request, res: Response) => {
 		message: 'Zor Pizza API v1.0',
 		availableEndpoints: [
 			{ method: 'GET', path: '/api/auth/me', description: 'Get current user', protected: true },
-			{ method: 'GET', path: '/api/auth/verify-token', description: 'Verify Firebase token', protected: true },
-			{ method: 'POST', path: '/api/auth/set-admin', description: 'Set admin role', protected: true, admin: true },
-			{ method: 'GET', path: '/api/dashboard', description: 'Real-time dashboard', protected: false },
+			{
+				method: 'GET',
+				path: '/api/auth/verify-token',
+				description: 'Verify Firebase token',
+				protected: true,
+			},
+			{
+				method: 'POST',
+				path: '/api/auth/set-admin',
+				description: 'Set admin role',
+				protected: true,
+				admin: true,
+			},
+			{
+				method: 'GET',
+				path: '/api/dashboard',
+				description: 'Real-time dashboard',
+				protected: false,
+			},
 			{ method: 'GET', path: '/api/analytics', description: 'Analytics', protected: false },
 			{ method: 'GET', path: '/api/products', description: 'Products', protected: false },
 			{ method: 'GET', path: '/api/orders', description: 'Orders', protected: true },
@@ -213,6 +230,7 @@ app.use('/api/products', generalLimiter, productsRoutes)
 app.use('/api/toppings', generalLimiter, toppingsRoutes)
 app.use('/api/orders', generalLimiter, ordersRoutes)
 app.use('/api/users', generalLimiter, usersRoutes)
+app.use('/api/profile', generalLimiter, profileRoutes)
 app.use('/api/notifications', generalLimiter, notificationsRoutes)
 app.use('/api/errors', generalLimiter, errorsRoutes)
 
@@ -299,16 +317,16 @@ const startServer = async () => {
 		console.error('❌ Serverni boshlashda xatolik:', error)
 		try {
 			await prisma.$disconnect()
-		} catch (_e) { }
+		} catch (_e) {}
 		process.exit(1)
 	}
 }
 
 // Start server only when this file is run directly (not imported for tests)
 if (require.main === module) {
-if (process.env.NODE_ENV !== 'test') {
-	startServer()
-}
+	if (process.env.NODE_ENV !== 'test') {
+		startServer()
+	}
 }
 
 // ============================================
@@ -332,5 +350,5 @@ process.on('SIGTERM', () => shutdown('SIGTERM'))
 process.on('beforeExit', async () => {
 	try {
 		await prisma.$disconnect()
-	} catch (_e) { }
+	} catch (_e) {}
 })

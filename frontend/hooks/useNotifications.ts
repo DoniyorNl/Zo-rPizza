@@ -1,11 +1,11 @@
 // =====================================
 // 📁 FILE PATH: frontend/hooks/useNotifications.ts
-// 🔔 NOTIFICATIONS HOOK (Optimized with Zustand Store)
+// 🔔 NOTIFICATIONS HOOK (Fixed)
 // =====================================
 
 import { useAuth } from '@/lib/AuthContext'
 import { useNotificationStore } from '@/store/useNotificationStore'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 export type { Notification } from '@/store/useNotificationStore'
 
 export const useNotifications = () => {
@@ -22,12 +22,22 @@ export const useNotifications = () => {
 		clearAll,
 	} = useNotificationStore()
 
-	// Initial fetch on mount - only if user is authenticated
+	// Track if component is mounted
+	const isMountedRef = useRef(true)
+
 	useEffect(() => {
-		if (user) {
+		// Cleanup function - component unmount bo'lganda ishga tushadi
+		return () => {
+			isMountedRef.current = false
+		}
+	}, [])
+
+	// Fetch notifications on user change
+	useEffect(() => {
+		if (user && isMountedRef.current) {
 			fetchNotifications()
 		}
-	}, [user, fetchNotifications])
+	}, [user, fetchNotifications]) // ✅ fetchNotifications ham dependency
 
 	return {
 		notifications,

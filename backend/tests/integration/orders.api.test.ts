@@ -113,12 +113,17 @@ describe('Orders API Integration Tests (Controller-level)', () => {
 			}
 
 			const newUser = { id: 'user-999', firebaseUid: 'user-999', email: 'newuser@test.com' }
-			const product = { id: 'prod-1', basePrice: 100, variations: [{ id: 'var-1', price: 120 }] }
+			const product = {
+				id: 'prod-1',
+				basePrice: 100,
+				isActive: true,
+				variations: [{ id: 'var-1', price: 120 }],
+			}
 
 			prismaMock.user.findUnique.mockResolvedValueOnce(null).mockResolvedValueOnce(null)
 			prismaMock.user.create.mockResolvedValue(newUser as any)
 			prismaMock.product.findUnique.mockResolvedValue(product as any)
-			prismaMock.productVariation.findUnique.mockResolvedValue({ id: 'var-1', price: 120 } as any)
+			prismaMock.productVariation.findFirst.mockResolvedValue({ id: 'var-1', price: 120 } as any)
 			prismaMock.order.findFirst.mockResolvedValue(null)
 			prismaMock.order.create.mockResolvedValue({ id: 'order-1', orderNumber: '#0001' } as any)
 

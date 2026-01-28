@@ -526,7 +526,7 @@ describe('Orders Controller - createOrder', () => {
 		prismaMock.user.findUnique.mockResolvedValueOnce(null).mockResolvedValueOnce(null)
 		prismaMock.user.create.mockResolvedValue(newUser as any)
 		prismaMock.product.findUnique.mockResolvedValue({ ...product, variations: [variation] } as any)
-		prismaMock.productVariation.findUnique.mockResolvedValue(variation as any)
+		prismaMock.productVariation.findFirst.mockResolvedValue(variation as any)
 		prismaMock.order.findFirst.mockResolvedValue(null)
 		prismaMock.order.create.mockResolvedValue(generateMockOrder() as any)
 
