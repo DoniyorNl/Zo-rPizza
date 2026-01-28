@@ -81,11 +81,7 @@ describe('usePopularProducts Hook', () => {
 			data: { data: mockProducts },
 		})
 
-		let result: any
-		await act(async () => {
-			const hook = renderHook(() => usePopularProducts(6))
-			result = hook.result
-		})
+		const { result } = renderHook(() => usePopularProducts(6))
 
 		// Wait for all effects to complete
 		await waitFor(() => {
@@ -101,11 +97,7 @@ describe('usePopularProducts Hook', () => {
 			data: { data: mockProducts },
 		})
 
-		let result: any
-		await act(async () => {
-			const hook = renderHook(() => usePopularProducts(6))
-			result = hook.result
-		})
+		const { result } = renderHook(() => usePopularProducts(6))
 
 		// Wait for all effects to complete
 		await waitFor(() => {
@@ -121,11 +113,7 @@ describe('usePopularProducts Hook', () => {
 			data: { data: mockProducts },
 		})
 
-		let result: any
-		await act(async () => {
-			const hook = renderHook(() => usePopularProducts(3))
-			result = hook.result
-		})
+		const { result } = renderHook(() => usePopularProducts(3))
 
 		// Wait for all effects to complete
 		await waitFor(() => {
@@ -145,11 +133,7 @@ describe('usePopularProducts Hook', () => {
 		})
 
 		const limit = 2
-		let result: any
-		await act(async () => {
-			const hook = renderHook(() => usePopularProducts(limit))
-			result = hook.result
-		})
+		const { result } = renderHook(() => usePopularProducts(limit))
 
 		// Wait for all effects to complete
 		await waitFor(() => {
@@ -162,11 +146,7 @@ describe('usePopularProducts Hook', () => {
 	it('should handle API errors gracefully', async () => {
 		mockedApi.get.mockRejectedValueOnce(new Error('Network error'))
 
-		let result: any
-		await act(async () => {
-			const hook = renderHook(() => usePopularProducts(6))
-			result = hook.result
-		})
+		const { result } = renderHook(() => usePopularProducts(6))
 
 		// Wait for all effects to complete
 		await waitFor(() => {
@@ -185,11 +165,7 @@ describe('usePopularProducts Hook', () => {
 		}
 		localStorage.setItem('popular_products_cache', JSON.stringify(cacheData))
 
-		let result: any
-		await act(async () => {
-			const hook = renderHook(() => usePopularProducts(6))
-			result = hook.result
-		})
+		const { result } = renderHook(() => usePopularProducts(6))
 
 		// Wait for all effects to complete
 		await waitFor(() => {
@@ -206,11 +182,7 @@ describe('usePopularProducts Hook', () => {
 			data: { data: mockProducts },
 		})
 
-		let result: any
-		await act(async () => {
-			const hook = renderHook(() => usePopularProducts(6))
-			result = hook.result
-		})
+		const { result } = renderHook(() => usePopularProducts(6))
 
 		// Wait for initial effects to complete
 		await waitFor(() => {
@@ -221,7 +193,7 @@ describe('usePopularProducts Hook', () => {
 		expect(mockedApi.get).toHaveBeenCalledTimes(1)
 
 		// Fast-forward 10 minutes inside act
-		await act(async () => {
+		act(() => {
 			jest.advanceTimersByTime(10 * 60 * 1000)
 		})
 
@@ -241,11 +213,7 @@ describe('usePopularProducts Hook', () => {
 			data: { data: productsWithoutCount },
 		})
 
-		let result: any
-		await act(async () => {
-			const hook = renderHook(() => usePopularProducts(3))
-			result = hook.result
-		})
+		const { result } = renderHook(() => usePopularProducts(3))
 
 		// Wait for all effects to complete
 		await waitFor(() => {
