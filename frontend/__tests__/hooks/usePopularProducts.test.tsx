@@ -87,14 +87,8 @@ describe('usePopularProducts Hook', () => {
 			result = hook.result
 		})
 
-		expect(result.current.loading).toBe(true)
-
-		await act(async () => {
-			await waitFor(() => {
-				expect(result.current.loading).toBe(false)
-			})
-		})
-
+		// Hook operations complete within act(), so loading should be false
+		expect(result.current.loading).toBe(false)
 		expect(result.current.popularProducts.length).toBeGreaterThan(0)
 		expect(result.current.error).toBeNull()
 	})
@@ -108,12 +102,10 @@ describe('usePopularProducts Hook', () => {
 		await act(async () => {
 			const hook = renderHook(() => usePopularProducts(6))
 			result = hook.result
-			await waitFor(() => {
-				expect(result.current.loading).toBe(false)
-			})
 		})
 
-		const hasInactive = result.current.popularProducts.some(p => !p.isActive)
+		expect(result.current.loading).toBe(false)
+		const hasInactive = result.current.popularProducts.some((p: any) => !p.isActive)
 		expect(hasInactive).toBe(false)
 	})
 
@@ -126,11 +118,9 @@ describe('usePopularProducts Hook', () => {
 		await act(async () => {
 			const hook = renderHook(() => usePopularProducts(3))
 			result = hook.result
-			await waitFor(() => {
-				expect(result.current.loading).toBe(false)
-			})
 		})
 
+		expect(result.current.loading).toBe(false)
 		// First product should have highest order count
 		if (result.current.popularProducts.length > 0) {
 			const firstProduct = result.current.popularProducts[0]
@@ -148,11 +138,9 @@ describe('usePopularProducts Hook', () => {
 		await act(async () => {
 			const hook = renderHook(() => usePopularProducts(limit))
 			result = hook.result
-			await waitFor(() => {
-				expect(result.current.loading).toBe(false)
-			})
 		})
 
+		expect(result.current.loading).toBe(false)
 		expect(result.current.popularProducts.length).toBeLessThanOrEqual(limit)
 	})
 
@@ -163,11 +151,9 @@ describe('usePopularProducts Hook', () => {
 		await act(async () => {
 			const hook = renderHook(() => usePopularProducts(6))
 			result = hook.result
-			await waitFor(() => {
-				expect(result.current.loading).toBe(false)
-			})
 		})
 
+		expect(result.current.loading).toBe(false)
 		expect(result.current.error).toBeTruthy()
 		expect(result.current.popularProducts).toHaveLength(0)
 	})
@@ -184,11 +170,9 @@ describe('usePopularProducts Hook', () => {
 		await act(async () => {
 			const hook = renderHook(() => usePopularProducts(6))
 			result = hook.result
-			await waitFor(() => {
-				expect(result.current.loading).toBe(false)
-			})
 		})
 
+		expect(result.current.loading).toBe(false)
 		// Should not call API if cache is fresh
 		expect(mockedApi.get).not.toHaveBeenCalled()
 		expect(result.current.popularProducts).toHaveLength(3)
@@ -203,20 +187,19 @@ describe('usePopularProducts Hook', () => {
 		await act(async () => {
 			const hook = renderHook(() => usePopularProducts(6))
 			result = hook.result
-			await waitFor(() => {
-				expect(result.current.loading).toBe(false)
-			})
 		})
 
+		expect(result.current.loading).toBe(false)
 		// Initial fetch
 		expect(mockedApi.get).toHaveBeenCalledTimes(1)
 
-		// Fast-forward 10 minutes - wrapped in act()
-		await act(async () => {
+		// Fast-forward 10 minutes
+		act(() => {
 			jest.advanceTimersByTime(10 * 60 * 1000)
-			await waitFor(() => {
-				expect(mockedApi.get).toHaveBeenCalledTimes(2)
-			})
+		})
+
+		await waitFor(() => {
+			expect(mockedApi.get).toHaveBeenCalledTimes(2)
 		})
 	})
 
@@ -234,11 +217,9 @@ describe('usePopularProducts Hook', () => {
 		await act(async () => {
 			const hook = renderHook(() => usePopularProducts(3))
 			result = hook.result
-			await waitFor(() => {
-				expect(result.current.loading).toBe(false)
-			})
 		})
 
+		expect(result.current.loading).toBe(false)
 		// Should still return products even without order count
 		expect(result.current.popularProducts.length).toBeGreaterThan(0)
 	})
