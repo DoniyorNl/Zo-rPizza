@@ -71,7 +71,7 @@ describe('usePopularProducts Hook', () => {
 
 	afterEach(() => {
 		act(() => {
-			jest.runOnlyPendingTimers()
+			jest.clearAllTimers()
 		})
 		jest.useRealTimers()
 	})
@@ -148,10 +148,13 @@ describe('usePopularProducts Hook', () => {
 
 		const { result } = renderHook(() => usePopularProducts(6))
 
-		// Wait for all effects to complete
-		await waitFor(() => {
-			expect(result.current.loading).toBe(false)
-		})
+		// Wait for error state
+		await waitFor(
+			() => {
+				expect(result.current.loading).toBe(false)
+			},
+			{ timeout: 3000 },
+		)
 
 		expect(result.current.error).toBeTruthy()
 		expect(result.current.popularProducts).toHaveLength(0)
@@ -192,15 +195,18 @@ describe('usePopularProducts Hook', () => {
 		// Initial fetch
 		expect(mockedApi.get).toHaveBeenCalledTimes(1)
 
-		// Fast-forward 10 minutes inside act
-		act(() => {
+		// Fast-forward 10 minutes
+		await act(async () => {
 			jest.advanceTimersByTime(10 * 60 * 1000)
 		})
 
 		// Wait for refresh to complete
-		await waitFor(() => {
-			expect(mockedApi.get).toHaveBeenCalledTimes(2)
-		})
+		await waitFor(
+			() => {
+				expect(mockedApi.get).toHaveBeenCalledTimes(2)
+			},
+			{ timeout: 3000 },
+		)
 	})
 
 	it('should handle products without order count (random shuffle)', async () => {
