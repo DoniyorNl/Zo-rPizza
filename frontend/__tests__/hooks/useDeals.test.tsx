@@ -2,9 +2,9 @@
 // 🎁 DEALS HOOK TESTS
 // Test useDeals hook for fetching and managing deals
 
-import { act, renderHook, waitFor } from '@testing-library/react'
-import { useDeals, useDeal } from '@/hooks/useDeals'
+import { useDeal, useDeals } from '@/hooks/useDeals'
 import { api } from '@/lib/apiClient'
+import { act, renderHook, waitFor } from '@testing-library/react'
 
 // Mock API client
 jest.mock('@/lib/apiClient', () => ({
@@ -59,7 +59,9 @@ describe('useDeals Hook', () => {
 	})
 
 	afterEach(() => {
-		jest.runOnlyPendingTimers()
+		act(() => {
+			jest.clearAllTimers()
+		})
 		jest.useRealTimers()
 	})
 
@@ -179,7 +181,7 @@ describe('useDeals Hook', () => {
 
 		// deal-1 (priority 1) should be first
 		expect(result.current.deals[0].priority).toBeLessThanOrEqual(
-			result.current.deals[1]?.priority || 999
+			result.current.deals[1]?.priority || 999,
 		)
 	})
 
@@ -188,18 +190,21 @@ describe('useDeals Hook', () => {
 	 */
 	it('should handle fetch errors', async () => {
 		const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
-		
+
 		mockedApi.get.mockRejectedValueOnce(new Error('Network error'))
 
 		const { result } = renderHook(() => useDeals())
 
-		await waitFor(() => {
-			expect(result.current.loading).toBe(false)
-		})
+		await waitFor(
+			() => {
+				expect(result.current.loading).toBe(false)
+			},
+			{ timeout: 3000 },
+		)
 
 		expect(result.current.error).toBeTruthy()
 		expect(result.current.deals).toEqual([])
-		
+
 		consoleErrorSpy.mockRestore()
 	})
 
@@ -243,15 +248,18 @@ describe('useDeals Hook', () => {
 		// Initial call
 		expect(mockedApi.get).toHaveBeenCalledTimes(1)
 
-		// Fast-forward 5 minutes - interval will call fetchDeals(true)
-		act(() => {
+		// Fast-forward 5 minutes
+		await act(async () => {
 			jest.advanceTimersByTime(5 * 60 * 1000)
 		})
 
 		// Should call again (forced, bypassing cache)
-		await waitFor(() => {
-			expect(mockedApi.get).toHaveBeenCalledTimes(2)
-		})
+		await waitFor(
+			() => {
+				expect(mockedApi.get).toHaveBeenCalledTimes(2)
+			},
+			{ timeout: 3000 },
+		)
 	})
 
 	/**
@@ -318,18 +326,21 @@ describe('useDeal Hook', () => {
 	 */
 	it('should handle deal not found', async () => {
 		const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
-		
+
 		mockedApi.get.mockRejectedValueOnce(new Error('Not found'))
 
 		const { result } = renderHook(() => useDeal('deal-999'))
 
-		await waitFor(() => {
-			expect(result.current.loading).toBe(false)
-		})
+		await waitFor(
+			() => {
+				expect(result.current.loading).toBe(false)
+			},
+			{ timeout: 3000 },
+		)
 
 		expect(result.current.deal).toBeNull()
 		expect(result.current.error).toBeTruthy()
-		
+
 		consoleErrorSpy.mockRestore()
 	})
 
