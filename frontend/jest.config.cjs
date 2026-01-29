@@ -7,19 +7,22 @@ const config = {
 		'\\.(css|less|scss|sass)$': 'identity-obj-proxy',
 	},
 	transform: {
-		'^.+\\.(ts|tsx)$': ['@swc/jest', {
-			jsc: {
-				parser: {
-					syntax: 'typescript',
-					tsx: true,
-				},
-				transform: {
-					react: {
-						runtime: 'automatic',
+		'^.+\\.(ts|tsx)$': [
+			'@swc/jest',
+			{
+				jsc: {
+					parser: {
+						syntax: 'typescript',
+						tsx: true,
+					},
+					transform: {
+						react: {
+							runtime: 'automatic',
+						},
 					},
 				},
 			},
-		}],
+		],
 	},
 	collectCoverageFrom: [
 		'app/**/*.{ts,tsx}',
@@ -39,15 +42,11 @@ const config = {
 	// 		statements: 50,
 	// 	},
 	// },
-	testMatch: [
-		'**/__tests__/**/*.[jt]s?(x)',
-		'**/?(*.)+(spec|test).[jt]s?(x)',
-	],
+	testMatch: ['**/__tests__/**/*.[jt]s?(x)', '**/?(*.)+(spec|test).[jt]s?(x)'],
 	testPathIgnorePatterns: ['/node_modules/', '/.next/'],
-	transformIgnorePatterns: [
-		'/node_modules/',
-		'^.+\\.module\\.(css|sass|scss)$',
-	],
+	transformIgnorePatterns: ['/node_modules/', '^.+\\.module\\.(css|sass|scss)$'],
+	maxWorkers: process.env.CI ? 2 : '50%',
+	testTimeout: 10000,
 }
 
 module.exports = config
