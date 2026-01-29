@@ -53,4 +53,6 @@ jobs:
       - name: Run Frontend Tests
         run: |
           cd frontend
-          pnpm test
+          CI=true pnpm test
+        env:
+          NODE_ENV: test
