@@ -76,9 +76,11 @@ describe('ProductCard Component', () => {
 
         render(<ProductCard product={productWithVariations} />)
 
-        expect(screen.getByText('40,000 so\'m')).toBeInTheDocument()
-        expect(screen.getByText('dan boshlab')).toBeInTheDocument()
-        expect(screen.getByText('2 ta o\'lcham')).toBeInTheDocument()
+        // Lowest price with "so'm" (regex tolerates locale/whitespace/apostrophe differences)
+        expect(screen.getByText(/40,?000\s*so['']m/)).toBeInTheDocument()
+        expect(screen.getByText(/dan boshlab/)).toBeInTheDocument()
+        // Size count label (regex tolerates apostrophe variants)
+        expect(screen.getByText(/2\s*ta\s*o['']lcham/)).toBeInTheDocument()
     })
 
     it('should navigate to product page on clicking the card', () => {
