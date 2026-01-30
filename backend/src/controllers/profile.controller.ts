@@ -411,7 +411,7 @@ export const updateAddress = async (req: Request, res: Response) => {
 
 	try {
 		const firebaseUid = (req as any).userId
-		const { id } = req.params
+		const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id
 		const { label, street, building, apartment, floor, entrance, landmark, lat, lng, isDefault } =
 			req.body
 
@@ -437,7 +437,7 @@ export const updateAddress = async (req: Request, res: Response) => {
 
 		// Check if address belongs to user
 		const existingAddress = await prisma.address.findFirst({
-			where: { id, userId: user.id },
+			where: { id: idParam, userId: user.id },
 		})
 
 		if (!existingAddress) {
@@ -450,13 +450,13 @@ export const updateAddress = async (req: Request, res: Response) => {
 		// If setting as default, unset other defaults
 		if (isDefault) {
 			await prisma.address.updateMany({
-				where: { userId: user.id, isDefault: true, id: { not: addressId } },
+				where: { userId: user.id, isDefault: true, id: { not: idParam } },
 				data: { isDefault: false },
 			})
 		}
 
 		const address = await prisma.address.update({
-			where: { id: addressId },
+			where: { id: idParam },
 			data: {
 				...(label !== undefined && { label }),
 				...(street !== undefined && { street }),
@@ -472,7 +472,7 @@ export const updateAddress = async (req: Request, res: Response) => {
 		})
 
 		const duration = Date.now() - startTime
-		console.log(`[UPDATE_ADDRESS] ✓ Address updated: ${addressId} | ${duration}ms`)
+		console.log(`[UPDATE_ADDRESS] ✓ Address updated: ${idParam} | ${duration}ms`)
 
 		return res.status(200).json({
 			success: true,
@@ -501,7 +501,7 @@ export const deleteAddress = async (req: Request, res: Response) => {
 
 	try {
 		const firebaseUid = (req as any).userId
-		const { id } = req.params
+		const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id
 
 		if (!firebaseUid) {
 			return res.status(401).json({
@@ -525,7 +525,7 @@ export const deleteAddress = async (req: Request, res: Response) => {
 
 		// Check if address belongs to user
 		const existingAddress = await prisma.address.findFirst({
-			where: { id, userId: user.id },
+			where: { id: idParam, userId: user.id },
 		})
 
 		if (!existingAddress) {
@@ -536,11 +536,11 @@ export const deleteAddress = async (req: Request, res: Response) => {
 		}
 
 		await prisma.address.delete({
-			where: { id },
+			where: { id: idParam },
 		})
 
 		const duration = Date.now() - startTime
-		console.log(`[DELETE_ADDRESS] ✓ Address deleted: ${id} | ${duration}ms`)
+		console.log(`[DELETE_ADDRESS] ✓ Address deleted: ${idParam} | ${duration}ms`)
 
 		return res.status(200).json({
 			success: true,
