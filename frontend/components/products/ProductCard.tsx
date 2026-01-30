@@ -59,14 +59,13 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
 
 	// Get price (handle both old 'price' and new 'basePrice' structures)
 	const displayPrice = product.basePrice || product.price || 0
-	
-	// Calculate cheapest price if variations exist
-	const cheapestPrice =
+
+	// Show "from" price when there are multiple variations; otherwise fixed price
+	const hasVariations = product.variations && product.variations.length > 1
+	const minPrice =
 		product.variations && product.variations.length > 0
 			? Math.min(...product.variations.map(v => v.price))
 			: displayPrice
-
-	const hasMultipleSizes = product.variations && product.variations.length > 1
 
 	const handleClick = () => {
 		router.push(`/products/${product.id}`)
@@ -134,7 +133,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
 						<span>{product.prepTime} daqiqa</span>
 					</div>
 
-					{hasMultipleSizes && (
+					{hasVariations && (
 						<span className='text-xs text-gray-500'>
 							{product.variations!.length} ta o&apos;lcham
 						</span>
@@ -146,9 +145,9 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
 			<CardFooter className='flex items-center justify-between pt-3 border-t'>
 				<div>
 					<div className='text-2xl font-bold text-orange-600'>
-						{cheapestPrice.toLocaleString()} so&apos;m
+						{minPrice.toLocaleString('en-US')} so&apos;m
 					</div>
-					{hasMultipleSizes && (
+					{hasVariations && (
 						<p className='text-xs text-gray-500 mt-0.5'>dan boshlab</p>
 					)}
 				</div>
