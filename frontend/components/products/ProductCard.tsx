@@ -60,12 +60,11 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
 	// Get price (handle both old 'price' and new 'basePrice' structures)
 	const displayPrice = product.basePrice || product.price || 0
 
-	// Show "from" price when there are multiple variations; otherwise fixed price
+	// Show "from" price when there are multiple variations; otherwise fixed base price
 	const hasVariations = product.variations && product.variations.length > 1
-	const minPrice =
-		product.variations && product.variations.length > 0
-			? Math.min(...product.variations.map(v => v.price))
-			: displayPrice
+	const minPrice = hasVariations
+		? Math.min(...product.variations!.map(v => v.price))
+		: displayPrice
 
 	const handleClick = () => {
 		router.push(`/products/${product.id}`)
