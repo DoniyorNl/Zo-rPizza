@@ -4,7 +4,7 @@
 // =====================================
 
 import { ProductCard } from '@/components/products/ProductCard'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { useRouter } from 'next/navigation'
 
 // Mock useRouter
@@ -12,8 +12,22 @@ jest.mock('next/navigation', () => ({
 	useRouter: jest.fn(),
 }))
 
+// Mock next/image to avoid fill/non-boolean attribute warnings and test leakage
+jest.mock('next/image', () => ({
+	__esModule: true,
+	default: (props: { src: string; alt: string; className?: string }) => (
+		// eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
+		<img src={props.src} alt={props.alt} className={props.className} />
+	),
+}))
+
 describe('ProductCard Component', () => {
 	const mockPush = jest.fn()
+
+	afterEach(() => {
+		jest.useRealTimers()
+		cleanup()
+	})
 
 	const mockProduct = {
 		id: 'prod-1',
@@ -40,9 +54,13 @@ describe('ProductCard Component', () => {
 
 		expect(screen.getByText('Test Pizza')).toBeInTheDocument()
 		expect(screen.getByText('Delicious cheese pizza')).toBeInTheDocument()
-		expect(screen.getByText('50,000 so\'m')).toBeInTheDocument()
-		expect(screen.getByText('20 daqiqa')).toBeInTheDocument()
-		expect(screen.getByText('500 kkal')).toBeInTheDocument()
+		// Price is split across text nodes, so use regex
+		expect(screen.getByText(/50,000/)).toBeInTheDocument()
+		expect(screen.getByText(/so'm/)).toBeInTheDocument()
+		expect(screen.getByText(/20/)).toBeInTheDocument()
+		expect(screen.getByText(/daqiqa/)).toBeInTheDocument()
+		expect(screen.getByText(/500/)).toBeInTheDocument()
+		expect(screen.getByText(/kkal/)).toBeInTheDocument()
         expect(screen.getByText('Easy')).toBeInTheDocument()
         expect(screen.getByText('Pizza')).toBeInTheDocument()
 	})
