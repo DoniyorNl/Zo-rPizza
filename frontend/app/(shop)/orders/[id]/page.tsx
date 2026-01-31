@@ -1,5 +1,7 @@
 // frontend/app/(shop)/orders/[id]/page.tsx
 // 📄 ORDER DETAILS PAGE
+// Route: /orders/[id] — id = buyurtmaning backend dagi unique ID (UUID).
+// Profil va "Mening buyurtmalarim" ro'yxatida bosilganda shu ID orqali shu sahifaga yo'naltiriladi.
 
 'use client'
 

@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/lib/AuthContext'
 import { useCartStore } from '@/store/cartStore'
-import { CircleUser, Home, LogOut, MapPin, Settings, ShoppingCart, User } from 'lucide-react'
+import { CircleUser, Home, LogOut, Navigation, Settings, ShoppingCart, Truck, User } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import api from '@/lib/api'
@@ -121,21 +121,34 @@ export function UnifiedHeader({ variant = 'user' }: UnifiedHeaderProps) {
 						</button>
 					)}
 
-					{/* Tracking Button - Faqat user uchun va active order bo'lganda */}
+					{/* Track order – creative pill (faqat user + active order) */}
 					{!isAdmin && activeOrderId && (
 						<button
 							onClick={() => router.push(`/tracking/${activeOrderId}`)}
-							className='relative flex items-center justify-center w-10 h-10 rounded-full
-							bg-green-500 hover:bg-green-600
-							transition-all duration-200
-							hover:shadow-lg active:scale-95 cursor-pointer
-							animate-pulse'
-							title='Track your order'
+							className='
+								group relative flex items-center gap-2 pl-3 pr-4 py-2 rounded-full
+								bg-gradient-to-r from-green-500 to-emerald-600 text-white
+								shadow-lg shadow-green-500/30
+								hover:from-green-600 hover:to-emerald-700
+								hover:shadow-green-500/40 hover:scale-[1.02]
+								active:scale-[0.98]
+								transition-all duration-300 cursor-pointer
+								ring-2 ring-white/20 hover:ring-white/40
+							'
+							title="Buyurtmani kuzatish"
 						>
-							<MapPin className='w-5 h-5' />
-							<Badge className='absolute -top-1.5 -right-1.5 bg-green-700 text-white px-1.5 py-0.5 text-xs shadow'>
-								Live
-							</Badge>
+							<span className="relative flex h-8 w-8 items-center justify-center">
+								<span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white/40 opacity-75" />
+								<Truck className="relative h-5 w-5" />
+							</span>
+							<span className="hidden sm:inline font-semibold text-sm whitespace-nowrap">
+								Yo&apos;lda
+							</span>
+							<Navigation className="h-4 w-4 opacity-90 group-hover:translate-x-0.5 transition-transform hidden xs:block" />
+							<span className="absolute -top-0.5 -right-0.5 flex h-4 w-4">
+								<span className="absolute inline-flex h-full w-full rounded-full bg-green-400 animate-ping opacity-80" />
+								<span className="relative inline-flex h-4 w-4 rounded-full bg-green-300 border-2 border-white" />
+							</span>
 						</button>
 					)}
 

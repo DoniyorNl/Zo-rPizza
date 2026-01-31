@@ -567,8 +567,17 @@ export default function ProfilePage() {
 											{profileData.recentOrders.map(order => (
 												<div
 													key={order.id}
+													role='button'
+													tabIndex={0}
+													aria-label={`Buyurtma ${order.orderNumber} - batafsil`}
 													className='flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer'
 													onClick={() => router.push(`/orders/${order.id}`)}
+													onKeyDown={e => {
+														if (e.key === 'Enter' || e.key === ' ') {
+															e.preventDefault()
+															router.push(`/orders/${order.id}`)
+														}
+													}}
 												>
 													<div className='flex items-center space-x-4'>
 														<div className='w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center'>
