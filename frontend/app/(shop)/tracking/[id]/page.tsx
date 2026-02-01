@@ -1,10 +1,11 @@
 // frontend/app/(shop)/tracking/[id]/page.tsx
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
 import TrackingMap from '@/components/tracking/TrackingMap'
 import { useAuth } from '@/lib/AuthContext'
+import { buildApiUrl } from '@/lib/apiBaseUrl'
+import { useParams, useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 interface Location {
 	lat: number
@@ -31,7 +32,8 @@ interface Driver {
 interface OrderData {
 	id: string
 	status: string
-	totalAmount: number
+	totalAmount?: number
+	totalPrice?: number
 	deliveryAddress: string
 	createdAt: string
 	trackingStartedAt?: string
@@ -59,7 +61,7 @@ export default function OrderTrackingPage() {
 		try {
 			const token = await user?.getIdToken()
 			const response = await fetch(
-				`${process.env.NEXT_PUBLIC_API_URL}/api/tracking/order/${orderId}`,
+				buildApiUrl(`/api/tracking/order/${orderId}`),
 				{
 					headers: {
 						Authorization: `Bearer ${token}`,
@@ -90,8 +92,9 @@ export default function OrderTrackingPage() {
 
 	useEffect(() => {
 		if (
-			trackingData?.order.status === 'OUT_FOR_DELIVERY' ||
-			trackingData?.order.status === 'PREPARING'
+			['OUT_FOR_DELIVERY', 'DELIVERING', 'PREPARING'].includes(
+				trackingData?.order.status || ''
+			)
 		) {
 			const interval = setInterval(fetchTracking, 10000)
 			return () => clearInterval(interval)
@@ -174,7 +177,7 @@ export default function OrderTrackingPage() {
 										deliveryLocation={tracking.deliveryLocation}
 										driverLocation={tracking.driverLocation}
 										height='500px'
-										showRoute={true}
+										showRoute
 									/>
 
 									{/* Stats Grid */}
@@ -207,13 +210,13 @@ export default function OrderTrackingPage() {
 												{formatETA(tracking.eta)} qoldi
 											</span>
 										</div>
-										
+
 										{/* Progress Bar */}
 										<div className='relative h-4 bg-gray-200 rounded-full overflow-hidden'>
-											<div 
+											<div
 												className='absolute top-0 left-0 h-full bg-gradient-to-r from-orange-500 to-pink-500 transition-all duration-500 rounded-full'
-												style={{ 
-													width: `${Math.min(100, Math.max(0, 100 - (tracking.distance * 10)))}%` 
+												style={{
+													width: `${Math.min(100, Math.max(0, 100 - (tracking.distance * 10)))}%`
 												}}
 											>
 												<div className='absolute inset-0 bg-white/20 animate-pulse'></div>
@@ -229,17 +232,15 @@ export default function OrderTrackingPage() {
 												<span>Boshlandi</span>
 											</div>
 											<div className='flex flex-col items-center'>
-												<div className={`w-8 h-8 rounded-full flex items-center justify-center text-white mb-1 ${
-													tracking.distance < 5 ? 'bg-orange-500 animate-bounce' : 'bg-gray-300'
-												}`}>
+												<div className={`w-8 h-8 rounded-full flex items-center justify-center text-white mb-1 ${tracking.distance < 5 ? 'bg-orange-500 animate-bounce' : 'bg-gray-300'
+													}`}>
 													🏍️
 												</div>
 												<span>Yo'lda</span>
 											</div>
 											<div className='flex flex-col items-center'>
-												<div className={`w-8 h-8 rounded-full flex items-center justify-center text-white mb-1 ${
-													tracking.isNearby ? 'bg-green-500 animate-pulse' : 'bg-gray-300'
-												}`}>
+												<div className={`w-8 h-8 rounded-full flex items-center justify-center text-white mb-1 ${tracking.isNearby ? 'bg-green-500 animate-pulse' : 'bg-gray-300'
+													}`}>
 													{tracking.isNearby ? '✓' : '○'}
 												</div>
 												<span>Yaqinlashdi</span>
@@ -279,9 +280,8 @@ export default function OrderTrackingPage() {
 								<div className='space-y-3 mt-6'>
 									<div className='flex items-start'>
 										<div
-											className={`w-8 h-8 rounded-full flex items-center justify-center ${
-												order.status !== 'PENDING' ? 'bg-green-500' : 'bg-gray-300'
-											}`}
+											className={`w-8 h-8 rounded-full flex items-center justify-center ${order.status !== 'PENDING' ? 'bg-green-500' : 'bg-gray-300'
+												}`}
 										>
 											<span className='text-white'>✓</span>
 										</div>
@@ -295,11 +295,10 @@ export default function OrderTrackingPage() {
 
 									<div className='flex items-start'>
 										<div
-											className={`w-8 h-8 rounded-full flex items-center justify-center ${
-												['PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(order.status)
+											className={`w-8 h-8 rounded-full flex items-center justify-center ${['PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(order.status)
 													? 'bg-green-500'
 													: 'bg-gray-300'
-											}`}
+												}`}
 										>
 											<span className='text-white'>✓</span>
 										</div>
@@ -315,11 +314,10 @@ export default function OrderTrackingPage() {
 
 									<div className='flex items-start'>
 										<div
-											className={`w-8 h-8 rounded-full flex items-center justify-center ${
-												['OUT_FOR_DELIVERY', 'DELIVERED'].includes(order.status)
+											className={`w-8 h-8 rounded-full flex items-center justify-center ${['OUT_FOR_DELIVERY', 'DELIVERED'].includes(order.status)
 													? 'bg-green-500'
 													: 'bg-gray-300'
-											}`}
+												}`}
 										>
 											<span className='text-white'>✓</span>
 										</div>
@@ -335,9 +333,8 @@ export default function OrderTrackingPage() {
 
 									<div className='flex items-start'>
 										<div
-											className={`w-8 h-8 rounded-full flex items-center justify-center ${
-												order.status === 'DELIVERED' ? 'bg-green-500' : 'bg-gray-300'
-											}`}
+											className={`w-8 h-8 rounded-full flex items-center justify-center ${order.status === 'DELIVERED' ? 'bg-green-500' : 'bg-gray-300'
+												}`}
 										>
 											<span className='text-white'>✓</span>
 										</div>
@@ -381,7 +378,7 @@ export default function OrderTrackingPage() {
 						<div className='bg-white rounded-xl shadow-lg p-6'>
 							<h3 className='text-lg font-bold text-gray-800 mb-4'>Order Total</h3>
 							<div className='text-3xl font-bold text-orange-600'>
-								${order.totalAmount.toFixed(2)}
+								{(order.totalPrice ?? order.totalAmount ?? 0).toLocaleString()} so&apos;m
 							</div>
 						</div>
 					</div>

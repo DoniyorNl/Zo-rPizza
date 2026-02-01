@@ -31,11 +31,11 @@ export const UsersStats: React.FC<UsersStatsProps> = ({ statistics }) => {
 	]
 
 	return (
-		<div className='grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-200'>
+		<div className='grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-gray-200'>
 			{stats.map(stat => (
 				<div key={stat.label} className='text-center'>
-					<p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-					<p className='text-sm text-gray-600 mt-1'>{stat.label}</p>
+					<p className={`text-lg font-bold ${stat.color}`}>{stat.value}</p>
+					<p className='text-[10px] text-gray-600 mt-0 leading-tight'>{stat.label}</p>
 				</div>
 			))}
 		</div>

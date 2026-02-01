@@ -136,12 +136,15 @@ describe('Orders API Integration Tests (Controller-level)', () => {
 
 	describe('GET /api/orders/user/:userId', () => {
 		it('should return user orders', async () => {
+			; (mockReq as any).userId = 'user-1'
 			mockReq.params = { userId: 'user-1' }
+			const mockUser = generateMockUser({ id: 'user-1', firebaseUid: 'user-1' })
 			const mockOrders = [
 				generateMockOrder({ id: 'order-1', userId: 'user-1' }),
 				generateMockOrder({ id: 'order-2', userId: 'user-1' }),
 			]
 
+			prismaMock.user.findFirst.mockResolvedValue(mockUser as any)
 			prismaMock.order.findMany.mockResolvedValue(mockOrders as any)
 
 			await getUserOrders(mockReq as Request, mockRes as Response)
@@ -191,9 +194,12 @@ describe('Orders API Integration Tests (Controller-level)', () => {
 
 	describe('DELETE /api/orders/:id', () => {
 		it('should delete pending order', async () => {
+			; (mockReq as any).userId = 'user-1'
 			mockReq.params = { id: 'order-1' }
-			const mockOrder = generateMockOrder({ id: 'order-1', status: 'PENDING' })
+			const mockUser = generateMockUser({ id: 'user-1', firebaseUid: 'user-1' })
+			const mockOrder = generateMockOrder({ id: 'order-1', status: 'PENDING', userId: 'user-1' })
 
+			prismaMock.user.findFirst.mockResolvedValue(mockUser as any)
 			prismaMock.order.findUnique.mockResolvedValue(mockOrder as any)
 			prismaMock.order.delete.mockResolvedValue(mockOrder as any)
 
@@ -204,9 +210,12 @@ describe('Orders API Integration Tests (Controller-level)', () => {
 		})
 
 		it('should not delete non-pending order', async () => {
+			; (mockReq as any).userId = 'user-1'
 			mockReq.params = { id: 'order-1' }
-			const mockOrder = generateMockOrder({ id: 'order-1', status: 'DELIVERED' })
+			const mockUser = generateMockUser({ id: 'user-1', firebaseUid: 'user-1' })
+			const mockOrder = generateMockOrder({ id: 'order-1', status: 'DELIVERED', userId: 'user-1' })
 
+			prismaMock.user.findFirst.mockResolvedValue(mockUser as any)
 			prismaMock.order.findUnique.mockResolvedValue(mockOrder as any)
 
 			await deleteOrder(mockReq as Request, mockRes as Response)

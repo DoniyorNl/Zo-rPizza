@@ -4,8 +4,8 @@
 // 📝 UPDATED: 2025-01-11
 // =====================================
 
-import React from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import React from 'react'
 
 interface UsersPaginationProps {
 	currentPage: number
@@ -34,32 +34,27 @@ export const UsersPagination: React.FC<UsersPaginationProps> = ({
 	}
 
 	return (
-		<div className='px-6 py-4 border-t border-gray-200 bg-gray-50'>
+		<div className='px-3 py-1.5 border-t border-gray-200 bg-gray-50'>
 			<div className='flex items-center justify-between'>
-				{/* Page Info */}
-				<div className='text-sm text-gray-600'>
-					Sahifa <span className='font-medium'>{currentPage}</span> /{' '}
-					<span className='font-medium'>{totalPages}</span>
+				<div className='text-xs text-gray-600'>
+					Sahifa <span className='font-medium'>{currentPage}</span> / {totalPages}
 				</div>
-
-				{/* Navigation Buttons */}
-				<div className='flex gap-2'>
+				<div className='flex gap-1.5'>
 					<button
 						onClick={handlePrevious}
 						disabled={currentPage === 1}
-						className='inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+						className='inline-flex items-center gap-1 px-3 py-1.5 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
 					>
-						<ChevronLeft className='w-4 h-4' />
+						<ChevronLeft className='w-3.5 h-3.5' />
 						Oldingi
 					</button>
-
 					<button
 						onClick={handleNext}
 						disabled={currentPage === totalPages}
-						className='inline-flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+						className='inline-flex items-center gap-1 px-3 py-1.5 bg-orange-500 text-white rounded text-xs font-medium hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
 					>
 						Keyingi
-						<ChevronRight className='w-4 h-4' />
+						<ChevronRight className='w-3.5 h-3.5' />
 					</button>
 				</div>
 			</div>

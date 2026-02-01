@@ -84,18 +84,26 @@ export const useUsers = ({
 
 			if (data.success) {
 				setUsers(data.data.users || [])
-				setTotalPages(data.data.pagination.totalPages || 1)
+				setTotalPages(data.data.pagination?.totalPages || 1)
 
-				// Calculate statistics from all users (not just current page)
-				// Note: Ideally this should come from backend
-				const allUsers = data.data.users || []
-				setStatistics({
-					totalCustomers: allUsers.filter((u: UserData) => u.role === 'CUSTOMER').length,
-					totalAdmins: allUsers.filter((u: UserData) => u.role === 'ADMIN').length,
-					totalDelivery: allUsers.filter((u: UserData) => u.role === 'DELIVERY').length,
-				})
+				// Statistics from backend (darhol to'g'ri)
+				const stats = data.data.statistics
+				if (stats) {
+					setStatistics({
+						totalCustomers: stats.totalCustomers ?? 0,
+						totalAdmins: stats.totalAdmins ?? 0,
+						totalDelivery: stats.totalDelivery ?? 0,
+					})
+				} else {
+					const allUsers = data.data.users || []
+					setStatistics({
+						totalCustomers: allUsers.filter((u: UserData) => u.role === 'CUSTOMER').length,
+						totalAdmins: allUsers.filter((u: UserData) => u.role === 'ADMIN').length,
+						totalDelivery: allUsers.filter((u: UserData) => u.isDriver === true).length,
+					})
+				}
 
-				console.log('✅ Users loaded:', allUsers.length)
+				console.log('✅ Users loaded:', data.data.users?.length)
 			} else {
 				throw new Error(data.message || 'Failed to fetch users')
 			}

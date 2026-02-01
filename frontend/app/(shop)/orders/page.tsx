@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { api } from '@/lib/apiClient'
 import { useAuth } from '@/lib/AuthContext'
-import { Clock, Package, ShoppingBag } from 'lucide-react'
+import TrackingModal from '@/components/tracking/TrackingModal'
+import { Clock, MapPin, Package, ShoppingBag, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -34,10 +35,14 @@ interface Order {
 	createdAt: string
 }
 
-const statusConfig = {
+const statusConfig: Record<string, { label: string; color: string }> = {
 	PENDING: { label: 'Kutilmoqda', color: 'bg-yellow-100 text-yellow-800' },
+	CONFIRMED: { label: 'Tasdiqlandi', color: 'bg-blue-100 text-blue-800' },
 	PREPARING: { label: 'Tayyorlanmoqda', color: 'bg-blue-100 text-blue-800' },
+	READY: { label: 'Tayyor', color: 'bg-indigo-100 text-indigo-800' },
+	OUT_FOR_DELIVERY: { label: 'Yetkazilmoqda', color: 'bg-purple-100 text-purple-800' },
 	DELIVERING: { label: 'Yetkazilmoqda', color: 'bg-purple-100 text-purple-800' },
+	DELIVERED: { label: 'Yetkazildi', color: 'bg-green-100 text-green-800' },
 	COMPLETED: { label: 'Yetkazildi', color: 'bg-green-100 text-green-800' },
 	CANCELLED: { label: 'Bekor qilindi', color: 'bg-red-100 text-red-800' },
 }
@@ -47,27 +52,46 @@ export default function OrdersPage() {
 	const router = useRouter()
 	const [orders, setOrders] = useState<Order[]>([])
 	const [loading, setLoading] = useState(true)
+	const [deletingId, setDeletingId] = useState<string | null>(null)
+	const [trackingOrderId, setTrackingOrderId] = useState<string | null>(null)
+	const [trackingOrderNumber, setTrackingOrderNumber] = useState<string>('')
+
+	const fetchOrders = async () => {
+		if (!user) return
+		try {
+			const response = await api.get(`/api/orders/user/${user.uid}`)
+			setOrders(response.data.data || [])
+		} catch (error) {
+			console.error('Error fetching orders:', error)
+			setOrders([])
+		} finally {
+			setLoading(false)
+		}
+	}
 
 	useEffect(() => {
 		if (!user) {
 			router.push('/login')
 			return
 		}
-
-		const fetchOrders = async () => {
-			try {
-				const response = await api.get(`/api/orders/user/${user.uid}`)
-				setOrders(response.data.data || [])
-			} catch (error) {
-				console.error('Error fetching orders:', error)
-				setOrders([])
-			} finally {
-				setLoading(false)
-			}
-		}
-
+		setLoading(true)
 		fetchOrders()
 	}, [user, router])
+
+	const handleDelete = async (e: React.MouseEvent, orderId: string) => {
+		e.stopPropagation()
+		if (!confirm('Buyurtmani bekor qilmoqchimisiz?')) return
+		setDeletingId(orderId)
+		try {
+			await api.delete(`/api/orders/${orderId}`)
+			setOrders(prev => prev.filter(o => o.id !== orderId))
+		} catch (err: unknown) {
+			const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+			alert(msg || 'Bekor qilishda xato')
+		} finally {
+			setDeletingId(null)
+		}
+	}
 
 	if (loading) {
 		return (
@@ -115,7 +139,11 @@ export default function OrdersPage() {
 				) : (
 					<div className='space-y-4'>
 						{orders.map(order => {
-							const status = statusConfig[order.status as keyof typeof statusConfig]
+							const status = statusConfig[order.status] ?? {
+								label: order.status,
+								color: 'bg-gray-100 text-gray-800',
+							}
+							const canDelete = order.status === 'PENDING'
 							return (
 								<Card
 									key={order.id}
@@ -137,7 +165,35 @@ export default function OrdersPage() {
 													})}
 												</p>
 											</div>
-											<Badge className={`${status.color} text-sm px-3 py-1`}>{status.label}</Badge>
+											<div className='flex items-center gap-2'>
+												<Button
+													variant='outline'
+													size='sm'
+													className='text-orange-600 hover:text-orange-700 hover:bg-orange-50'
+													onClick={e => {
+														e.stopPropagation()
+														setTrackingOrderNumber(order.orderNumber)
+														setTrackingOrderId(order.id)
+													}}
+													aria-label='Kuzatish'
+												>
+													<MapPin className='w-4 h-4 mr-1' />
+													Kuzatish
+												</Button>
+												<Badge className={`${status.color} text-sm px-3 py-1`}>{status.label}</Badge>
+												{canDelete && (
+													<Button
+														variant='outline'
+														size='icon'
+														className='text-red-600 hover:text-red-700 hover:bg-red-50'
+														onClick={e => handleDelete(e, order.id)}
+														disabled={deletingId === order.id}
+														aria-label='Buyurtmani bekor qilish'
+													>
+														<Trash2 className='w-4 h-4' />
+													</Button>
+												)}
+											</div>
 										</div>
 
 										<div className='flex items-center gap-4 mb-4'>
@@ -173,6 +229,18 @@ export default function OrdersPage() {
 					</div>
 				)}
 			</div>
+
+			{trackingOrderId && (
+				<TrackingModal
+					open={!!trackingOrderId}
+					onClose={() => {
+						setTrackingOrderId(null)
+						setTrackingOrderNumber('')
+					}}
+					orderId={trackingOrderId}
+					orderNumber={trackingOrderNumber}
+				/>
+			)}
 		</main>
 	)
 }

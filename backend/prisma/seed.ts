@@ -1,7 +1,7 @@
 // backend/prisma/seed.ts
 // 🍕 ZOR PIZZA - COMPLETE DATABASE SEED with Orders & Variations
 
-import { OrderStatus, PaymentMethod, PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
@@ -304,91 +304,7 @@ async function main() {
 		console.log(`✅ 1 ta admin user yaratildi`)
 		console.log(`✅ ${customers.length} ta mijoz yaratildi\n`)
 
-		// ============================================
-		// 5. BUGUNGI BUYURTMALAR
-		// ============================================
-		console.log('🛍️ Bugungi buyurtmalar yaratilmoqda...')
-
-		const today = new Date()
-
-		const orderTimes = [
-			new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 30),
-			new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10, 45),
-			new Date(today.getFullYear(), today.getMonth(), today.getDate(), 11, 20),
-			new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12, 15),
-			new Date(today.getFullYear(), today.getMonth(), today.getDate(), 13, 40),
-			new Date(today.getFullYear(), today.getMonth(), today.getDate(), 14, 10),
-			new Date(today.getFullYear(), today.getMonth(), today.getDate(), 18, 30),
-			new Date(today.getFullYear(), today.getMonth(), today.getDate(), 19, 15),
-			new Date(today.getFullYear(), today.getMonth(), today.getDate(), 19, 50),
-			new Date(today.getFullYear(), today.getMonth(), today.getDate(), 20, 25),
-		]
-
-		const orders = []
-
-		for (let i = 0; i < orderTimes.length; i++) {
-			const customer = customers[i % customers.length]
-			const customerData = customerSeedData[i % customerSeedData.length]
-			const orderTime = orderTimes[i]
-
-			// Status logic
-			let status: OrderStatus
-			if (i < 6) {
-				status = 'DELIVERED'
-			} else if (i < 8) {
-				status = 'PREPARING'
-			} else {
-				status = 'PENDING'
-			}
-
-			// Create order
-			const order = await prisma.order.create({
-				data: {
-					orderNumber: `ORD${Date.now()}${String(i).padStart(3, '0')}`,
-					userId: customer.id,
-					status,
-					totalPrice: 0, // Will update later
-					paymentMethod: (i % 2 === 0 ? 'CARD' : 'CASH') as PaymentMethod,
-					deliveryAddress: customerData.address,
-					deliveryPhone: customerData.phone,
-					createdAt: orderTime,
-					estimatedTime: 40,
-				},
-			})
-
-			// Add random items (1-3 products)
-			const itemsCount = Math.floor(Math.random() * 3) + 1
-			let orderTotal = 0
-
-			for (let j = 0; j < itemsCount; j++) {
-				const product = createdProducts[Math.floor(Math.random() * createdProducts.length)]
-				const variation = product.variations[Math.floor(Math.random() * product.variations.length)]
-				const quantity = Math.floor(Math.random() * 2) + 1 // 1-2
-
-				await prisma.orderItem.create({
-					data: {
-						orderId: order.id,
-						productId: product.id,
-						variationId: variation.id,
-						quantity,
-						price: variation.price,
-						size: variation.size,
-					},
-				})
-
-				orderTotal += variation.price * quantity
-			}
-
-			// Update order total
-			await prisma.order.update({
-				where: { id: order.id },
-				data: { totalPrice: orderTotal },
-			})
-
-			orders.push(order)
-		}
-
-		console.log(`✅ ${orders.length} ta bugungi buyurtma yaratildi\n`)
+		// Buyurtmalar seed’da yaratilmaydi – faqat checkout orqali yaratiladi (standart pizzeria)
 
 		// ============================================
 		// FINAL SUMMARY
@@ -404,10 +320,7 @@ async function main() {
 		)
 		console.log(`   👤 Admin: 1 (${adminUser.email})`)
 		console.log(`   👥 Mijozlar: ${customers.length}`)
-		console.log(`   🛍️ Buyurtmalar: ${orders.length}`)
-		console.log(
-			`   💰 Jami daromad: ${orders.reduce((sum, o) => sum + o.totalPrice, 0).toLocaleString()} so'm`,
-		)
+		console.log(`   🛍️ Buyurtmalar: 0 (faqat checkout orqali)`)
 		console.log('━'.repeat(60))
 		console.log('\n🔐 LOGIN CREDENTIALS:')
 		console.log(`   📧 Email: admin@zorpizza.uz`)

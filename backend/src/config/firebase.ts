@@ -37,7 +37,14 @@ if (!admin.apps.length) {
 		else if (process.env.NODE_ENV === 'development') {
 			console.log('🔥 Initializing Firebase Admin from local file...')
 
-			const serviceAccountPath = path.join(__dirname, '../../firebase-service-account.json')
+			const fs = require('fs')
+			const backendDir = path.join(__dirname, '../..')
+			const p1 = path.join(backendDir, 'firebase-service-account.json')
+			const p2 = path.join(backendDir, 'zo-rpizza-firebase-adminsdk-fbsvc-d80a464fc5.json')
+			const serviceAccountPath = fs.existsSync(p1) ? p1 : fs.existsSync(p2) ? p2 : null
+			if (!serviceAccountPath) {
+				throw new Error('Firebase service account JSON not found. Add firebase-service-account.json or zo-rpizza-firebase-adminsdk-*.json to backend/')
+			}
 			const serviceAccount = require(serviceAccountPath)
 
 			admin.initializeApp({

@@ -70,8 +70,9 @@ export class ErrorBoundary extends Component<Props, State> {
 			}
 
 			// Send to backend
-			if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) {
-				await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/errors/log`, {
+			if (typeof window !== 'undefined') {
+				const { buildApiUrl } = await import('@/lib/apiBaseUrl')
+				await fetch(buildApiUrl('/api/errors/log'), {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify(errorData),

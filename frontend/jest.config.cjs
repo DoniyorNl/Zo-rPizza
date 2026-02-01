@@ -2,6 +2,7 @@
 const config = {
 	testEnvironment: 'jsdom',
 	setupFilesAfterEnv: ['<rootDir>/jest.setup.cjs'],
+	cacheDirectory: '<rootDir>/.jest-cache',
 	moduleNameMapper: {
 		'^@/(.*)$': '<rootDir>/$1',
 		'\\.(css|less|scss|sass)$': 'identity-obj-proxy',

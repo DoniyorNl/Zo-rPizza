@@ -1,10 +1,14 @@
 // =====================================
 // 📁 FILE PATH: frontend/src/app/admin/users/utils/userConstants.ts
 // 🎯 PURPOSE: Constants for User Management
-// 📝 UPDATED: 2025-01-11
+// 📝 Backend bilan bir xil qiymatlar (single source of truth)
 // =====================================
 
 export const ITEMS_PER_PAGE = 10
+
+/** API ga yuboriladigan rol qiymatlari - faqat shular */
+export const API_ROLES = ['CUSTOMER', 'ADMIN', 'DELIVERY'] as const
+export type ApiRole = (typeof API_ROLES)[number]
 
 export const USER_ROLES = {
 	CUSTOMER: 'CUSTOMER',
@@ -12,6 +16,18 @@ export const USER_ROLES = {
 	DELIVERY: 'DELIVERY',
 	ALL: 'ALL',
 } as const
+
+/** Dropdown value -> API value. Doim to'g'ri format yuborish uchun */
+export function toApiRole(value: string): ApiRole {
+	const v = value?.trim().toUpperCase()
+	if (API_ROLES.includes(v as ApiRole)) return v as ApiRole
+	const labelMap: Record<string, ApiRole> = {
+		MIJOZ: 'CUSTOMER',
+		ADMIN: 'ADMIN',
+		YETKAZUVCHI: 'DELIVERY',
+	}
+	return labelMap[v] ?? 'CUSTOMER'
+}
 
 export const ROLE_LABELS = {
 	CUSTOMER: 'Mijoz',

@@ -2,6 +2,13 @@
 	"name": "zor-pizza",
 	"version": "1.0.0",
 	"private": true,
+	"engines": {
+		"node": ">=18",
+		"pnpm": ">=8"
+	},
+	"pnpm": {
+		"onlyBuiltDependencies": ["prisma", "@prisma/engines", "@prisma/client"]
+	},
 	"scripts": {
 		"dev": "pnpm --filter frontend dev",
 		"dev:backend": "pnpm --filter backend dev",
@@ -16,6 +23,7 @@
 		"test:backend:coverage": "pnpm --filter backend test:coverage",
 		"test:e2e": "pnpm --filter frontend test:e2e",
 		"test:e2e:ui": "pnpm --filter frontend test:e2e:ui",
+		"test:changed": "pnpm --filter zor-pizza-backend test:changed && pnpm --filter frontend test:changed",
 		"test:all": "pnpm -r test && pnpm --filter frontend test:e2e"
 	}
 }

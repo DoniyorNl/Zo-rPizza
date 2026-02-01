@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import api from '@/lib/api'
 import { useAuth } from '@/lib/AuthContext'
+import { geocodeAddress } from '@/lib/geocoding'
 import { useCartStore } from '@/store/cartStore'
 import axios from 'axios'
 import { useRouter } from 'next/navigation'
@@ -51,11 +52,22 @@ export default function CheckoutPage() {
 		setLoading(true)
 
 		try {
-			// Firebase token olish
+			// Manzildan koordinatalar olish (tracking xaritasi uchun)
+			let deliveryLat: number | undefined
+			let deliveryLng: number | undefined
+			try {
+				const coords = await geocodeAddress(deliveryAddress)
+				if (coords) {
+					deliveryLat = coords.lat
+					deliveryLng = coords.lng
+				}
+			} catch {
+				// Geocoding muvaffaqiyatsiz - buyurtma baribir yaratiladi
+			}
+
 			const token = await user.getIdToken()
 
-			// Buyurtma yaratish
-			const orderData = {
+			const orderData: Record<string, unknown> = {
 				userId: user.uid,
 				items: items.map(item => ({
 					productId: item.productId,
@@ -69,6 +81,10 @@ export default function CheckoutPage() {
 				paymentMethod,
 				deliveryAddress,
 				deliveryPhone,
+			}
+			if (deliveryLat != null && deliveryLng != null) {
+				orderData.deliveryLat = deliveryLat
+				orderData.deliveryLng = deliveryLng
 			}
 
 			const response = await api.post('/api/orders', orderData, {

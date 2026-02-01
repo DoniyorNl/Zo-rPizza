@@ -1,35 +1,5 @@
 import axios, { AxiosHeaders } from 'axios'
-
-// Smart API URL detection
-const getSmartApiUrl = (): string => {
-	// Production URL
-	const productionUrl =
-		process.env.NEXT_PUBLIC_API_URL || 'https://zo-rpizza-production.up.railway.app'
-
-	// Check if user wants to force production API
-	const useProductionApi = process.env.NEXT_PUBLIC_USE_PRODUCTION_API === 'true'
-
-	// Check if we're in development mode
-	const isDevelopment = process.env.NODE_ENV === 'development'
-
-	// ALWAYS use local backend in development (localhost)
-	if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-		if (useProductionApi) {
-			console.warn('⚠️ Using production API in development mode')
-			return productionUrl.replace(/\/+$/, '')
-		}
-		if (isDevelopment) {
-			console.log('🔧 Using local backend: http://localhost:5001')
-		}
-		return 'http://localhost:5001'
-	}
-
-	// Production mode
-	if (typeof window !== 'undefined') {
-		console.log('🚀 Using production backend:', productionUrl)
-	}
-	return productionUrl.replace(/\/+$/, '')
-}
+import { getApiBaseUrl } from '@/lib/apiBaseUrl'
 
 export const api = axios.create({
 	withCredentials: true,
@@ -37,7 +7,7 @@ export const api = axios.create({
 })
 
 api.interceptors.request.use(config => {
-	const baseUrl = getSmartApiUrl()
+	const baseUrl = getApiBaseUrl()
 	if (!config.baseURL) {
 		config.baseURL = baseUrl
 	}
