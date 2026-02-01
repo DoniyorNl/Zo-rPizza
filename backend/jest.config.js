@@ -2,6 +2,7 @@
 module.exports = {
 	preset: 'ts-jest',
 	testEnvironment: 'node',
+	cacheDirectory: '<rootDir>/.jest-cache',
 	transform: {
 		'^.+\\.(t|j)sx?$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.test.json' }],
 	},

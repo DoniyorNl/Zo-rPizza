@@ -302,6 +302,7 @@ model Review {
 enum UserRole {
   CUSTOMER
   ADMIN
+  DELIVERY
 }
 
 enum DiscountType {

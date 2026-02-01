@@ -1,8 +1,9 @@
 // backend/src/controllers/users.controller.ts
 
-import { Prisma } from '@prisma/client'
+import { Prisma, UserRole } from '@prisma/client'
 import { Request, Response } from 'express'
 import prisma from '../lib/prisma'
+import { parseRole } from '../validators/role.validator'
 
 // ==========================================
 // HELPER FUNCTIONS
@@ -320,7 +321,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
 	const startTime = Date.now()
 
 	try {
-		const { page = '1', limit = '10', role, search } = req.query
+		const { page = '1', limit = '10', role, search, isDriver } = req.query
 		const skip = (parseInt(page as string) - 1) * parseInt(limit as string)
 
 		// Build where clause
@@ -331,6 +332,11 @@ export const getAllUsers = async (req: Request, res: Response) => {
 			where.role = role as any
 		}
 
+		// Driver filter (haydovchilar ro'yxati)
+		if (isDriver === 'true') {
+			where.isDriver = true
+		}
+
 		// Search filter (name or email)
 		if (search) {
 			where.OR = [
@@ -339,8 +345,8 @@ export const getAllUsers = async (req: Request, res: Response) => {
 			]
 		}
 
-		// Fetch users with pagination
-		const [users, total] = await Promise.all([
+		// Fetch users with pagination + statistics (barcha userlar bo'yicha)
+		const [users, total, totalCustomers, totalAdmins, totalDelivery] = await Promise.all([
 			prisma.user.findMany({
 				where,
 				skip,
@@ -351,6 +357,8 @@ export const getAllUsers = async (req: Request, res: Response) => {
 					email: true,
 					phone: true,
 					role: true,
+					isDriver: true,
+					vehicleType: true,
 					isBlocked: true,
 					createdAt: true,
 					updatedAt: true,
@@ -361,6 +369,9 @@ export const getAllUsers = async (req: Request, res: Response) => {
 				orderBy: { createdAt: 'desc' },
 			}),
 			prisma.user.count({ where }),
+			prisma.user.count({ where: { role: 'CUSTOMER' } }),
+			prisma.user.count({ where: { role: 'ADMIN' } }),
+			prisma.user.count({ where: { isDriver: true } }),
 		])
 
 		const duration = Date.now() - startTime
@@ -375,6 +386,11 @@ export const getAllUsers = async (req: Request, res: Response) => {
 					page: parseInt(page as string),
 					limit: parseInt(limit as string),
 					totalPages: Math.ceil(total / parseInt(limit as string)),
+				},
+				statistics: {
+					totalCustomers: totalCustomers ?? 0,
+					totalAdmins: totalAdmins ?? 0,
+					totalDelivery: totalDelivery ?? 0,
 				},
 			},
 		})
@@ -405,9 +421,7 @@ export const updateUserRole = async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params
 		const userId = Array.isArray(id) ? id[0] : id
-		const { role } = req.body
 
-		// Validation
 		if (!userId) {
 			return res.status(400).json({
 				success: false,
@@ -415,21 +429,14 @@ export const updateUserRole = async (req: Request, res: Response) => {
 			})
 		}
 
-		if (!role) {
+		const parsed = parseRole(req.body?.role)
+		if (!parsed.success) {
 			return res.status(400).json({
 				success: false,
-				message: 'Role is required',
+				message: parsed.error,
 			})
 		}
-
-		// Validate role
-		const validRoles = ['CUSTOMER', 'ADMIN', 'DELIVERY']
-		if (!validRoles.includes(role)) {
-			return res.status(400).json({
-				success: false,
-				message: `Invalid role. Must be one of: ${validRoles.join(', ')}`,
-			})
-		}
+		const { role, prismaRole } = parsed
 
 		// Check if user exists
 		const existingUser = await prisma.user.findUnique({
@@ -452,15 +459,20 @@ export const updateUserRole = async (req: Request, res: Response) => {
 			})
 		}
 
-		// Update role
+		// Update role (+ isDriver when DELIVERY - yetkazuvchi)
+		const updateData: { role: UserRole; isDriver?: boolean } = { role: prismaRole }
+		if (role === 'DELIVERY') updateData.isDriver = true
+		else if (String(existingUser.role) === 'DELIVERY') updateData.isDriver = false
+
 		const user = await prisma.user.update({
 			where: { id: userId },
-			data: { role },
+			data: updateData,
 			select: {
 				id: true,
 				name: true,
 				email: true,
 				role: true,
+				isDriver: true,
 				isBlocked: true,
 			},
 		})
@@ -476,13 +488,56 @@ export const updateUserRole = async (req: Request, res: Response) => {
 	} catch (error) {
 		const duration = Date.now() - startTime
 		console.error(`[UPDATE_USER_ROLE] Error:`, {
-			error: error instanceof Error ? error.message : 'Unknown error',
+			message: error instanceof Error ? error.message : 'Unknown error',
+			stack: error instanceof Error ? error.stack : undefined,
+			code: error instanceof Prisma.PrismaClientKnownRequestError ? error.code : undefined,
+			meta: error instanceof Prisma.PrismaClientKnownRequestError ? error.meta : undefined,
 			duration: `${duration}ms`,
 		})
 
 		return res.status(500).json({
 			success: false,
 			message: 'Server error while updating user role',
+		})
+	}
+}
+
+// ==========================================
+// UPDATE USER DRIVER STATUS (ADMIN ONLY)
+// ==========================================
+
+/**
+ * PUT /api/users/:id/driver - Haydovchi statusini o'zgartirish (Admin only)
+ */
+export const updateUserDriver = async (req: Request, res: Response) => {
+	try {
+		const userId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id
+		const { isDriver } = req.body
+
+		if (!userId) {
+			return res.status(400).json({ success: false, message: 'User ID is required' })
+		}
+
+		if (typeof isDriver !== 'boolean') {
+			return res.status(400).json({ success: false, message: 'isDriver must be a boolean' })
+		}
+
+		const user = await prisma.user.update({
+			where: { id: userId },
+			data: { isDriver },
+			select: { id: true, name: true, email: true, isDriver: true, vehicleType: true },
+		})
+
+		return res.status(200).json({
+			success: true,
+			message: isDriver ? 'Haydovchi sifatida qo\'shildi' : 'Haydovchi ro\'yxatdan chiqarildi',
+			data: user,
+		})
+	} catch (error) {
+		console.error('[UPDATE_USER_DRIVER] Error:', error)
+		return res.status(500).json({
+			success: false,
+			message: 'Server error while updating driver status',
 		})
 	}
 }

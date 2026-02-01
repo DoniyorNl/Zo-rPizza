@@ -4,7 +4,7 @@
 // 📝 UPDATED: 2025-01-11
 // =====================================
 
-import { ROLE_LABELS, ROLE_BADGE_COLORS } from './userConstants'
+import { ROLE_BADGE_COLORS, ROLE_LABELS } from './userConstants'
 
 /**
  * Get role badge color classes
@@ -47,6 +47,12 @@ export const getUserInitials = (name?: string): string => {
  */
 export const formatDate = (dateString: string): string => {
 	return new Date(dateString).toLocaleDateString('uz-UZ')
+}
+
+/** Qisqa sana (jadval uchun) - DD.MM.YY */
+export const formatDateShort = (dateString: string): string => {
+	const d = new Date(dateString)
+	return `${d.getDate().toString().padStart(2, '0')}.${(d.getMonth() + 1).toString().padStart(2, '0')}.${d.getFullYear().toString().slice(-2)}`
 }
 
 /**

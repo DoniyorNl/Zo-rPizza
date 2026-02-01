@@ -3,6 +3,7 @@
 
 import { Request, Response } from 'express'
 import prisma from '../lib/prisma'
+import type { AuthRequest } from '../middleware/firebase-auth.middleware'
 
 const getQueryString = (value: unknown): string | undefined => {
 	if (typeof value === 'string') return value
@@ -55,16 +56,28 @@ export const getAllOrders = async (req: Request, res: Response) => {
 	}
 }
 
-// GET /api/orders/user/:userId - User buyurtmalari
+// GET /api/orders/user/:userId - User buyurtmalari (Firebase UID orqali; faqat o‘zi yaratgan buyurtmalar)
 export const getUserOrders = async (req: Request, res: Response) => {
 	try {
-		const userId = getParamString((req.params as any).userId)
-		if (!userId) {
+		const authReq = req as AuthRequest
+		const firebaseUid = authReq.userId ?? getParamString((req.params as any).userId)
+		if (!firebaseUid) {
 			return res.status(400).json({ success: false, message: 'Invalid userId' })
+		}
+		// Faqat o‘z buyurtmalarini ko‘rishi: token’dagi uid bilan URL’dagi userId mos bo‘lishi kerak
+		if (authReq.userId && authReq.userId !== firebaseUid) {
+			return res.status(403).json({ success: false, message: 'Forbidden' })
+		}
+
+		const dbUser = await prisma.user.findFirst({
+			where: { firebaseUid },
+		})
+		if (!dbUser) {
+			return res.status(200).json({ success: true, count: 0, data: [] })
 		}
 
 		const orders = await prisma.order.findMany({
-			where: { userId },
+			where: { userId: dbUser.id },
 			include: {
 				items: {
 					include: {
@@ -349,13 +362,13 @@ export const createOrder = async (req: Request, res: Response) => {
 				},
 				...(halfProductId
 					? {
-							halfHalf: {
-								create: {
-									leftProductId: product.id,
-									rightProductId: halfProductId,
-								},
+						halfHalf: {
+							create: {
+								leftProductId: product.id,
+								rightProductId: halfProductId,
 							},
-						}
+						},
+					}
 					: {}),
 			})
 		}
@@ -373,6 +386,14 @@ export const createOrder = async (req: Request, res: Response) => {
 			}
 		}
 
+		// deliveryLocation: deliveryLat/Lng bo'lsa, tracking uchun JSON saqlash
+		const lat = deliveryLat ? parseFloat(deliveryLat) : null
+		const lng = deliveryLng ? parseFloat(deliveryLng) : null
+		const deliveryLocationJson =
+			lat != null && lng != null && !isNaN(lat) && !isNaN(lng)
+				? ({ lat, lng } as object)
+				: undefined
+
 		// Buyurtma yaratish
 		const order = await prisma.order.create({
 			data: {
@@ -382,8 +403,9 @@ export const createOrder = async (req: Request, res: Response) => {
 				paymentMethod: paymentMethod || 'CASH',
 				deliveryAddress,
 				deliveryPhone,
-				deliveryLat: deliveryLat ? parseFloat(deliveryLat) : null,
-				deliveryLng: deliveryLng ? parseFloat(deliveryLng) : null,
+				deliveryLat: lat,
+				deliveryLng: lng,
+				...(deliveryLocationJson && { deliveryLocation: deliveryLocationJson }),
 				items: {
 					create: orderItems,
 				},
@@ -412,14 +434,14 @@ export const createOrder = async (req: Request, res: Response) => {
 	}
 }
 
-// PATCH /api/orders/:id/status - Status yangilash
+// PATCH /api/orders/:id/status - Status yangilash (driverId, deliveryLocation qo'llab-quvvatlash)
 export const updateOrderStatus = async (req: Request, res: Response) => {
 	try {
 		const id = getParamString((req.params as any).id)
 		if (!id) {
 			return res.status(400).json({ success: false, message: 'Invalid id' })
 		}
-		const { status, paymentStatus } = req.body
+		const { status, paymentStatus, driverId, deliveryLat, deliveryLng } = req.body
 
 		// Buyurtma mavjudligini tekshirish
 		const existing = await prisma.order.findUnique({
@@ -433,12 +455,34 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 			})
 		}
 
+		const updateData: Record<string, unknown> = {
+			...(status && { status }),
+			...(paymentStatus && { paymentStatus }),
+			...(driverId != null && { driverId: String(driverId) }),
+		}
+
+		// OUT_FOR_DELIVERY ga o'tganda: deliveryLocation yo'q bo'lsa, deliveryLat/Lng yoki default dan to'ldirish
+		if (status === 'OUT_FOR_DELIVERY') {
+			let deliveryLocation = existing.deliveryLocation as { lat: number; lng: number } | null
+			if (!deliveryLocation) {
+				const lat = deliveryLat != null ? parseFloat(deliveryLat) : existing.deliveryLat
+				const lng = deliveryLng != null ? parseFloat(deliveryLng) : existing.deliveryLng
+				if (lat != null && lng != null && !isNaN(lat) && !isNaN(lng)) {
+					deliveryLocation = { lat, lng }
+					updateData.deliveryLocation = deliveryLocation
+				} else {
+					const defLat = parseFloat(process.env.RESTAURANT_LAT || '41.2995')
+					const defLng = parseFloat(process.env.RESTAURANT_LNG || '69.2401')
+					updateData.deliveryLocation = { lat: defLat, lng: defLng }
+				}
+			}
+			updateData.trackingStartedAt = new Date()
+			updateData.deliveryStartedAt = new Date()
+		}
+
 		const order = await prisma.order.update({
 			where: { id },
-			data: {
-				...(status && { status }),
-				...(paymentStatus && { paymentStatus }),
-			},
+			data: updateData as object,
 			include: {
 				items: {
 					include: {
@@ -463,12 +507,25 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 	}
 }
 
-// DELETE /api/orders/:id - Buyurtma o'chirish (faqat PENDING)
+// DELETE /api/orders/:id - Buyurtma o'chirish (faqat egasi, faqat PENDING)
 export const deleteOrder = async (req: Request, res: Response) => {
 	try {
 		const id = getParamString((req.params as any).id)
 		if (!id) {
 			return res.status(400).json({ success: false, message: 'Invalid id' })
+		}
+
+		const authReq = req as AuthRequest
+		const firebaseUid = authReq.userId
+		if (!firebaseUid) {
+			return res.status(401).json({ success: false, message: 'Unauthorized' })
+		}
+
+		const dbUser = await prisma.user.findFirst({
+			where: { firebaseUid },
+		})
+		if (!dbUser) {
+			return res.status(403).json({ success: false, message: 'Forbidden' })
 		}
 
 		const existing = await prisma.order.findUnique({
@@ -482,7 +539,14 @@ export const deleteOrder = async (req: Request, res: Response) => {
 			})
 		}
 
-		// Faqat PENDING statusdagi buyurtmalarni o'chirish mumkin
+		// Faqat buyurtma egasi o'chira oladi (admin boshqa route orqali)
+		if (existing.userId !== dbUser.id) {
+			return res.status(403).json({
+				success: false,
+				message: 'You can only delete your own orders',
+			})
+		}
+
 		if (existing.status !== 'PENDING') {
 			return res.status(400).json({
 				success: false,
@@ -490,7 +554,6 @@ export const deleteOrder = async (req: Request, res: Response) => {
 			})
 		}
 
-		// Order items birinchi o'chiriladi (cascade)
 		await prisma.order.delete({
 			where: { id },
 		})

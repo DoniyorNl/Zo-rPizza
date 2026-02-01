@@ -7,11 +7,16 @@ node_modules/
 # Build
 dist/
 
+# Jest cache
+.jest-cache/
+
 # Logs
 *.log
 
-# Firebase
+# Firebase (barcha service account JSON va base64)
 firebase-service-account.json
+*-firebase-adminsdk-*.json
+zo-rpizza-firebase-adminsdk-*.json
 firebase-base64.txt
 
 # Package locks (using pnpm)

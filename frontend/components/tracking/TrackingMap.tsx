@@ -1,6 +1,7 @@
 // frontend/components/tracking/TrackingMap.tsx
 'use client'
 
+import { getRestaurantLocation } from '@/lib/trackingConfig'
 import { useEffect, useRef, useState } from 'react'
 
 interface Location {
@@ -20,7 +21,7 @@ interface TrackingMapProps {
 export default function TrackingMap({
 	deliveryLocation,
 	driverLocation,
-	restaurantLocation = { lat: 41.2995, lng: 69.2401 },
+	restaurantLocation = getRestaurantLocation(),
 	zoom = 13,
 	height = '400px',
 	showRoute = true,

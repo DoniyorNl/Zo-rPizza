@@ -16,12 +16,12 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import api from '@/lib/api'
 import { useAuth } from '@/lib/AuthContext'
 import { useCartStore } from '@/store/cartStore'
 import { CircleUser, Home, LogOut, Navigation, Settings, ShoppingCart, Truck, User } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
-import api from '@/lib/api'
 
 interface UnifiedHeaderProps {
 	variant?: 'user' | 'admin'
@@ -49,10 +49,10 @@ export function UnifiedHeader({ variant = 'user' }: UnifiedHeaderProps) {
 				const response = await api.get('/api/orders/user/' + user.uid, {
 					headers: { Authorization: `Bearer ${token}` }
 				})
-				
+
 				if (response.data.success) {
-					const activeOrder = response.data.data.find((order: any) => 
-						['PREPARING', 'OUT_FOR_DELIVERY'].includes(order.status)
+					const activeOrder = response.data.data.find((order: any) =>
+						['PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERING'].includes(order.status)
 					)
 					setActiveOrderId(activeOrder?.id || null)
 				}

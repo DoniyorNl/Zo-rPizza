@@ -1,26 +1,26 @@
 // backend/src/controllers/tracking.controller.ts
-import { Request, Response } from 'express';
-import prisma from '../lib/prisma';
+import { Request, Response } from 'express'
+import prisma from '../lib/prisma'
+import { AppError } from '../utils/errors'
 import {
   calculateDistance,
   calculateETA,
-  isValidLocation,
   getLocationTimestamp,
   isNearDestination,
-} from '../utils/gps.utils';
-import { AppError } from '../utils/errors';
+  isValidLocation,
+} from '../utils/gps.utils'
 
 export async function updateDriverLocation(req: Request, res: Response) {
   try {
-    const userId = req.user?.id;
-    const { lat, lng } = req.body;
+    const userId = req.user?.id
+    const { lat, lng } = req.body
 
     if (!userId) {
-      throw new AppError(401, 'User not authenticated', 'UNAUTHORIZED');
+      throw new AppError(401, 'User not authenticated', 'UNAUTHORIZED')
     }
 
     if (!lat || !lng || !isValidLocation({ lat, lng })) {
-      throw new AppError(400, 'Invalid location coordinates', 'INVALID_LOCATION');
+      throw new AppError(400, 'Invalid location coordinates', 'INVALID_LOCATION')
     }
 
     const driver = await prisma.user.update({
@@ -32,17 +32,17 @@ export async function updateDriverLocation(req: Request, res: Response) {
           timestamp: getLocationTimestamp(),
         },
       },
-    });
+    })
 
     const activeOrder = await prisma.order.findFirst({
       where: {
         driverId: userId,
-        status: 'OUT_FOR_DELIVERY',
+        status: { in: ['OUT_FOR_DELIVERY', 'DELIVERING'] },
       },
-    });
+    })
 
     if (activeOrder && activeOrder.deliveryLocation) {
-      const deliveryLoc = activeOrder.deliveryLocation as any;
+      const deliveryLoc = activeOrder.deliveryLocation as any
 
       await prisma.order.update({
         where: { id: activeOrder.id },
@@ -53,9 +53,9 @@ export async function updateDriverLocation(req: Request, res: Response) {
             timestamp: getLocationTimestamp(),
           },
         },
-      });
+      })
 
-      const isNear = isNearDestination({ lat, lng }, deliveryLoc);
+      const isNear = isNearDestination({ lat, lng }, deliveryLoc)
       if (isNear && activeOrder.status !== 'DELIVERED') {
         await prisma.notification.create({
           data: {
@@ -65,7 +65,7 @@ export async function updateDriverLocation(req: Request, res: Response) {
             type: 'ORDER_UPDATE',
             orderId: activeOrder.id,
           },
-        });
+        })
       }
     }
 
@@ -76,17 +76,17 @@ export async function updateDriverLocation(req: Request, res: Response) {
         location: { lat, lng },
         activeOrder: activeOrder?.id,
       },
-    });
+    })
   } catch (error) {
-    console.error('Update driver location error:', error);
-    throw error;
+    console.error('Update driver location error:', error)
+    throw error
   }
 }
 
 export async function getOrderTracking(req: Request, res: Response) {
   try {
-    const { orderId } = req.params;
-    const userId = req.user?.id;
+    const { orderId } = req.params
+    const userId = req.user?.id
 
     const order = await prisma.order.findUnique({
       where: { id: String(orderId) },
@@ -99,17 +99,17 @@ export async function getOrderTracking(req: Request, res: Response) {
           },
         },
       },
-    });
+    })
 
     if (!order) {
-      throw new AppError(404, 'Order not found', 'ORDER_NOT_FOUND');
+      throw new AppError(404, 'Order not found', 'ORDER_NOT_FOUND')
     }
 
     if (order.userId !== userId && req.user?.role !== 'ADMIN') {
-      throw new AppError(403, 'Not authorized to track this order', 'UNAUTHORIZED');
+      throw new AppError(403, 'Not authorized to track this order', 'UNAUTHORIZED')
     }
 
-    let driver = null;
+    let driver = null
     if (order.driverId) {
       driver = await prisma.user.findUnique({
         where: { id: order.driverId },
@@ -120,19 +120,19 @@ export async function getOrderTracking(req: Request, res: Response) {
           currentLocation: true,
           vehicleType: true,
         },
-      });
+      })
     }
 
-    let tracking = null;
+    let tracking = null
     if (order.driverLocation && order.deliveryLocation) {
-      const driverLoc = order.driverLocation as any;
-      const deliveryLoc = order.deliveryLocation as any;
+      const driverLoc = order.driverLocation as any
+      const deliveryLoc = order.deliveryLocation as any
 
-      const distance = calculateDistance(driverLoc, deliveryLoc);
+      const distance = calculateDistance(driverLoc, deliveryLoc)
       const eta = calculateETA(distance, {
         preparationTime: 0,
         vehicleType: (driver?.vehicleType as any) || 'bike',
-      });
+      })
 
       tracking = {
         driverLocation: driverLoc,
@@ -141,7 +141,7 @@ export async function getOrderTracking(req: Request, res: Response) {
         eta,
         isNearby: isNearDestination(driverLoc, deliveryLoc),
         lastUpdate: driverLoc.timestamp,
-      };
+      }
     }
 
     res.json({
@@ -160,33 +160,33 @@ export async function getOrderTracking(req: Request, res: Response) {
         tracking,
         driver,
       },
-    });
+    })
   } catch (error) {
-    console.error('Get order tracking error:', error);
-    throw error;
+    console.error('Get order tracking error:', error)
+    throw error
   }
 }
 
 export async function startDeliveryTracking(req: Request, res: Response) {
   try {
-    const { orderId } = req.params;
-    const userId = req.user?.id;
-    const { deliveryLocation } = req.body;
+    const { orderId } = req.params
+    const userId = req.user?.id
+    const { deliveryLocation } = req.body
 
     if (!deliveryLocation || !isValidLocation(deliveryLocation)) {
-      throw new AppError(400, 'Invalid delivery location', 'INVALID_LOCATION');
+      throw new AppError(400, 'Invalid delivery location', 'INVALID_LOCATION')
     }
 
     const order = await prisma.order.findUnique({
       where: { id: String(orderId) },
-    });
+    })
 
     if (!order) {
-      throw new AppError(404, 'Order not found', 'ORDER_NOT_FOUND');
+      throw new AppError(404, 'Order not found', 'ORDER_NOT_FOUND')
     }
 
     if (order.driverId !== userId && req.user?.role !== 'ADMIN') {
-      throw new AppError(403, 'Not authorized', 'UNAUTHORIZED');
+      throw new AppError(403, 'Not authorized', 'UNAUTHORIZED')
     }
 
     const updatedOrder = await prisma.order.update({
@@ -197,20 +197,20 @@ export async function startDeliveryTracking(req: Request, res: Response) {
         deliveryStartedAt: new Date(),
         status: 'OUT_FOR_DELIVERY',
       },
-    });
+    })
 
     const driver = await prisma.user.findUnique({
       where: { id: userId! },
       select: { currentLocation: true, vehicleType: true },
-    });
+    })
 
-    let eta = 30;
+    let eta = 30
     if (driver?.currentLocation) {
-      const driverLoc = driver.currentLocation as any;
-      const distance = calculateDistance(driverLoc, deliveryLocation);
+      const driverLoc = driver.currentLocation as any
+      const distance = calculateDistance(driverLoc, deliveryLocation)
       eta = calculateETA(distance, {
         vehicleType: (driver.vehicleType as any) || 'bike',
-      });
+      })
     }
 
     await prisma.order.update({
@@ -218,7 +218,7 @@ export async function startDeliveryTracking(req: Request, res: Response) {
       data: {
         estimatedTime: eta,
       },
-    });
+    })
 
     await prisma.notification.create({
       data: {
@@ -228,7 +228,7 @@ export async function startDeliveryTracking(req: Request, res: Response) {
         type: 'ORDER_UPDATE',
         orderId: order.id,
       },
-    });
+    })
 
     res.json({
       success: true,
@@ -238,28 +238,28 @@ export async function startDeliveryTracking(req: Request, res: Response) {
         eta,
         trackingStartedAt: updatedOrder.trackingStartedAt,
       },
-    });
+    })
   } catch (error) {
-    console.error('Start delivery tracking error:', error);
-    throw error;
+    console.error('Start delivery tracking error:', error)
+    throw error
   }
 }
 
 export async function completeDelivery(req: Request, res: Response) {
   try {
-    const { orderId } = req.params;
-    const userId = req.user?.id;
+    const { orderId } = req.params
+    const userId = req.user?.id
 
     const order = await prisma.order.findUnique({
       where: { id: String(orderId) },
-    });
+    })
 
     if (!order) {
-      throw new AppError(404, 'Order not found', 'ORDER_NOT_FOUND');
+      throw new AppError(404, 'Order not found', 'ORDER_NOT_FOUND')
     }
 
     if (order.driverId !== userId && req.user?.role !== 'ADMIN') {
-      throw new AppError(403, 'Not authorized', 'UNAUTHORIZED');
+      throw new AppError(403, 'Not authorized', 'UNAUTHORIZED')
     }
 
     await prisma.order.update({
@@ -268,7 +268,7 @@ export async function completeDelivery(req: Request, res: Response) {
         status: 'DELIVERED',
         deliveryCompletedAt: new Date(),
       },
-    });
+    })
 
     await prisma.notification.create({
       data: {
@@ -278,15 +278,15 @@ export async function completeDelivery(req: Request, res: Response) {
         type: 'ORDER_UPDATE',
         orderId: order.id,
       },
-    });
+    })
 
     res.json({
       success: true,
       message: 'Delivery completed',
-    });
+    })
   } catch (error) {
-    console.error('Complete delivery error:', error);
-    throw error;
+    console.error('Complete delivery error:', error)
+    throw error
   }
 }
 
@@ -310,11 +310,11 @@ export async function getActiveDeliveries(req: Request, res: Response) {
       orderBy: {
         createdAt: 'desc',
       },
-    });
+    })
 
     const ordersWithTracking = await Promise.all(
       activeOrders.map(async (order) => {
-        let driver = null;
+        let driver = null
         if (order.driverId) {
           driver = await prisma.user.findUnique({
             where: { id: order.driverId },
@@ -325,41 +325,92 @@ export async function getActiveDeliveries(req: Request, res: Response) {
               currentLocation: true,
               vehicleType: true,
             },
-          });
+          })
         }
 
-        let tracking = null;
+        let tracking = null
         if (order.driverLocation && order.deliveryLocation) {
-          const driverLoc = order.driverLocation as any;
-          const deliveryLoc = order.deliveryLocation as any;
-          const distance = calculateDistance(driverLoc, deliveryLoc);
+          const driverLoc = order.driverLocation as any
+          const deliveryLoc = order.deliveryLocation as any
+          const distance = calculateDistance(driverLoc, deliveryLoc)
           const eta = calculateETA(distance, {
             preparationTime: 0,
             vehicleType: (driver?.vehicleType as any) || 'bike',
-          });
+          })
 
           tracking = {
             distance,
             eta,
             isNearby: isNearDestination(driverLoc, deliveryLoc),
-          };
+          }
         }
 
         return {
           ...order,
           driver,
           tracking,
-        };
+        }
       })
-    );
+    )
 
     res.json({
       success: true,
       data: ordersWithTracking,
       count: ordersWithTracking.length,
-    });
+    })
   } catch (error) {
-    console.error('Get active deliveries error:', error);
-    throw error;
+    console.error('Get active deliveries error:', error)
+    throw error
+  }
+}
+
+/**
+ * Admin: Haydovchi joyini simulyatsiya qilish (test uchun)
+ * POST /api/tracking/admin/simulate-location
+ * Body: { orderId, lat, lng }
+ */
+export async function adminSimulateDriverLocation(req: Request, res: Response) {
+  try {
+    const { orderId, lat, lng } = req.body
+
+    if (!orderId || !lat || !lng || !isValidLocation({ lat, lng })) {
+      throw new AppError(400, 'Invalid orderId or coordinates', 'INVALID_INPUT')
+    }
+
+    const order = await prisma.order.findUnique({
+      where: { id: String(orderId) },
+    })
+
+    if (!order) {
+      throw new AppError(404, 'Order not found', 'ORDER_NOT_FOUND')
+    }
+
+    if (!['OUT_FOR_DELIVERY', 'DELIVERING'].includes(order.status)) {
+      throw new AppError(400, 'Order must be OUT_FOR_DELIVERY or DELIVERING', 'INVALID_STATUS')
+    }
+
+    if (!order.deliveryLocation) {
+      throw new AppError(400, 'Order has no delivery location', 'NO_DELIVERY_LOCATION')
+    }
+
+    await prisma.order.update({
+      where: { id: String(orderId) },
+      data: {
+        driverLocation: {
+          lat,
+          lng,
+          timestamp: getLocationTimestamp(),
+        },
+      },
+    })
+
+    res.json({
+      success: true,
+      message: 'Driver location simulated',
+      data: { orderId, lat, lng },
+    })
+  } catch (error) {
+    console.error('Admin simulate location error:', error)
+    throw error
   }
 }

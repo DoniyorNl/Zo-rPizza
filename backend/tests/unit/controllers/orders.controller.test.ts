@@ -257,9 +257,10 @@ describe('Orders Controller - getUserOrders', () => {
 	 */
 	it('should return orders for specific user', async () => {
 		const userId = 'user-1'
-		const req = mockRequest({ params: { userId } })
+		const req = mockRequest({ params: { userId }, userId } as any)
 		const res = mockResponse()
 
+		const mockUser = generateMockUser({ id: userId, firebaseUid: userId })
 		const mockUserOrders = [
 			{
 				...generateMockOrder({ userId }),
@@ -272,6 +273,7 @@ describe('Orders Controller - getUserOrders', () => {
 			},
 		]
 
+		prismaMock.user.findFirst.mockResolvedValue(mockUser as any)
 		prismaMock.order.findMany.mockResolvedValue(mockUserOrders as any)
 
 		await getUserOrders(req as Request, res as Response)
@@ -315,9 +317,11 @@ describe('Orders Controller - getUserOrders', () => {
 	 * Expected: Bo'sh array qaytadi
 	 */
 	it('should return empty array if user has no orders', async () => {
-		const req = mockRequest({ params: { userId: 'user-1' } })
+		const req = mockRequest({ params: { userId: 'user-1' }, userId: 'user-1' } as any)
 		const res = mockResponse()
 
+		const mockUser = generateMockUser({ id: 'user-1', firebaseUid: 'user-1' })
+		prismaMock.user.findFirst.mockResolvedValue(mockUser as any)
 		prismaMock.order.findMany.mockResolvedValue([])
 
 		await getUserOrders(req as Request, res as Response)
@@ -708,11 +712,13 @@ describe('Orders Controller - deleteOrder', () => {
 	 */
 	it('should delete pending order', async () => {
 		const orderId = 'order-1'
-		const req = mockRequest({ params: { id: orderId } })
+		const req = mockRequest({ params: { id: orderId }, userId: 'user-1' } as any)
 		const res = mockResponse()
 
-		const pendingOrder = generateMockOrder({ id: orderId, status: 'PENDING' })
+		const mockUser = generateMockUser({ id: 'user-1', firebaseUid: 'user-1' })
+		const pendingOrder = generateMockOrder({ id: orderId, status: 'PENDING', userId: 'user-1' })
 
+		prismaMock.user.findFirst.mockResolvedValue(mockUser as any)
 		prismaMock.order.findUnique.mockResolvedValue(pendingOrder as any)
 		prismaMock.order.delete.mockResolvedValue(pendingOrder as any)
 
@@ -736,14 +742,17 @@ describe('Orders Controller - deleteOrder', () => {
 	 */
 	it('should not delete non-pending order', async () => {
 		const orderId = 'order-1'
-		const req = mockRequest({ params: { id: orderId } })
+		const req = mockRequest({ params: { id: orderId }, userId: 'user-1' } as any)
 		const res = mockResponse()
 
+		const mockUser = generateMockUser({ id: 'user-1', firebaseUid: 'user-1' })
 		const deliveredOrder = generateMockOrder({
 			id: orderId,
 			status: 'DELIVERED',
+			userId: 'user-1',
 		})
 
+		prismaMock.user.findFirst.mockResolvedValue(mockUser as any)
 		prismaMock.order.findUnique.mockResolvedValue(deliveredOrder as any)
 
 		await deleteOrder(req as Request, res as Response)
@@ -763,9 +772,11 @@ describe('Orders Controller - deleteOrder', () => {
 	 * Expected: 404 error
 	 */
 	it('should return 404 if order not found', async () => {
-		const req = mockRequest({ params: { id: 'order-999' } })
+		const req = mockRequest({ params: { id: 'order-999' }, userId: 'user-1' } as any)
 		const res = mockResponse()
 
+		const mockUser = generateMockUser({ id: 'user-1', firebaseUid: 'user-1' })
+		prismaMock.user.findFirst.mockResolvedValue(mockUser as any)
 		prismaMock.order.findUnique.mockResolvedValue(null)
 
 		await deleteOrder(req as Request, res as Response)

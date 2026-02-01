@@ -13,10 +13,11 @@ out/
 .env.local
 .env*.local
 
-# Test reports
+# Test reports and caches
 playwright-report/
 test-results/
 coverage/
+.jest-cache/
 
 # OS files
 .DS_Store

@@ -28,31 +28,46 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
 
-      # Backend
-      - name: Install Backend Dependencies
-        run: |
-          cd backend
-          pnpm install
+      # Bitta lockfile: root’dan install (barcha workspace package’lari)
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
+      # Cache: Next.js build (tez qayta build)
+      - name: Cache Next.js
+        uses: actions/cache@v4
+        with:
+          path: frontend/.next/cache
+          key: next-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml', 'frontend/package.json') }}
+          restore-keys: next-${{ runner.os }}-
+
+      # Cache: Jest (o‘zgargan fayllar test qilinadi, qolgani cache’dan)
+      - name: Cache Jest (frontend)
+        uses: actions/cache@v4
+        with:
+          path: frontend/.jest-cache
+          key: jest-frontend-${{ runner.os }}-${{ hashFiles('frontend/**/*.ts', 'frontend/**/*.tsx') }}
+          restore-keys: jest-frontend-${{ runner.os }}-
+      - name: Cache Jest (backend)
+        uses: actions/cache@v4
+        with:
+          path: backend/.jest-cache
+          key: jest-backend-${{ runner.os }}-${{ hashFiles('backend/src/**/*.ts', 'backend/tests/**/*.ts') }}
+          restore-keys: jest-backend-${{ runner.os }}-
+
+      # Backend
       - name: Generate Prisma Client
-        run: |
-          cd backend
-          pnpm prisma generate
+        run: pnpm --filter zor-pizza-backend run prisma:generate
 
       - name: Run Backend Tests
-        run: |
-          cd backend
-          pnpm test
+        run: pnpm --filter zor-pizza-backend test
 
       # Frontend
-      - name: Install Frontend Dependencies
-        run: |
-          cd frontend
-          pnpm install
-
       - name: Run Frontend Tests
-        run: |
-          cd frontend
-          CI=true pnpm test
+        run: pnpm --filter frontend test
         env:
+          CI: true
           NODE_ENV: test
+
+      # Build (backend build no-op; frontend next build)
+      - name: Build
+        run: pnpm build

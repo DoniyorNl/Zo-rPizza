@@ -125,6 +125,7 @@ export const FIREBASE_ERROR_MESSAGES: Record<string, string> = {
 	'auth/weak-password': 'Parol juda oddiy. Kamida 6 ta belgidan iborat bo\'lishi kerak',
 	'auth/operation-not-allowed': 'Bu amal ta\'qiqlangan',
 	'auth/invalid-credential': 'Email yoki parol noto\'g\'ri',
+	'auth/network-request-failed': 'Internet ulanishini tekshiring.',
 }
 
 export function getFirebaseErrorMessage(error: any): string {

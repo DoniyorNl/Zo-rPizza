@@ -4,18 +4,19 @@
 // 📝 UPDATED: 2025-01-11 - FIXED ORDER
 // =====================================
 
-import { Router } from 'express'
 import {
 	createUser,
-	getUserById,
-	updateUser,
 	getAllUsers,
+	getCurrentUser,
+	getUserById,
+	updateCurrentUser,
+	updateUser,
+	updateUserDriver,
 	updateUserRole,
 	updateUserStatus,
-	getCurrentUser,
-	updateCurrentUser,
 } from '@/controllers/users.controller'
 import { adminOnly, authRequired } from '@/middleware/admin.middleware'
+import { Router } from 'express'
 
 const router = Router()
 
@@ -67,6 +68,12 @@ router.put('/:id/role', adminOnly, updateUserRole)
  * Block/unblock user
  */
 router.put('/:id/status', adminOnly, updateUserStatus)
+
+/**
+ * PUT /api/users/:id/driver
+ * Haydovchi sifatida belgilash (tracking uchun)
+ */
+router.put('/:id/driver', adminOnly, updateUserDriver)
 
 // ==========================================
 // GENERIC ROUTES - LAST! ✅

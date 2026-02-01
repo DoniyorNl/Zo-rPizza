@@ -14,6 +14,8 @@ export interface UserData {
 	createdAt: string
 	updatedAt?: string
 	isBlocked?: boolean
+	isDriver?: boolean
+	vehicleType?: string | null
 	_count?: {
 		orders: number
 	}

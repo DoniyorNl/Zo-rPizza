@@ -47,8 +47,9 @@ export async function logError(error: Error | string, context?: Record<string, a
 		}
 
 		// Send to backend (production)
-		if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) {
-			await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/errors/log`, {
+		if (typeof window !== 'undefined') {
+			const { buildApiUrl } = await import('./apiBaseUrl')
+			await fetch(buildApiUrl('/api/errors/log'), {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(errorData),

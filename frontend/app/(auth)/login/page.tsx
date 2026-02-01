@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/lib/AuthContext'
+import { getFirebaseErrorMessage } from '@/lib/errorMessages'
 import { AlertCircle, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -42,26 +43,7 @@ export default function LoginPage() {
 			router.refresh() // Force refresh
 		} catch (err: unknown) {
 			console.error('❌ Login error:', err)
-
-			let errorMessage = 'Kirish xatosi. Qaytadan urinib ko\'ring.'
-
-			if (err instanceof Error) {
-				// Firebase error kodlarini o'zgartirish
-				if (err.message.includes('auth/user-not-found')) {
-					errorMessage = 'Bu email bilan foydalanuvchi topilmadi.'
-				} else if (err.message.includes('auth/wrong-password')) {
-					errorMessage = 'Parol noto\'g\'ri. Qaytadan urinib ko\'ring.'
-				} else if (err.message.includes('auth/invalid-email')) {
-					errorMessage = 'Email manzil noto\'g\'ri formatda.'
-				} else if (err.message.includes('auth/user-disabled')) {
-					errorMessage = 'Bu hisob bloklangan. Admin bilan bog\'laning.'
-				} else if (err.message.includes('auth/too-many-requests')) {
-					errorMessage = 'Juda ko\'p urinish. Keyinroq qaytadan urinib ko\'ring.'
-				} else {
-					errorMessage = err.message
-				}
-			}
-
+			const errorMessage = getFirebaseErrorMessage(err) || 'Kirish xatosi. Qaytadan urinib ko\'ring.'
 			setError(errorMessage)
 		} finally {
 			setLoading(false)

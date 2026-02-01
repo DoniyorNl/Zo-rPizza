@@ -6,9 +6,9 @@
 
 import React from 'react'
 import { UserData } from '../types/user.types'
-import { UsersTableRow } from './UsersTableRow'
 import { UsersEmptyState } from './UsersEmptyState'
 import { UsersPagination } from './UsersPagination'
+import { UsersTableRow } from './UsersTableRow'
 
 interface UsersTableProps {
 	users: UserData[]
@@ -19,6 +19,7 @@ interface UsersTableProps {
 	onPageChange: (page: number) => void
 	onRoleChange: (userId: string, newRole: string) => void
 	onBlockToggle: (userId: string, currentStatus: boolean) => void
+	onDriverToggle?: (userId: string, currentStatus: boolean) => void
 }
 
 export const UsersTable: React.FC<UsersTableProps> = ({
@@ -30,6 +31,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
 	onPageChange,
 	onRoleChange,
 	onBlockToggle,
+	onDriverToggle,
 }) => {
 	const isEmpty = !loading && !error && users.length === 0
 
@@ -40,33 +42,35 @@ export const UsersTable: React.FC<UsersTableProps> = ({
 				<UsersEmptyState loading={loading} error={error} isEmpty={isEmpty} />
 			)}
 
-			{/* Table Content */}
+			{/* Table Content - ixcham, scrollsiz */}
 			{!loading && !error && users.length > 0 && (
 				<>
-					<div className='overflow-x-auto'>
-						<table className='w-full'>
-							{/* Table Header */}
+					<div className='overflow-x-auto min-w-0'>
+						<table className='w-full table-auto'>
 							<thead className='bg-gray-50 border-b border-gray-200'>
 								<tr>
-									<th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider'>
+									<th className='px-1.5 py-1 text-left text-[11px] font-semibold text-gray-600 uppercase whitespace-nowrap'>
 										Foydalanuvchi
 									</th>
-									<th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider'>
+									<th className='px-1.5 py-1 text-left text-[11px] font-semibold text-gray-600 uppercase whitespace-nowrap'>
 										Email
 									</th>
-									<th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider'>
+									<th className='px-1.5 py-1 text-left text-[11px] font-semibold text-gray-600 uppercase whitespace-nowrap'>
 										Rol
 									</th>
-									<th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider'>
+									<th className='px-1.5 py-1 text-center text-[11px] font-semibold text-gray-600 uppercase whitespace-nowrap'>
+										Haydovchi
+									</th>
+									<th className='px-1.5 py-1 text-center text-[11px] font-semibold text-gray-600 uppercase whitespace-nowrap'>
 										Buyurtmalar
 									</th>
-									<th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider'>
+									<th className='px-1.5 py-1 text-left text-[11px] font-semibold text-gray-600 uppercase whitespace-nowrap'>
 										Ro&apos;yxatdan o&apos;tgan
 									</th>
-									<th className='px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider'>
+									<th className='px-1.5 py-1 text-left text-[11px] font-semibold text-gray-600 uppercase whitespace-nowrap'>
 										Status
 									</th>
-									<th className='px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider'>
+									<th className='px-1.5 py-1 text-right text-[11px] font-semibold text-gray-600 uppercase whitespace-nowrap'>
 										Amallar
 									</th>
 								</tr>
@@ -80,6 +84,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
 										user={user}
 										onRoleChange={onRoleChange}
 										onBlockToggle={onBlockToggle}
+										onDriverToggle={onDriverToggle}
 									/>
 								))}
 							</tbody>

@@ -1,8 +1,8 @@
 // frontend/app/admin/layout.tsx
 'use client'
 
-import { useAuth } from '@/lib/AuthContext'
 import { AdminHeader } from '@/components/admin/AdminHeader'
+import { useAuth } from '@/lib/AuthContext'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
@@ -31,13 +31,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 	}
 
 	return (
-		<div className='min-h-screen bg-gray-100'>
+		<div className='h-screen flex flex-col bg-gray-100 overflow-hidden'>
 			{/* Header */}
 			<AdminHeader />
 
-			<div className='flex pt-16'>
+			<div className='flex flex-1 min-h-0 pt-16'>
 				{/* Sidebar */}
-				<aside className='w-64 bg-gray-900 text-white min-h-[calc(100vh-4rem)] p-6 fixed top-16'>
+				<aside className='w-64 flex-shrink-0 bg-gray-900 text-white h-[calc(100vh-4rem)] p-6 fixed top-16 overflow-y-auto'>
 					<h2 className='text-2xl font-bold mb-8'>🍕 Admin Panel</h2>
 
 					<nav className='space-y-2'>
@@ -134,8 +134,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 					</nav>
 				</aside>
 
-				{/* Main Content */}
-				<main className='flex-1 ml-64 p-8'>{children}</main>
+				{/* Main Content - scrollable */}
+				<main className='flex-1 ml-64 p-8 overflow-y-auto min-h-0'>{children}</main>
 			</div>
 		</div>
 	)

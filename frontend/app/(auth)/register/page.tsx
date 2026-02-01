@@ -19,6 +19,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/lib/AuthContext'
+import { getFirebaseErrorMessage } from '@/lib/errorMessages'
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -84,29 +85,8 @@ export default function RegisterPage() {
 			}, 1500)
 		} catch (err: unknown) {
 			console.error('❌ Signup error:', err)
-
-			// ============================================
-			// FIREBASE ERROR HANDLING
-			// ============================================
-			let errorMessage = 'Ro\'yxatdan o\'tishda xatolik. Qaytadan urinib ko\'ring.'
-
-			if (err instanceof Error) {
-				// Firebase error kodlari
-				if (err.message.includes('auth/email-already-in-use')) {
-					errorMessage = 'Bu email allaqachon ro\'yxatdan o\'tgan. Login qiling yoki boshqa email kiriting.'
-				} else if (err.message.includes('auth/invalid-email')) {
-					errorMessage = 'Email manzil noto\'g\'ri formatda.'
-				} else if (err.message.includes('auth/weak-password')) {
-					errorMessage = 'Parol juda oddiy. Kamida 6 ta belgi, raqam va harf ishlating.'
-				} else if (err.message.includes('auth/operation-not-allowed')) {
-					errorMessage = 'Email/parol autentifikatsiya o\'chirilgan. Admin bilan bog\'laning.'
-				} else if (err.message.includes('auth/network-request-failed')) {
-					errorMessage = 'Internet ulanishini tekshiring.'
-				} else {
-					errorMessage = err.message
-				}
-			}
-
+			const errorMessage =
+				getFirebaseErrorMessage(err) || 'Ro\'yxatdan o\'tishda xatolik. Qaytadan urinib ko\'ring.'
 			setError(errorMessage)
 		} finally {
 			setLoading(false)

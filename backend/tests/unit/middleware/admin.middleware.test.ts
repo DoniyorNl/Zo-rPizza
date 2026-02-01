@@ -1,10 +1,10 @@
 // backend/tests/unit/middleware/admin.middleware.test.ts
 // 🛡️ ADMIN MIDDLEWARE TESTS - Senior Level Security Testing
 
-import { Request, Response, NextFunction } from 'express'
+import { NextFunction, Request, Response } from 'express'
 import { DeepMockProxy, mockDeep, mockReset } from 'jest-mock-extended'
 import prisma from '../../../src/lib/prisma'
-import { adminOnly, roleOnly, authRequired } from '../../../src/middleware/admin.middleware'
+import { adminOnly, authRequired, roleOnly } from '../../../src/middleware/admin.middleware'
 
 // ============================================================================
 // MOCK SETUP
@@ -73,13 +73,13 @@ describe('Admin Middleware', () => {
 	describe('adminOnly', () => {
 		it('should allow admin user to pass', async () => {
 			const req = mockRequest({
-				userId: 'admin-123',
+				headers: { 'x-user-id': 'admin-123' },
 			}) as Request
 			const res = mockResponse() as Response
 			const next = mockNext()
 
 			const mockUser = generateMockUser({ id: 'admin-123', role: 'ADMIN' })
-			prismaMock.user.findUnique.mockResolvedValue(mockUser as any)
+			prismaMock.user.findFirst.mockResolvedValue(mockUser as any)
 
 			await adminOnly(req, res, next)
 
@@ -112,12 +112,12 @@ describe('Admin Middleware', () => {
 
 		it('should return 401 if user not found in database', async () => {
 			const req = mockRequest({
-				userId: 'nonexistent',
+				headers: { 'x-user-id': 'nonexistent' },
 			}) as Request
 			const res = mockResponse() as Response
 			const next = mockNext()
 
-			prismaMock.user.findUnique.mockResolvedValue(null)
+			prismaMock.user.findFirst.mockResolvedValue(null)
 
 			await adminOnly(req, res, next)
 
@@ -141,7 +141,7 @@ describe('Admin Middleware', () => {
 				id: 'blocked-user',
 				isBlocked: true,
 			})
-			prismaMock.user.findUnique.mockResolvedValue(blockedUser as any)
+			prismaMock.user.findFirst.mockResolvedValue(blockedUser as any)
 
 			await adminOnly(req, res, next)
 
@@ -165,7 +165,7 @@ describe('Admin Middleware', () => {
 				id: 'customer-123',
 				role: 'CUSTOMER',
 			})
-			prismaMock.user.findUnique.mockResolvedValue(customerUser as any)
+			prismaMock.user.findFirst.mockResolvedValue(customerUser as any)
 
 			await adminOnly(req, res, next)
 
@@ -186,7 +186,7 @@ describe('Admin Middleware', () => {
 			const next = mockNext()
 
 			const mockUser = generateMockUser({ id: 'admin-456' })
-			prismaMock.user.findUnique.mockResolvedValue(mockUser as any)
+			prismaMock.user.findFirst.mockResolvedValue(mockUser as any)
 
 			await adminOnly(req, res, next)
 
@@ -223,7 +223,7 @@ describe('Admin Middleware', () => {
 			const res = mockResponse() as Response
 			const next = mockNext()
 
-			prismaMock.user.findUnique.mockRejectedValue(new Error('Database error'))
+			prismaMock.user.findFirst.mockRejectedValue(new Error('Database error'))
 
 			await adminOnly(req, res, next)
 

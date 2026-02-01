@@ -17,8 +17,7 @@
       "react",
       "react-dom",
       "node",
-      "jest",
-      "@testing-library/jest-dom"
+      "jest"
     ],
     "resolveJsonModule": true,
     "isolatedModules": true,
