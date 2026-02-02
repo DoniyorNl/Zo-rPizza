@@ -151,6 +151,40 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
 **Sabab:** Firebase token muddati tugagan  
 **Yechim:** Logout/login qiling, token avtomatik yangilanadi
 
+### Issue 4: Prisma P1001 – Can't reach database (Railway + Supabase)
+
+**Xato:** `PrismaClientInitializationError: Can't reach database server at db.xxx.supabase.co:5432`
+
+**Sabablar va yechimlar:**
+
+1. **Supabase loyiha pauza holatida (free tier)**
+
+   - Free tier’da 7 kun faoliyat bo‘lmasa loyiha avtomatik pauza bo‘ladi.
+   - **Yechim:** [Supabase Dashboard](https://supabase.com/dashboard) → loyihangiz → **Restore project** (yoki **Resume**). Bir necha daqiqa kutib, Railway’da **Redeploy** qiling.
+
+2. **To‘g‘ri connection string ishlatilmagan (direct 5432)**
+
+   - Railway kabi serverless/cloud’dan **to‘g‘ridan-to‘g‘ri** `db.xxx.supabase.co:5432` ga ulanish cheklanishi yoki muvaffaqiyatsiz bo‘lishi mumkin.
+   - **Yechim:** Supabase **Connection pooler** (Session yoki Transaction) URL ishlating, **5432 emas, 6543** port.
+   - [Supabase Dashboard](https://supabase.com/dashboard) → loyiha → **Settings** → **Database** → **Connection string** → **URI** (Transaction pooler yoki Session pooler).
+   - Format:  
+     `postgresql://postgres.PROJECT_REF:PASSWORD@aws-0-REGION.pooler.supabase.com:6543/postgres?sslmode=require`
+   - Railway’da **Variables** → `DATABASE_URL` ni shu pooler URL bilan yangilang va **Redeploy**.
+
+3. **SSL yo‘q**
+
+   - Supabase SSL talab qiladi.
+   - **Yechim:** `DATABASE_URL` oxirida `?sslmode=require` bo‘lishi kerak (yuqoridagi formatda bor).
+
+4. **Parol maxsus belgilar**
+
+   - Parolda `@`, `#`, `%` va boshqalar bo‘lsa, URL encode qiling (masalan `@` → `%40`).
+
+5. **IPv4 (ixtiyoriy)**
+   - Ba’zi cloud’lar IPv6 bilan muammo qiladi. Supabase Dashboard → **Settings** → **Database** → **Connection** bo‘limida **IPv4 add-on** bor bo‘lsa, yoqib urinib ko‘ring.
+
+**Tezkor tekshiruv:** Supabase Dashboard’da loyiha **Active** (pauza emas), `DATABASE_URL` **pooler** (port 6543) va `?sslmode=require` borligini tekshiring.
+
 ---
 
 ## 📊 Monitoring
