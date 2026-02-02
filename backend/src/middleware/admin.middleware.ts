@@ -50,16 +50,19 @@ const checkRateLimit = (ip: string): boolean => {
 }
 
 /**
- * Clean up old rate limit records (har 5 minutda)
+ * Clean up old rate limit records (har 5 minutda).
+ * Test muhitida ishlamaydi – Jest open handle xatosini oldini olish uchun.
  */
-setInterval(() => {
-	const now = Date.now()
-	for (const [ip, record] of rateLimitStore.entries()) {
-		if (now > record.resetTime) {
-			rateLimitStore.delete(ip)
+if (process.env.NODE_ENV !== 'test') {
+	setInterval(() => {
+		const now = Date.now()
+		for (const [ip, record] of rateLimitStore.entries()) {
+			if (now > record.resetTime) {
+				rateLimitStore.delete(ip)
+			}
 		}
-	}
-}, 5 * 60 * 1000)
+	}, 5 * 60 * 1000)
+}
 
 /**
  * Admin-only middleware
