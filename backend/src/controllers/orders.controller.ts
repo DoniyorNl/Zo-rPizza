@@ -178,8 +178,6 @@ export const createOrder = async (req: Request, res: Response) => {
 		if (typeof items === 'string') {
 			items = JSON.parse(items)
 		}
-		console.log('Received items:', items)
-		console.log('First item:', items[0])
 		// Validation
 		if (!userId || !items || !items.length || !deliveryAddress || !deliveryPhone) {
 			return res.status(400).json({
@@ -210,7 +208,6 @@ export const createOrder = async (req: Request, res: Response) => {
 				})
 			} else {
 				// Agar user database'da yo'q bo'lsa, avtomatik yaratish
-				console.log(` Creating user in database: ${userId}`)
 				user = await prisma.user.create({
 					data: {
 						firebaseUid: userId,
