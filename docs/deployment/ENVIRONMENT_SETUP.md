@@ -100,7 +100,7 @@ curl -X OPTIONS http://localhost:5001/api/products \
 
 Railway dashboard'da qo'shish kerak:
 
-1. `DATABASE_URL` - Automatically set by Railway Postgres
+1. **`DATABASE_URL`** – Agar **Supabase** ishlatilsa: Supabase Dashboard → Settings → Database → **Connection string** → **URI (Transaction pooler)**. Port **6543** va `?sslmode=require` bo‘lishi kerak (direct 5432 Railway’dan ishlamasligi mumkin). Agar Railway Postgres ishlatilsa – avtomatik set bo‘ladi.
 2. `FIREBASE_PROJECT_ID`
 3. `FIREBASE_PRIVATE_KEY` - Escape newlines: `\n`
 4. `FIREBASE_CLIENT_EMAIL`
