@@ -2,7 +2,7 @@
 	"name": "zor-pizza-backend",
 	"version": "1.0.0",
 	"engines": {
-		"node": ">=18"
+		"node": ">=20"
 	},
 	"scripts": {
 		"dev": "tsx watch src/server.ts",
