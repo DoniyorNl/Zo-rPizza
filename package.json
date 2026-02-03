@@ -6,9 +6,6 @@
 		"node": ">=18",
 		"pnpm": ">=8"
 	},
-	"pnpm": {
-		"onlyBuiltDependencies": ["prisma", "@prisma/engines", "@prisma/client"]
-	},
 	"scripts": {
 		"dev": "pnpm --filter frontend dev",
 		"dev:backend": "pnpm --filter backend dev",
