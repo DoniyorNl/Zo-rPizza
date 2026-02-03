@@ -269,10 +269,29 @@ app.use((err: AppError, _req: Request, res: Response, _next: NextFunction) => {
 // SERVER LAUNCHER
 // ============================================
 
+const DB_CONNECT_RETRY_DELAY_MS = 30_000 // circuit breaker ochilganda bir marta 30s kutib qayta urinish
+
+async function connectDatabase(): Promise<void> {
+	const msg = (e: unknown) => String((e as { message?: string })?.message ?? e)
+	try {
+		await prisma.$connect()
+		return
+	} catch (first: unknown) {
+		const isCircuitBreaker = /circuit breaker open/i.test(msg(first))
+		if (isCircuitBreaker) {
+			console.warn('⚠️  Circuit breaker aniqlandi. 30 soniya kutib qayta urinilmoqda...')
+			await new Promise(r => setTimeout(r, DB_CONNECT_RETRY_DELAY_MS))
+			await prisma.$connect()
+			return
+		}
+		throw first
+	}
+}
+
 const startServer = async () => {
 	try {
-		// 1. Database ulanish
-		await prisma.$connect()
+		// 1. Database ulanish (circuit breaker bo‘lsa bir marta 30s kutib qayta urinish)
+		await connectDatabase()
 		console.log('✅ Database connected')
 
 		// 2. Firebase Admin SDK tekshirish
