@@ -313,11 +313,28 @@ const startServer = async () => {
 			console.error(err)
 			server.close(() => process.exit(1))
 		})
-	} catch (error) {
+	} catch (error: unknown) {
+		const err = error as { name?: string; message?: string }
+		const msg = String(err?.message ?? error)
+		const isDbAuth =
+			err?.name === 'PrismaClientInitializationError' ||
+			/authentication|circuit breaker|too many.*auth/i.test(msg)
+
 		console.error('❌ Serverni boshlashda xatolik:', error)
+		if (isDbAuth) {
+			console.error(`
+⚠️  DATABASE ULANISH XATOSI (authentication / circuit breaker)
+   • Xato: "Too many authentication errors" – noto‘g‘ri parol yoki juda ko‘p muvaffaqiyatsiz urinish.
+   • Tuzatish:
+     1. DATABASE_URL da parol to‘g‘ri ekanligini tekshiring (Supabase → Settings → Database).
+     2. Pooler URL ishlatilayotganiga ishonch hosil qiling: port 6543, host ...pooler.supabase.com, oxirida ?sslmode=require
+     3. Agar circuit breaker ochilgan bo‘lsa: 20–30 daqiqa kuting yoki Supabase loyihasini restart qiling, keyin to‘g‘ri DATABASE_URL bilan qayta deploy qiling.
+   • Batafsil: docs/deployment/RAILWAY_SUPABASE_FIX.md va docs/deployment/CIRCUIT_BREAKER_FIX.md
+`)
+		}
 		try {
 			await prisma.$disconnect()
-		} catch (_e) {}
+		} catch (_e) { }
 		process.exit(1)
 	}
 }
@@ -350,5 +367,5 @@ process.on('SIGTERM', () => shutdown('SIGTERM'))
 process.on('beforeExit', async () => {
 	try {
 		await prisma.$disconnect()
-	} catch (_e) {}
+	} catch (_e) { }
 })

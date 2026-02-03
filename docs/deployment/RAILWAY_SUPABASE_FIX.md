@@ -44,6 +44,7 @@ Bu **to‘liq** matnni brauzer yoki notepad’ga nusxalab saqlang — keyingi bo
 ## 3. Tekshirish
 
 - Deploy tugagach **Logs** da `PrismaClientInitializationError` / `P1001` bo‘lmasligi kerak.
+- Agar **"Circuit breaker open: Too many authentication errors"** chiqsa → parol noto‘g‘ri yoki juda ko‘p muvaffaqiyatsiz urinish; [CIRCUIT_BREAKER_FIX.md](./CIRCUIT_BREAKER_FIX.md) ga qarang.
 - Agar yana 5432 yoki `db.xxx.supabase.co` ko‘rinsa — Railway’da hali ham **eski (direct)** URL ishlatilayapti. Variables’da faqat **pooler** URL (port 6543, `pooler.supabase.com`) ekanligini tekshiring va qayta Redeploy qiling.
 
 ---
