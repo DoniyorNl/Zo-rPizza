@@ -39,11 +39,26 @@ if (!admin.apps.length) {
 
 			const fs = require('fs')
 			const backendDir = path.join(__dirname, '../..')
+
+			// Check for multiple possible Firebase service account file names
 			const p1 = path.join(backendDir, 'firebase-service-account.json')
-			const p2 = path.join(backendDir, 'zo-rpizza-firebase-adminsdk-fbsvc-d80a464fc5.json')
-			const serviceAccountPath = fs.existsSync(p1) ? p1 : fs.existsSync(p2) ? p2 : null
+			let serviceAccountPath = fs.existsSync(p1) ? p1 : null
+
+			// If not found, search for any zo-rpizza-firebase-adminsdk-*.json file
 			if (!serviceAccountPath) {
-				throw new Error('Firebase service account JSON not found. Add firebase-service-account.json or zo-rpizza-firebase-adminsdk-*.json to backend/')
+				const files = fs.readdirSync(backendDir)
+				const firebaseFile = files.find(
+					(f: string) => f.startsWith('zo-rpizza-firebase-adminsdk-') && f.endsWith('.json'),
+				)
+				if (firebaseFile) {
+					serviceAccountPath = path.join(backendDir, firebaseFile)
+				}
+			}
+
+			if (!serviceAccountPath) {
+				throw new Error(
+					'Firebase service account JSON not found. Add firebase-service-account.json or zo-rpizza-firebase-adminsdk-*.json to backend/',
+				)
 			}
 			const serviceAccount = require(serviceAccountPath)
 
@@ -58,7 +73,7 @@ if (!admin.apps.length) {
 		// ============================================
 		else {
 			throw new Error(
-				'Firebase configuration not found. Please set FIREBASE_SERVICE_ACCOUNT_BASE64 environment variable or provide firebase-service-account.json file.'
+				'Firebase configuration not found. Please set FIREBASE_SERVICE_ACCOUNT_BASE64 environment variable or provide firebase-service-account.json file.',
 			)
 		}
 	} catch (error: any) {
