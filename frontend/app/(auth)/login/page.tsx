@@ -34,16 +34,22 @@ export default function LoginPage() {
 
 		try {
 			// Firebase login + backend sync
-			await login(email, password)
+			const backendUser = await login(email, password)
 
-			console.log('✅ Login successful, redirecting...')
+			console.log('✅ Login successful, redirecting...', backendUser)
 
-			// Redirect to home
-			router.push('/')
+			// Role bo'yicha redirect
+			if (backendUser?.role === 'ADMIN') {
+				router.push('/admin')
+			} else if (backendUser?.role === 'DELIVERY') {
+				router.push('/driver/dashboard')
+			} else {
+				router.push('/')
+			}
 			router.refresh() // Force refresh
 		} catch (err: unknown) {
 			console.error('❌ Login error:', err)
-			const errorMessage = getFirebaseErrorMessage(err) || 'Kirish xatosi. Qaytadan urinib ko\'ring.'
+			const errorMessage = getFirebaseErrorMessage(err) || "Kirish xatosi. Qaytadan urinib ko'ring."
 			setError(errorMessage)
 		} finally {
 			setLoading(false)

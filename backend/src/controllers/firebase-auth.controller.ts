@@ -205,7 +205,9 @@ export const firebaseAuthController = {
 				})
 			}
 		} catch (error: any) {
-			console.error('❌ syncUser Error:', error.message)
+			console.error('❌ syncUser Error:', error)
+			console.error('Error message:', error.message)
+			console.error('Error stack:', error.stack)
 			return res.status(500).json({
 				success: false,
 				message: 'User sinxronlashda xatolik.',

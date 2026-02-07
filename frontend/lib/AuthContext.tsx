@@ -17,11 +17,24 @@ import {
 import { createContext, useContext, useEffect, useState } from 'react'
 import { auth } from './firebase'
 
+// Backend User Type
+export interface BackendUser {
+	id: string
+	firebaseUid: string
+	email: string
+	name: string | null
+	phone: string | null
+	role: 'CUSTOMER' | 'DELIVERY' | 'ADMIN'
+	vehicleType?: string | null
+	currentLocation?: any
+}
+
 interface AuthContextType {
 	user: User | null
+	backendUser: BackendUser | null
 	loading: boolean
-	signup: (email: string, password: string) => Promise<void>
-	login: (email: string, password: string) => Promise<void>
+	signup: (email: string, password: string) => Promise<BackendUser | undefined>
+	login: (email: string, password: string) => Promise<BackendUser | undefined>
 	logout: () => Promise<void>
 	refreshToken: () => Promise<string | null>
 }
@@ -34,6 +47,7 @@ export function useAuth() {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const [user, setUser] = useState<User | null>(null)
+	const [backendUser, setBackendUser] = useState<BackendUser | null>(null)
 	const [loading, setLoading] = useState(true)
 
 	/**
@@ -59,6 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 			if (response.data.success) {
 				console.log('✅ User synced with backend:', response.data.data)
+				setBackendUser(response.data.data)
 				return response.data.data
 			} else {
 				console.warn('⚠️ Backend sync warning:', response.data.message)
@@ -108,8 +123,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 			console.log('✅ Firebase signup successful:', firebaseUser.uid)
 
-			// 3. Backend bilan sinxronlashtirish
-			await syncWithBackend(firebaseUser)
+			// 3. Backend bilan sinxronlashtirish va user qaytarish
+			const backendUser = await syncWithBackend(firebaseUser)
+			return backendUser
 		} catch (error) {
 			console.error('❌ Signup error:', error)
 			throw error
@@ -138,8 +154,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 			console.log('✅ Firebase login successful:', firebaseUser.uid)
 
-			// 3. Backend bilan sinxronlashtirish
-			await syncWithBackend(firebaseUser)
+			// 3. Backend bilan sinxronlashtirish va user qaytarish
+			const backendUser = await syncWithBackend(firebaseUser)
+			return backendUser
 		} catch (error) {
 			console.error('❌ Login error:', error)
 			throw error
@@ -193,6 +210,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				}
 			} else {
 				// User chiqdi
+				setBackendUser(null)
 				localStorage.removeItem('firebaseUser')
 				localStorage.removeItem('firebaseToken')
 			}
@@ -219,6 +237,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 	const value = {
 		user,
+		backendUser,
 		loading,
 		signup,
 		login,

@@ -5,6 +5,7 @@ import {
 	createOrder,
 	deleteOrder,
 	getAllOrders,
+	getDriverOrders,
 	getOrderById,
 	getUserOrders,
 	updateOrderStatus,
@@ -18,6 +19,9 @@ const router = Router()
 // ✅ ADMIN ROUTES (adminOnly middleware bilan)
 router.get('/admin/all', adminOnly, getAllOrders) // Admin - barcha buyurtmalar
 router.patch('/admin/:id/status', adminOnly, updateOrderStatus) // Admin - status o'zgartirish
+
+// ✅ DRIVER ROUTES
+router.get('/driver', authenticateFirebaseToken, getDriverOrders) // Driver buyurtmalari
 
 // ✅ USER ROUTES
 router.get('/user/:userId', authenticateFirebaseToken, getUserOrders) // User buyurtmalari

@@ -26,6 +26,7 @@ import ordersRoutes from './routes/orders.routes'
 import productsRoutes from './routes/products.routes'
 import profileRoutes from './routes/profile.routes'
 import toppingsRoutes from './routes/toppings.routes'
+import trackingRoutes from './routes/tracking.routes'
 import usersRoutes from './routes/users.routes'
 
 // 🆕 FIREBASE AUTH ROUTES
@@ -232,6 +233,7 @@ app.use('/api/orders', generalLimiter, ordersRoutes)
 app.use('/api/users', generalLimiter, usersRoutes)
 app.use('/api/profile', generalLimiter, profileRoutes)
 app.use('/api/notifications', generalLimiter, notificationsRoutes)
+app.use('/api/tracking', generalLimiter, trackingRoutes)
 app.use('/api/errors', generalLimiter, errorsRoutes)
 
 // ============================================
@@ -353,7 +355,7 @@ const startServer = async () => {
 		}
 		try {
 			await prisma.$disconnect()
-		} catch (_e) { }
+		} catch (_e) {}
 		process.exit(1)
 	}
 }
@@ -386,5 +388,5 @@ process.on('SIGTERM', () => shutdown('SIGTERM'))
 process.on('beforeExit', async () => {
 	try {
 		await prisma.$disconnect()
-	} catch (_e) { }
+	} catch (_e) {}
 })

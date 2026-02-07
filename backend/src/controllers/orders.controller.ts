@@ -359,13 +359,13 @@ export const createOrder = async (req: Request, res: Response) => {
 				},
 				...(halfProductId
 					? {
-						halfHalf: {
-							create: {
-								leftProductId: product.id,
-								rightProductId: halfProductId,
+							halfHalf: {
+								create: {
+									leftProductId: product.id,
+									rightProductId: halfProductId,
+								},
 							},
-						},
-					}
+						}
 					: {}),
 			})
 		}
@@ -561,6 +561,71 @@ export const deleteOrder = async (req: Request, res: Response) => {
 		})
 	} catch (error) {
 		console.error('Error deleting order:', error)
+		return res.status(500).json({
+			success: false,
+			message: 'Server error',
+			error: error instanceof Error ? error.message : 'Unknown error',
+		})
+	}
+}
+
+// GET /api/orders/driver - Driver buyurtmalari
+export const getDriverOrders = async (req: Request, res: Response) => {
+	try {
+		const authReq = req as AuthRequest
+		const firebaseUid = authReq.userId
+
+		if (!firebaseUid) {
+			return res.status(401).json({ success: false, message: 'Unauthorized' })
+		}
+
+		// Find driver in database
+		const driver = await prisma.user.findFirst({
+			where: {
+				firebaseUid,
+				role: 'DELIVERY',
+			},
+		})
+
+		if (!driver) {
+			return res.status(403).json({
+				success: false,
+				message: 'Not a driver or driver not found',
+			})
+		}
+
+		// Get driver's orders
+		const orders = await prisma.order.findMany({
+			where: {
+				driverId: driver.id,
+				status: {
+					in: ['CONFIRMED', 'OUT_FOR_DELIVERY', 'PREPARING', 'DELIVERED'],
+				},
+			},
+			include: {
+				user: {
+					select: {
+						name: true,
+						email: true,
+						phone: true,
+					},
+				},
+				items: {
+					include: {
+						product: true,
+					},
+				},
+			},
+			orderBy: { createdAt: 'desc' },
+		})
+
+		return res.status(200).json({
+			success: true,
+			count: orders.length,
+			data: orders,
+		})
+	} catch (error) {
+		console.error('Error fetching driver orders:', error)
 		return res.status(500).json({
 			success: false,
 			message: 'Server error',

@@ -9,13 +9,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/lib/AuthContext'
@@ -46,7 +40,7 @@ export default function RegisterPage() {
 		// ============================================
 
 		if (!email || !password || !confirmPassword) {
-			setError('Barcha maydonlarni to\'ldiring')
+			setError("Barcha maydonlarni to'ldiring")
 			return
 		}
 
@@ -56,14 +50,14 @@ export default function RegisterPage() {
 		}
 
 		if (password.length < 6) {
-			setError('Parol kamida 6 ta belgidan iborat bo\'lishi kerak')
+			setError("Parol kamida 6 ta belgidan iborat bo'lishi kerak")
 			return
 		}
 
 		// Email format tekshirish
 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 		if (!emailRegex.test(email)) {
-			setError('Email manzil noto\'g\'ri formatda')
+			setError("Email manzil noto'g'ri formatda")
 			return
 		}
 
@@ -73,20 +67,26 @@ export default function RegisterPage() {
 			// ============================================
 			// FIREBASE SIGNUP + BACKEND SYNC
 			// ============================================
-			await signup(email, password)
+			const backendUser = await signup(email, password)
 
 			console.log('✅ Signup successful')
 			setSuccess(true)
 
-			// Success message ko'rsatish va redirect
+			// Success message ko'rsatish va role bo'yicha redirect
 			setTimeout(() => {
-				router.push('/')
+				if (backendUser?.role === 'ADMIN') {
+					router.push('/admin')
+				} else if (backendUser?.role === 'DELIVERY') {
+					router.push('/driver/dashboard')
+				} else {
+					router.push('/')
+				}
 				router.refresh()
 			}, 1500)
 		} catch (err: unknown) {
 			console.error('❌ Signup error:', err)
 			const errorMessage =
-				getFirebaseErrorMessage(err) || 'Ro\'yxatdan o\'tishda xatolik. Qaytadan urinib ko\'ring.'
+				getFirebaseErrorMessage(err) || "Ro'yxatdan o'tishda xatolik. Qaytadan urinib ko'ring."
 			setError(errorMessage)
 		} finally {
 			setLoading(false)
@@ -178,9 +178,7 @@ export default function RegisterPage() {
 								className='h-11 text-base'
 								autoComplete='new-password'
 							/>
-							<p className='text-xs text-gray-500'>
-								Kamida 6 ta belgi, raqam va harf ishlating
-							</p>
+							<p className='text-xs text-gray-500'>Kamida 6 ta belgi, raqam va harf ishlating</p>
 						</div>
 
 						{/* ============================================ */}
@@ -222,7 +220,7 @@ export default function RegisterPage() {
 									Muvaffaqiyatli!
 								</>
 							) : (
-								'Ro\'yxatdan O\'tish'
+								"Ro'yxatdan O'tish"
 							)}
 						</Button>
 
