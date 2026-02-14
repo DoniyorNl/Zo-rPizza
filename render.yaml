@@ -35,10 +35,9 @@ services:
       - key: PORT
         generateValue: true
       # Quyidagilarni Render Dashboard > Environment da qo'lda qo'shing:
-      # - DATABASE_URL (PostgreSQL)
-      # - DIRECT_URL (Prisma migrations uchun)
+      # - DATABASE_URL, DIRECT_URL (PostgreSQL)
       # - FRONTEND_URL yoki FRONTEND_URLS (frontend URL)
-      # - FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL
+      # - FIREBASE_SERVICE_ACCOUNT_BASE64 (Firebase JSON ni base64 qilib)
 
   # ---------------------------------------------------------------------------
   # FRONTEND (Next.js)
