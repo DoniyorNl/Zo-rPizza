@@ -304,6 +304,22 @@ async function main() {
 		console.log(`✅ 1 ta admin user yaratildi`)
 		console.log(`✅ ${customers.length} ta mijoz yaratildi\n`)
 
+		console.log('📍 Filiallar yaratilmoqda...')
+		await prisma.branch.upsert({
+			where: { id: 'seed-branch-1' },
+			update: {},
+			create: {
+				id: 'seed-branch-1',
+				name: 'Zo-rPizza Markaziy',
+				address: "Toshkent sh., Amir Temur ko'chasi 1",
+				lat: 41.2995,
+				lng: 69.2401,
+				phone: '+998712000000',
+				isActive: true,
+			},
+		})
+		console.log('✅ 1 ta filial yaratildi\n')
+
 		// Buyurtmalar seed’da yaratilmaydi – faqat checkout orqali yaratiladi (standart pizzeria)
 
 		// ============================================
@@ -320,6 +336,7 @@ async function main() {
 		)
 		console.log(`   👤 Admin: 1 (${adminUser.email})`)
 		console.log(`   👥 Mijozlar: ${customers.length}`)
+		console.log(`   📍 Filiallar: 1`)
 		console.log(`   🛍️ Buyurtmalar: 0 (faqat checkout orqali)`)
 		console.log('━'.repeat(60))
 		console.log('\n🔐 LOGIN CREDENTIALS:')

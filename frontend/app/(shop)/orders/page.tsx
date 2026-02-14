@@ -10,7 +10,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { api } from '@/lib/apiClient'
 import { useAuth } from '@/lib/AuthContext'
 import TrackingModal from '@/components/tracking/TrackingModal'
-import { Clock, MapPin, Package, ShoppingBag, Trash2 } from 'lucide-react'
+import { Clock, MapPin, Package, RotateCcw, ShoppingBag, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -55,6 +55,7 @@ export default function OrdersPage() {
 	const [deletingId, setDeletingId] = useState<string | null>(null)
 	const [trackingOrderId, setTrackingOrderId] = useState<string | null>(null)
 	const [trackingOrderNumber, setTrackingOrderNumber] = useState<string>('')
+	const [reorderingId, setReorderingId] = useState<string | null>(null)
 
 	const fetchOrders = async () => {
 		if (!user) return
@@ -77,6 +78,24 @@ export default function OrdersPage() {
 		setLoading(true)
 		fetchOrders()
 	}, [user, router])
+
+	const handleReorder = async (e: React.MouseEvent, orderId: string) => {
+		e.stopPropagation()
+		setReorderingId(orderId)
+		try {
+			const res = await api.post(`/api/orders/${orderId}/reorder`)
+			if (res.data?.data?.id) {
+				router.push(`/orders/${res.data.data.id}`)
+			} else {
+				router.push('/orders')
+			}
+		} catch (err: unknown) {
+			const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+			alert(msg || 'Qayta buyurtmada xato')
+		} finally {
+			setReorderingId(null)
+		}
+	}
 
 	const handleDelete = async (e: React.MouseEvent, orderId: string) => {
 		e.stopPropagation()
@@ -179,6 +198,17 @@ export default function OrdersPage() {
 												>
 													<MapPin className='w-4 h-4 mr-1' />
 													Kuzatish
+												</Button>
+												<Button
+													variant='outline'
+													size='sm'
+													className='text-green-600 hover:text-green-700 hover:bg-green-50'
+													onClick={e => handleReorder(e, order.id)}
+													disabled={reorderingId === order.id}
+													aria-label='Qayta buyurtma'
+												>
+													<RotateCcw className='w-4 h-4 mr-1' />
+													Qayta buyurtma
 												</Button>
 												<Badge className={`${status.color} text-sm px-3 py-1`}>{status.label}</Badge>
 												{canDelete && (

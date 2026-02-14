@@ -55,6 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	 * Firebase user ni database ga saqlaydi
 	 */
 	const syncWithBackend = async (firebaseUser: User) => {
+		const { getApiBaseUrl } = await import('@/lib/apiBaseUrl')
 		try {
 			// 1. Firebase token olish
 			const token = await firebaseUser.getIdToken()
@@ -78,8 +79,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			} else {
 				console.warn('⚠️ Backend sync warning:', response.data.message)
 			}
-		} catch (error) {
-			console.error('❌ Backend sync error:', error)
+		} catch (error: unknown) {
+			const isNetworkError =
+				error &&
+				typeof error === 'object' &&
+				'code' in error &&
+				((error as { code?: string }).code === 'ERR_NETWORK' ||
+					(error as { message?: string }).message === 'Network Error')
+			if (isNetworkError && typeof window !== 'undefined') {
+				const baseUrl = getApiBaseUrl()
+				console.warn(
+					'⚠️ Backend unreachable at',
+					baseUrl,
+					'— is the server running? Auth will work with Firebase only until sync succeeds.',
+				)
+			} else {
+				console.error('❌ Backend sync error:', error)
+			}
 		}
 	}
 
