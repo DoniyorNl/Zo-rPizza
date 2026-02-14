@@ -8,6 +8,7 @@ import {
 	getDriverOrders,
 	getOrderById,
 	getUserOrders,
+	reorder,
 	updateOrderStatus,
 } from '@/controllers/orders.controller'
 import { Router } from 'express'
@@ -38,6 +39,7 @@ router.get('/', (_req, res) => {
 })
 
 router.get('/:id', authenticateFirebaseToken, getOrderById) // Bitta buyurtma
+router.post('/:id/reorder', authenticateFirebaseToken, reorder) // Qayta buyurtma
 router.delete('/:id', authenticateFirebaseToken, deleteOrder) // Buyurtma o'chirish
 
 export default router

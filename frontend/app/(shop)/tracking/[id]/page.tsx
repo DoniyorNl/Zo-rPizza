@@ -4,8 +4,9 @@
 import TrackingMap from '@/components/tracking/TrackingMap'
 import { useAuth } from '@/lib/AuthContext'
 import { buildApiUrl } from '@/lib/apiBaseUrl'
+import { useOrderTrackingSocket } from '@/lib/useOrderTrackingSocket'
 import { useParams, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 interface Location {
 	lat: number
@@ -90,13 +91,36 @@ export default function OrderTrackingPage() {
 		}
 	}, [user, orderId])
 
+	// Live updates via Socket.io
+	const onOrderUpdate = useCallback(
+		(payload: { status?: string; driverLocation?: object }) => {
+			setTrackingData((prev) => {
+				if (!prev) return prev
+				const next = { ...prev }
+				if (payload.status) {
+					next.order = { ...next.order, status: payload.status }
+				}
+				if (payload.driverLocation && prev.tracking) {
+					next.tracking = {
+						...prev.tracking,
+						driverLocation: payload.driverLocation as { lat: number; lng: number; timestamp?: string },
+						lastUpdate: new Date().toISOString(),
+					}
+				}
+				return next
+			})
+		},
+		[],
+	)
+	useOrderTrackingSocket(orderId, onOrderUpdate)
+
 	useEffect(() => {
 		if (
 			['OUT_FOR_DELIVERY', 'DELIVERING', 'PREPARING'].includes(
 				trackingData?.order.status || ''
 			)
 		) {
-			const interval = setInterval(fetchTracking, 10000)
+			const interval = setInterval(fetchTracking, 15000)
 			return () => clearInterval(interval)
 		}
 	}, [trackingData?.order.status])

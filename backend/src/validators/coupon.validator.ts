@@ -10,6 +10,7 @@ const baseCouponSchema = z.object({
 	description: z.string().optional(),
 	discountType: z.enum(discountTypes),
 	discountValue: z.coerce.number().positive(),
+	minOrderTotal: z.coerce.number().min(0).optional(),
 	isActive: z.coerce.boolean().optional(),
 	startsAt: z.coerce.date().optional(),
 	endsAt: z.coerce.date().optional(),

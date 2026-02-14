@@ -162,7 +162,7 @@ export const getOrderById = async (req: Request, res: Response) => {
 	}
 }
 
-// POST /api/orders - Yangi buyurtma
+// POST /api/orders - Yangi buyurtma (promo + loyalty qo'llab-quvvatlanadi)
 export const createOrder = async (req: Request, res: Response) => {
 	try {
 		let {
@@ -173,6 +173,8 @@ export const createOrder = async (req: Request, res: Response) => {
 			deliveryPhone,
 			deliveryLat,
 			deliveryLng,
+			couponCode,
+			loyaltyPointsToUse,
 		} = req.body
 
 		if (typeof items === 'string') {
@@ -391,12 +393,69 @@ export const createOrder = async (req: Request, res: Response) => {
 				? ({ lat, lng } as object)
 				: undefined
 
+		// Promo code (coupon) qo'llash
+		let discountAmount = 0
+		let couponId: string | null = null
+		if (couponCode && typeof couponCode === 'string' && couponCode.trim()) {
+			const coupon = await prisma.coupon.findFirst({
+				where: { code: couponCode.trim().toUpperCase(), isActive: true },
+			})
+			if (coupon) {
+				const now = new Date()
+				const valid =
+					(!coupon.startsAt || now >= coupon.startsAt) &&
+					(!coupon.endsAt || now <= coupon.endsAt) &&
+					(coupon.minOrderTotal == null || totalPrice >= coupon.minOrderTotal)
+				if (valid) {
+					const usageCount = await prisma.couponUsage.count({
+						where: { couponId: coupon.id },
+					})
+					const userUsageCount = await prisma.couponUsage.count({
+						where: { userId: user.id, couponId: coupon.id },
+					})
+					const underLimit =
+						(coupon.usageLimit == null || usageCount < coupon.usageLimit) &&
+						(coupon.perUserLimit == null || userUsageCount < coupon.perUserLimit)
+					if (underLimit) {
+						discountAmount =
+							coupon.discountType === 'PERCENT'
+								? (totalPrice * coupon.discountValue) / 100
+								: Math.min(coupon.discountValue, totalPrice)
+						couponId = coupon.id
+					}
+				}
+			}
+		}
+
+		let loyaltyPointsUsed = 0
+		const { REDEEM_POINTS_PER_CURRENCY, POINTS_PER_CURRENCY } = await import(
+			'../constants/loyalty'
+		)
+		const pointsToUse = Math.min(
+			Math.floor(Number(loyaltyPointsToUse) || 0),
+			user.loyaltyPoints ?? 0,
+		)
+		const redeemDiscount =
+			pointsToUse > 0
+				? Math.min(
+						pointsToUse / REDEEM_POINTS_PER_CURRENCY,
+						totalPrice - discountAmount,
+					)
+				: 0
+		if (redeemDiscount > 0) {
+			loyaltyPointsUsed = Math.floor(redeemDiscount * REDEEM_POINTS_PER_CURRENCY)
+		}
+
+		const finalTotal = Math.max(0, totalPrice - discountAmount - redeemDiscount)
+
 		// Buyurtma yaratish
 		const order = await prisma.order.create({
 			data: {
 				orderNumber,
 				userId: user.id,
-				totalPrice,
+				totalPrice: finalTotal,
+				...(discountAmount > 0 && { discountAmount, couponId }),
+				...(loyaltyPointsUsed > 0 && { loyaltyPointsUsed }),
 				paymentMethod: paymentMethod || 'CASH',
 				deliveryAddress,
 				deliveryPhone,
@@ -413,6 +472,47 @@ export const createOrder = async (req: Request, res: Response) => {
 						product: true,
 					},
 				},
+			},
+		})
+
+		// CouponUsage yozish
+		if (couponId) {
+			await prisma.couponUsage.create({
+				data: { userId: user.id, couponId, orderId: order.id },
+			})
+		}
+
+		// Loyalty: redeem va earn
+		const earnPoints = Math.floor(finalTotal * POINTS_PER_CURRENCY)
+		if (loyaltyPointsUsed > 0) {
+			await prisma.loyaltyTransaction.create({
+				data: {
+					userId: user.id,
+					type: 'REDEEM',
+					points: -loyaltyPointsUsed,
+					orderId: order.id,
+					description: `Redeemed for order ${order.orderNumber}`,
+				},
+			})
+		}
+		if (earnPoints > 0) {
+			await prisma.loyaltyTransaction.create({
+				data: {
+					userId: user.id,
+					type: 'EARN',
+					points: earnPoints,
+					orderId: order.id,
+					description: `Earned from order ${order.orderNumber}`,
+				},
+			})
+		}
+		const newPoints =
+			(user.loyaltyPoints ?? 0) - loyaltyPointsUsed + earnPoints
+		await prisma.user.update({
+			where: { id: user.id },
+			data: {
+				loyaltyPoints: Math.max(0, newPoints),
+				totalSpent: { increment: finalTotal },
 			},
 		})
 
@@ -489,6 +589,13 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 			},
 		})
 
+		// Live tracking: Socket.io
+		const { emitOrderUpdate } = await import('../lib/socket')
+		emitOrderUpdate(id, {
+			status: order.status,
+			estimatedTime: order.estimatedTime ?? undefined,
+		})
+
 		return res.status(200).json({
 			success: true,
 			message: 'Order status updated',
@@ -561,6 +668,128 @@ export const deleteOrder = async (req: Request, res: Response) => {
 		})
 	} catch (error) {
 		console.error('Error deleting order:', error)
+		return res.status(500).json({
+			success: false,
+			message: 'Server error',
+			error: error instanceof Error ? error.message : 'Unknown error',
+		})
+	}
+}
+
+// POST /api/orders/:id/reorder - Xuddi shu buyurtmani qayta berish
+export const reorder = async (req: Request, res: Response) => {
+	try {
+		const id = getParamString((req.params as any).id)
+		const authReq = req as AuthRequest
+		const firebaseUid = authReq.userId
+		if (!id || !firebaseUid) {
+			return res.status(400).json({ success: false, message: 'Order id and auth required' })
+		}
+		const dbUser = await prisma.user.findFirst({ where: { firebaseUid } })
+		if (!dbUser) {
+			return res.status(403).json({ success: false, message: 'Forbidden' })
+		}
+		const existing = await prisma.order.findUnique({
+			where: { id },
+			include: {
+				items: {
+					include: {
+						product: true,
+						toppings: { include: { topping: true } },
+						halfHalf: true,
+					},
+				},
+			},
+		})
+		if (!existing) {
+			return res.status(404).json({ success: false, message: 'Order not found' })
+		}
+		if (existing.userId !== dbUser.id) {
+			return res.status(403).json({ success: false, message: 'Not your order' })
+		}
+
+		const orderItems = existing.items.map((item) => {
+			const addedToppingIds = item.toppings
+				.filter((t) => !t.isRemoved)
+				.map((t) => t.toppingId)
+			const removedToppingIds = item.toppings
+				.filter((t) => t.isRemoved)
+				.map((t) => t.toppingId)
+			const halfProductId =
+				item.halfHalf != null
+					? item.productId === item.halfHalf.leftProductId
+						? item.halfHalf.rightProductId
+						: item.halfHalf.leftProductId
+					: undefined
+			return {
+				productId: item.productId!,
+				quantity: item.quantity,
+				variationId: item.variationId ?? undefined,
+				size: item.size ?? undefined,
+				addedToppingIds,
+				removedToppingIds,
+				...(halfProductId && { halfProductId }),
+			}
+		})
+
+		const lastOrder = await prisma.order.findFirst({
+			orderBy: { createdAt: 'desc' },
+		})
+		let orderNumber = '#0001'
+		if (lastOrder?.orderNumber) {
+			const lastNumber = parseInt(lastOrder.orderNumber.replace(/\D/g, ''), 10)
+			if (!isNaN(lastNumber)) {
+				orderNumber = `#${(lastNumber + 1).toString().padStart(4, '0')}`
+			}
+		}
+
+		const newOrder = await prisma.order.create({
+			data: {
+				orderNumber,
+				userId: dbUser.id,
+				totalPrice: existing.totalPrice,
+				paymentMethod: existing.paymentMethod,
+				deliveryAddress: existing.deliveryAddress,
+				deliveryPhone: existing.deliveryPhone,
+				deliveryLat: existing.deliveryLat,
+				deliveryLng: existing.deliveryLng,
+				deliveryLocation: existing.deliveryLocation,
+				items: {
+					create: existing.items.map((item) => ({
+						productId: item.productId,
+						quantity: item.quantity,
+						price: item.price,
+						size: item.size,
+						variationId: item.variationId,
+						toppings: {
+							create: item.toppings.map((t) => ({
+								toppingId: t.toppingId,
+								isRemoved: t.isRemoved,
+							})),
+						},
+						...(item.halfHalf && {
+							halfHalf: {
+								create: {
+									leftProductId: item.halfHalf.leftProductId,
+									rightProductId: item.halfHalf.rightProductId,
+								},
+							},
+						}),
+					})),
+				},
+			},
+			include: {
+				items: { include: { product: true } },
+			},
+		})
+
+		return res.status(201).json({
+			success: true,
+			message: 'Reorder created successfully',
+			data: newOrder,
+		})
+	} catch (error) {
+		console.error('Reorder error:', error)
 		return res.status(500).json({
 			success: false,
 			message: 'Server error',

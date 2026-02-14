@@ -18,13 +18,17 @@ import { rateLimit } from 'express-rate-limit'
 // ROUTES IMPORT
 // ============================================================================
 import analyticsRoutes from './routes/analytics.routes'
+import branchesRoutes from './routes/branches.routes'
 import categoriesRoutes from './routes/categories.routes'
 import couponsRoutes from './routes/coupons.routes'
 import dashboardRoutes from './routes/dashboard.routes'
 import dealsRoutes from './routes/deals.routes'
+import deliveryRoutes from './routes/delivery.routes'
+import loyaltyRoutes from './routes/loyalty.routes'
 import ordersRoutes from './routes/orders.routes'
 import productsRoutes from './routes/products.routes'
 import profileRoutes from './routes/profile.routes'
+import promosRoutes from './routes/promos.routes'
 import toppingsRoutes from './routes/toppings.routes'
 import trackingRoutes from './routes/tracking.routes'
 import usersRoutes from './routes/users.routes'
@@ -224,9 +228,13 @@ app.use('/api/dashboard', dashboardLimiter, dashboardRoutes)
 app.use('/api/analytics', analyticsLimiter, analyticsRoutes)
 
 // General API Routes
+app.use('/api/branches', generalLimiter, branchesRoutes)
 app.use('/api/categories', generalLimiter, categoriesRoutes)
 app.use('/api/deals', generalLimiter, dealsRoutes)
+app.use('/api/delivery', generalLimiter, deliveryRoutes)
 app.use('/api/coupons', generalLimiter, couponsRoutes)
+app.use('/api/loyalty', generalLimiter, loyaltyRoutes)
+app.use('/api/promos', generalLimiter, promosRoutes)
 app.use('/api/products', generalLimiter, productsRoutes)
 app.use('/api/toppings', generalLimiter, toppingsRoutes)
 app.use('/api/orders', generalLimiter, ordersRoutes)
@@ -266,6 +274,11 @@ app.use((err: AppError, _req: Request, res: Response, _next: NextFunction) => {
 		...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
 	})
 })
+
+// ============================================
+// SOCKET.IO (Live order tracking)
+// ============================================
+import { initSocket } from './lib/socket'
 
 // ============================================
 // SERVER LAUNCHER
@@ -308,6 +321,7 @@ const startServer = async () => {
 
 		// 3. Server ishga tushirish
 		const server = app.listen(Number(PORT), '0.0.0.0', () => {
+			initSocket(server)
 			const baseUrl = `http://localhost:${PORT}`
 			console.log(`
 ╔══════════════════════════════════════════════════════════════╗

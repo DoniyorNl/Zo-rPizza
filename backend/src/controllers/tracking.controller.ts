@@ -55,6 +55,11 @@ export async function updateDriverLocation(req: Request, res: Response) {
         },
       })
 
+      const { emitOrderUpdate } = await import('../lib/socket')
+      emitOrderUpdate(activeOrder.id, {
+        driverLocation: { lat, lng, timestamp: getLocationTimestamp() },
+      })
+
       const isNear = isNearDestination({ lat, lng }, deliveryLoc)
       if (isNear && activeOrder.status !== 'DELIVERED') {
         await prisma.notification.create({

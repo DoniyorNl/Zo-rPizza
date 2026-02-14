@@ -36,10 +36,12 @@ model User {
   memberSince     DateTime @default(now())
   
   // Relations
-  orders        Order[]
-  reviews       Review[]
-  notifications Notification[]
-  addresses     Address[]
+  orders             Order[]
+  reviews            Review[]
+  notifications      Notification[]
+  addresses          Address[]
+  couponUsages       CouponUsage[]
+  loyaltyTransactions LoyaltyTransaction[]
   
   // Driver specific fields
   isDriver            Boolean        @default(false)
@@ -179,6 +181,7 @@ model Coupon {
   description   String?
   discountType  DiscountType
   discountValue Float
+  minOrderTotal Float?       @default(0)
   isActive      Boolean      @default(true)
   startsAt      DateTime?
   endsAt        DateTime?
@@ -186,8 +189,55 @@ model Coupon {
   perUserLimit  Int?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
+  usages        CouponUsage[]
 
   @@map("coupons")
+}
+
+model CouponUsage {
+  id        String   @id @default(uuid())
+  userId    String
+  couponId  String
+  orderId   String?
+  usedAt   DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+
+  @@index([userId, couponId])
+  @@map("coupon_usages")
+}
+
+model Branch {
+  id        String   @id @default(uuid())
+  name      String
+  address   String
+  lat       Float
+  lng       Float
+  phone     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("branches")
+}
+
+model LoyaltyTransaction {
+  id          String   @id @default(uuid())
+  userId      String
+  type        LoyaltyTransactionType
+  points      Int
+  orderId     String?
+  description String?
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("loyalty_transactions")
+}
+
+enum LoyaltyTransactionType {
+  EARN
+  REDEEM
 }
 
 model Order {
@@ -196,6 +246,9 @@ model Order {
   userId              String
   status              OrderStatus   @default(PENDING)
   totalPrice          Float
+  discountAmount      Float?        @default(0)
+  couponId            String?
+  loyaltyPointsUsed   Int?         @default(0)
   paymentMethod       PaymentMethod
   paymentStatus       PaymentStatus @default(PENDING)
   deliveryAddress     String
