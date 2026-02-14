@@ -22,12 +22,12 @@ function getGreeting(): string {
 
 /**
  * HeroSection Component
- * 
+ *
  * Main hero section with:
  * - Time-based greeting
  * - Welcome message
  * - Call to action
- * 
+ *
  * Inspired by New York Pizza style - minimal and friendly
  */
 export function HeroSection() {
@@ -114,7 +114,7 @@ export function HeroSection() {
 			</div>
 
 			{/* Custom Animations (Add to globals.css) */}
-			<style jsx>{`
+			<style>{`
 				@keyframes fade-in {
 					from {
 						opacity: 0;

@@ -152,6 +152,9 @@ export const firebaseAuthController = {
 							firebaseUid: req.userId,
 							name: firebaseUser.displayName || existingUser.name,
 							phone: firebaseUser.phoneNumber || existingUser.phone,
+							...(existingUser.isDriver && existingUser.role === 'CUSTOMER'
+								? { role: 'DELIVERY' }
+								: {}),
 						},
 					})
 				} else {
@@ -183,6 +186,10 @@ export const firebaseAuthController = {
 				}
 				if (firebaseUser.phoneNumber && firebaseUser.phoneNumber !== dbUser.phone) {
 					updateData.phone = firebaseUser.phoneNumber
+				}
+
+				if (dbUser.isDriver && dbUser.role === 'CUSTOMER') {
+					updateData.role = 'DELIVERY'
 				}
 
 				// Agar o'zgarishlar bo'lsa, update qilish

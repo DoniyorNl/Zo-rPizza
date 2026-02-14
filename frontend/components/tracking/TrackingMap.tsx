@@ -30,6 +30,7 @@ export default function TrackingMap({
 	const [isMapReady, setIsMapReady] = useState(false)
 
 	useEffect(() => {
+		if (process.env.NODE_ENV === 'test') return
 		if (typeof window === 'undefined' || !mapRef.current) return
 
 		let map: any
@@ -156,7 +157,7 @@ export default function TrackingMap({
 				</div>
 			</div>
 
-			<style jsx>{`
+			<style>{`
 				@keyframes pulse {
 					0%,
 					100% {

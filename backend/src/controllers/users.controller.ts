@@ -522,15 +522,33 @@ export const updateUserDriver = async (req: Request, res: Response) => {
 			return res.status(400).json({ success: false, message: 'isDriver must be a boolean' })
 		}
 
+		const existingUser = await prisma.user.findUnique({
+			where: { id: userId },
+			select: { id: true, role: true, isDriver: true },
+		})
+
+		if (!existingUser) {
+			return res.status(404).json({ success: false, message: 'User not found' })
+		}
+
+		const updateData: { isDriver: boolean; role?: UserRole } = { isDriver }
+
+		// Keep role consistent with driver status for non-admin users
+		if (isDriver && existingUser.role !== 'ADMIN') {
+			updateData.role = 'DELIVERY'
+		} else if (!isDriver && existingUser.role === 'DELIVERY') {
+			updateData.role = 'CUSTOMER'
+		}
+
 		const user = await prisma.user.update({
 			where: { id: userId },
-			data: { isDriver },
-			select: { id: true, name: true, email: true, isDriver: true, vehicleType: true },
+			data: updateData,
+			select: { id: true, name: true, email: true, isDriver: true, role: true, vehicleType: true },
 		})
 
 		return res.status(200).json({
 			success: true,
-			message: isDriver ? 'Haydovchi sifatida qo\'shildi' : 'Haydovchi ro\'yxatdan chiqarildi',
+			message: isDriver ? "Haydovchi sifatida qo'shildi" : "Haydovchi ro'yxatdan chiqarildi",
 			data: user,
 		})
 	} catch (error) {

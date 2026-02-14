@@ -73,5 +73,11 @@ global.IntersectionObserver = class IntersectionObserver {
 	unobserve() {}
 }
 
+// Mock fetch to avoid noisy warnings in tests
+global.fetch = jest.fn().mockResolvedValue({
+	ok: true,
+	json: async () => ({}),
+})
+
 // Suppress console errors in tests (optional)
 // global.console.error = jest.fn()

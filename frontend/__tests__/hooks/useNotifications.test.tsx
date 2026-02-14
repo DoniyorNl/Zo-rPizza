@@ -23,10 +23,18 @@ jest.mock('@/lib/AuthContext', () => ({
 const originalError = console.error
 beforeAll(() => {
 	console.error = (...args: any[]) => {
-		if (
-			typeof args[0] === 'string' &&
-			(args[0].includes('Network error') || args[0].includes('act(...)'))
-		) {
+		const firstArg = args[0]
+		if (typeof firstArg === 'string') {
+			if (
+				firstArg.includes('Network error') ||
+				firstArg.includes('act(...)') ||
+				firstArg.includes('Fetch notifications error') ||
+				firstArg.includes('API Error')
+			) {
+				return
+			}
+		}
+		if (args.some(arg => arg instanceof Error && arg.message.includes('API Error'))) {
 			return
 		}
 		originalError.call(console, ...args)

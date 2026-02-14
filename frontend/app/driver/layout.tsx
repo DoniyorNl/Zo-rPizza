@@ -1,29 +1,58 @@
 /**
- * 🚗 DRIVER LAYOUT
+ * 🚗 DRIVER LAYOUT - IMPROVED
  * Driver sahifalar uchun umumiy layout
- * - Faqat DRIVER role kirishi mumkin
- * - Navigation: Dashboard, Profile
- * - Real-time notifications
+ * - Faqat DELIVERY role kirishi mumkin
+ * - Navigation: Dashboard, Orders, History, Settings
+ * - User dropdown menu
  */
 
 'use client'
 
 import { useAuth } from '@/lib/AuthContext'
-import { LayoutDashboard, LogOut, MapPin, Truck, User } from 'lucide-react'
+import {
+	ChevronDown,
+	History,
+	LayoutDashboard,
+	LogOut,
+	MapPin,
+	Package,
+	Settings,
+	Truck,
+	User,
+} from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
 
 export default function DriverLayout({ children }: { children: React.ReactNode }) {
 	const { user, backendUser, logout, loading } = useAuth()
 	const router = useRouter()
+	const [showUserMenu, setShowUserMenu] = useState(false)
+	const dropdownRef = useRef<HTMLDivElement>(null)
+	const shouldBypassAuth =
+		typeof window !== 'undefined' &&
+		process.env.NEXT_PUBLIC_E2E_BYPASS_AUTH === 'true' &&
+		process.env.NODE_ENV !== 'production'
+	const isAuthorized = backendUser?.role === 'DELIVERY' && (user || shouldBypassAuth)
 
 	// Auth Guard: faqat DELIVERY role kirishi mumkin
 	useEffect(() => {
-		if (!loading && (!user || !backendUser || backendUser.role !== 'DELIVERY')) {
+		if (!loading && !isAuthorized) {
 			router.push('/login')
 		}
-	}, [user, backendUser, loading, router])
+	}, [loading, isAuthorized, router])
+
+	// Close dropdown when clicking outside
+	useEffect(() => {
+		function handleClickOutside(event: MouseEvent) {
+			if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+				setShowUserMenu(false)
+			}
+		}
+
+		document.addEventListener('mousedown', handleClickOutside)
+		return () => document.removeEventListener('mousedown', handleClickOutside)
+	}, [])
 
 	// Loading state
 	if (loading) {
@@ -38,7 +67,7 @@ export default function DriverLayout({ children }: { children: React.ReactNode }
 	}
 
 	// User yo'q yoki DELIVERY emas
-	if (!user || !backendUser || backendUser.role !== 'DELIVERY') {
+	if (!isAuthorized) {
 		return null // redirect boshlanmoqda
 	}
 
@@ -71,14 +100,16 @@ export default function DriverLayout({ children }: { children: React.ReactNode }
 							</div>
 						</Link>
 
-						{/* User Info & Actions */}
-						<div className='flex items-center space-x-6'>
-							{/* User Profile */}
-							<div className='flex items-center space-x-3 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100'>
+						{/* User Dropdown */}
+						<div className='relative' ref={dropdownRef}>
+							<button
+								onClick={() => setShowUserMenu(!showUserMenu)}
+								className='flex items-center space-x-3 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 hover:border-blue-300 hover:shadow-md transition-all'
+							>
 								<div className='w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-md'>
 									<User className='w-6 h-6 text-white' />
 								</div>
-								<div className='hidden sm:block'>
+								<div className='hidden sm:block text-left'>
 									<p className='text-sm font-semibold text-gray-900'>
 										{backendUser?.name || 'Driver'}
 									</p>
@@ -87,16 +118,80 @@ export default function DriverLayout({ children }: { children: React.ReactNode }
 										{backendUser?.vehicleType || 'Mototsikl'}
 									</p>
 								</div>
-							</div>
-
-							{/* Logout Button */}
-							<button
-								onClick={handleLogout}
-								className='flex items-center space-x-2 px-4 py-2 rounded-lg text-gray-700 hover:text-red-600 hover:bg-red-50 transition-all duration-200 border border-transparent hover:border-red-200'
-							>
-								<LogOut className='w-5 h-5' />
-								<span className='hidden sm:inline text-sm font-medium'>Chiqish</span>
+								<ChevronDown
+									className={`w-4 h-4 text-gray-600 transition-transform ${showUserMenu ? 'rotate-180' : ''}`}
+								/>
 							</button>
+
+							{/* Dropdown Menu */}
+							{showUserMenu && (
+								<div className='absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50'>
+									{/* User Info */}
+									<div className='px-4 py-3 border-b border-gray-100'>
+										<p className='text-sm font-semibold text-gray-900'>
+											{backendUser?.name || 'Driver'}
+										</p>
+										<p className='text-xs text-gray-500'>{backendUser?.email}</p>
+										<p className='text-xs text-gray-500 mt-1 flex items-center'>
+											<MapPin className='w-3 h-3 mr-1' />
+											Vehicle: {backendUser?.vehicleType || 'Mototsikl'}
+										</p>
+									</div>
+
+									{/* Menu Items */}
+									<div className='py-1'>
+										<Link
+											href='/driver/dashboard'
+											className='flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors'
+											onClick={() => setShowUserMenu(false)}
+										>
+											<LayoutDashboard className='w-4 h-4' />
+											<span>Dashboard</span>
+										</Link>
+
+										<Link
+											href='/driver/orders'
+											className='flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors'
+											onClick={() => setShowUserMenu(false)}
+										>
+											<Package className='w-4 h-4' />
+											<span>Buyurtmalar</span>
+										</Link>
+
+										<Link
+											href='/driver/history'
+											className='flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors'
+											onClick={() => setShowUserMenu(false)}
+										>
+											<History className='w-4 h-4' />
+											<span>Tarix</span>
+										</Link>
+
+										<Link
+											href='/driver/settings'
+											className='flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors'
+											onClick={() => setShowUserMenu(false)}
+										>
+											<Settings className='w-4 h-4' />
+											<span>Sozlamalar</span>
+										</Link>
+									</div>
+
+									{/* Logout */}
+									<div className='border-t border-gray-100 pt-1'>
+										<button
+											onClick={() => {
+												setShowUserMenu(false)
+												handleLogout()
+											}}
+											className='flex items-center space-x-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors w-full text-left'
+										>
+											<LogOut className='w-4 h-4' />
+											<span>Chiqish</span>
+										</button>
+									</div>
+								</div>
+							)}
 						</div>
 					</div>
 				</div>
@@ -109,11 +204,14 @@ export default function DriverLayout({ children }: { children: React.ReactNode }
 						<NavLink href='/driver/dashboard' icon={LayoutDashboard}>
 							Dashboard
 						</NavLink>
-						<NavLink href='/driver/orders' icon={Truck}>
+						<NavLink href='/driver/orders' icon={Package}>
 							Buyurtmalar
 						</NavLink>
-						<NavLink href='/driver/history' icon={User}>
+						<NavLink href='/driver/history' icon={History}>
 							Tarix
+						</NavLink>
+						<NavLink href='/driver/settings' icon={Settings}>
+							Sozlamalar
 						</NavLink>
 					</div>
 				</div>
@@ -144,10 +242,13 @@ interface NavLinkProps {
 }
 
 function NavLink({ href, icon: Icon, children }: NavLinkProps) {
+	const pathname = usePathname()
+	const isActive = pathname === href || pathname.startsWith(href + '/')
+
 	return (
 		<Link
 			href={href}
-			className='flex items-center space-x-2 py-4 border-b-2 border-transparent hover:border-blue-600 text-gray-600 hover:text-blue-600 transition-all duration-200 font-medium text-sm group'
+			className={`flex items-center space-x-2 py-4 border-b-2 transition-all duration-200 font-medium text-sm group ${isActive ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:border-blue-300 hover:text-blue-600'}`}
 		>
 			<Icon className='w-5 h-5 group-hover:scale-110 transition-transform' />
 			<span>{children}</span>

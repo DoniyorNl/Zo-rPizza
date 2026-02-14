@@ -22,5 +22,8 @@
 		"test:e2e:ui": "pnpm --filter frontend test:e2e:ui",
 		"test:changed": "pnpm --filter zor-pizza-backend test:changed && pnpm --filter frontend test:changed",
 		"test:all": "pnpm -r test && pnpm --filter frontend test:e2e"
+	},
+	"devDependencies": {
+		"@types/node": "^25.2.2"
 	}
 }
