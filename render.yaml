@@ -17,6 +17,7 @@ services:
   # ---------------------------------------------------------------------------
   - type: web
     name: zo-rpizza-backend
+    plan: free
     runtime: node
 
     # Monorepo: faqat backend papkasida o'zgarish bo'lsa deploy
@@ -44,6 +45,7 @@ services:
   # ---------------------------------------------------------------------------
   - type: web
     name: zo-rpizza-frontend
+    plan: free
     runtime: node
 
     # Monorepo: faqat frontend papkasida o'zgarish bo'lsa deploy
