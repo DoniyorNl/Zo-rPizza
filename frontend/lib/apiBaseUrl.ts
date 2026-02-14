@@ -4,19 +4,24 @@
  */
 
 const PRODUCTION_FALLBACK = 'https://zo-rpizza-production.up.railway.app'
+const LOCAL_API = 'http://localhost:5001'
+
+const isLocalHost = (host: string) =>
+	host === 'localhost' || host === '127.0.0.1'
 
 function getApiBaseUrl(): string {
 	const productionUrl = process.env.NEXT_PUBLIC_API_URL || PRODUCTION_FALLBACK
 	const useProductionApi = process.env.NEXT_PUBLIC_USE_PRODUCTION_API === 'true'
 	const isDevelopment = process.env.NODE_ENV === 'development'
 
-	if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+	// Brauzerda: localhost yoki 127.0.0.1 da local backend ishlatamiz
+	if (typeof window !== 'undefined' && isLocalHost(window.location.hostname)) {
 		if (useProductionApi) {
 			if (isDevelopment) console.warn('⚠️ Using production API in development mode')
 			return productionUrl.replace(/\/+$/, '')
 		}
-		if (isDevelopment) console.log('🔧 Using local backend: http://localhost:5001')
-		return 'http://localhost:5001'
+		if (isDevelopment) console.log('🔧 Using local backend:', LOCAL_API)
+		return LOCAL_API
 	}
 
 	if (typeof window !== 'undefined' && isDevelopment) {
@@ -32,10 +37,12 @@ export function buildApiUrl(path: string): string {
 	return `${base}${normalizedPath}`
 }
 
-/** Server yoki ilk yuklanishda ishlatish uchun (SSR). */
+/** Server yoki ilk yuklanishda ishlatish uchun (SSR). Developmentda local backend. */
 export const API_BASE_URL =
 	typeof window !== 'undefined'
 		? getApiBaseUrl()
-		: (process.env.NEXT_PUBLIC_API_URL || PRODUCTION_FALLBACK).replace(/\/+$/, '')
+		: process.env.NODE_ENV === 'development' && !process.env.NEXT_PUBLIC_API_URL
+			? LOCAL_API
+			: (process.env.NEXT_PUBLIC_API_URL || PRODUCTION_FALLBACK).replace(/\/+$/, '')
 
 export { getApiBaseUrl }
