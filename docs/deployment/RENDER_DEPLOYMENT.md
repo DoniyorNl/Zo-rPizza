@@ -81,18 +81,17 @@ Frontend uchun `NEXT_PUBLIC_*` o'zgaruvchilari build vaqtida qo'shilishi kerak.
 |-------------|----------|-------|
 | `DATABASE_URL` | Render PostgreSQL yoki Supabase | `postgresql://user:pass@host:5432/db?sslmode=require` |
 | `DIRECT_URL` | Xuddi shu (Prisma migrations) | `postgresql://user:pass@host:5432/db?sslmode=require` |
-| `FRONTEND_URL` | Frontend URL (deploydan keyin) | `https://zo-rpizza-frontend.onrender.com` |
-| `FIREBASE_PROJECT_ID` | Firebase Console | `zo-rpizza` |
-| `FIREBASE_PRIVATE_KEY` | Firebase Service Account JSON | `"-----BEGIN PRIVATE KEY-----\n..."` |
-| `FIREBASE_CLIENT_EMAIL` | Firebase Service Account | `firebase-adminsdk-xxx@zo-rpizza.iam.gserviceaccount.com` |
+| `FRONTEND_URL` yoki `FRONTEND_URLS` | Frontend URL (deploydan keyin) | `https://zo-rpizza-frontend.onrender.com` |
+| `FIREBASE_SERVICE_ACCOUNT_BASE64` | Firebase JSON fayl (base64) | Quyida |
 | `NODE_ENV` | - | `production` |
 
-**Firebase Service Account olish:**
+**FIREBASE_SERVICE_ACCOUNT_BASE64 qanday olish:**
 
-1. Firebase Console → Project Settings → Service Accounts
-2. **Generate new private key**
-3. JSON fayldan `private_key` va `client_email` ni nusxalang
-4. `private_key` da `\n` ni haqiqiy yangi qatorga almashtiring (yoki to'g'ridan-to'g'ri qoldiring)
+1. Firebase Console → Project Settings → Service Accounts → **Generate new private key** (JSON yuklab oladi)
+2. Terminalda: `base64 -i firebase-service-account.json | pbcopy` (Mac) yoki `base64 firebase-service-account.json` (Linux)
+3. Chiqqan matnni to'liq nusxalab `FIREBASE_SERVICE_ACCOUNT_BASE64` qiymati sifatida Render'ga qo'ying
+
+**Loyiha Firebase ni shu usulda ishlatadi** – `backend/src/config/firebase.ts` da `FIREBASE_SERVICE_ACCOUNT_BASE64` qabul qilinadi.
 
 ---
 
