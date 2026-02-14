@@ -1,0 +1,67 @@
+# =============================================================================
+# Zo-rPizza - Render Blueprint
+# =============================================================================
+# Bu fayl Render'da avtomatik deploy uchun ishlatiladi.
+# Dashboard: https://dashboard.render.com
+#
+# Qanday ishlatish:
+# 1. render.com ga kiring
+# 2. New > Blueprint
+# 3. GitHub reponi ulang
+# 4. render.yaml avtomatik topiladi
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # BACKEND (Express + Prisma)
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: zo-rpizza-backend
+    runtime: node
+
+    # Monorepo: faqat backend papkasida o'zgarish bo'lsa deploy
+    rootDir: backend
+    buildFilter:
+      paths:
+        - backend/**
+
+    buildCommand: pnpm install && pnpm prisma:migrate
+    startCommand: pnpm start
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        generateValue: true
+      # Quyidagilarni Render Dashboard > Environment da qo'lda qo'shing:
+      # - DATABASE_URL (PostgreSQL)
+      # - DIRECT_URL (Prisma migrations uchun)
+      # - FRONTEND_URL yoki FRONTEND_URLS (frontend URL)
+      # - FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL
+
+  # ---------------------------------------------------------------------------
+  # FRONTEND (Next.js)
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: zo-rpizza-frontend
+    runtime: node
+
+    # Monorepo: faqat frontend papkasida o'zgarish bo'lsa deploy
+    rootDir: frontend
+    buildFilter:
+      paths:
+        - frontend/**
+
+    buildCommand: pnpm install && pnpm build
+    startCommand: pnpm start
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        generateValue: true
+      # Quyidagilarni Render Dashboard da qo'shing:
+      # - NEXT_PUBLIC_API_URL (backend URL, masalan https://zo-rpizza-backend.onrender.com)
+      # - NEXT_PUBLIC_FIREBASE_API_KEY
+      # - NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+      # - NEXT_PUBLIC_FIREBASE_PROJECT_ID

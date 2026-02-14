@@ -250,5 +250,15 @@ Deploy muvaffaqiyatli bo'lishi uchun:
 
 ---
 
-**Oxirgi yangilanish:** 2026-01-25  
+---
+
+## 🆕 Render'ga Deploy (Alternativ)
+
+Agar Railway o'rniga **Render** ishlatmoqchi bo'lsangiz, batafsil qo'llanma:
+
+👉 **[RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md)** – Render uchun to'liq qadam-baqadam qo'llanma
+
+---
+
+**Oxirgi yangilanish:** 2026-02-14  
 **Muallif:** Zo-rPizza Development Team

@@ -1,9 +1,9 @@
 // frontend/__tests__/components/DealsSection.test.tsx
 // 🎁 DEALS SECTION COMPONENT TESTS - Senior Level
 
-import { render, screen, fireEvent } from '@testing-library/react'
 import { DealsSection } from '@/components/home/DealsSection'
 import { useDeals } from '@/hooks/useDeals'
+import { render, screen } from '@testing-library/react'
 
 // Mock hooks
 jest.mock('@/hooks/useDeals')
@@ -15,8 +15,9 @@ jest.mock('next/navigation', () => ({
 jest.mock('next/image', () => ({
 	__esModule: true,
 	default: (props: any) => {
+		const { src, alt, className } = props
 		// eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
-		return <img {...props} />
+		return <img src={src} alt={alt} className={className} />
 	},
 }))
 

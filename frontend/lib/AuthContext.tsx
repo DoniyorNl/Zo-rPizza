@@ -185,9 +185,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	 * Auth state o'zgarishini kuzatish
 	 */
 	useEffect(() => {
+		let isSubscribed = true
+		const shouldBypassAuth =
+			typeof window !== 'undefined' &&
+			process.env.NEXT_PUBLIC_E2E_BYPASS_AUTH === 'true' &&
+			process.env.NODE_ENV !== 'production'
+
+		if (shouldBypassAuth) {
+			const storedUser = localStorage.getItem('e2eBackendUser')
+			if (storedUser) {
+				try {
+					const parsed = JSON.parse(storedUser) as BackendUser
+					if (isSubscribed) setBackendUser(parsed)
+				} catch (error) {
+					console.warn('⚠️ E2E bypass user parse failed:', error)
+				}
+			}
+			if (isSubscribed) setLoading(false)
+			return () => {
+				isSubscribed = false
+			}
+		}
+
 		const unsubscribe = onAuthStateChanged(auth, async currentUser => {
+			if (!isSubscribed) return
+
 			setUser(currentUser)
-			setLoading(false)
 
 			if (currentUser) {
 				// User tizimga kirgan
@@ -207,16 +230,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 					await syncWithBackend(currentUser)
 				} catch (error) {
 					console.error('❌ Auth state change error:', error)
+				} finally {
+					if (isSubscribed) setLoading(false)
 				}
 			} else {
 				// User chiqdi
 				setBackendUser(null)
 				localStorage.removeItem('firebaseUser')
 				localStorage.removeItem('firebaseToken')
+				if (isSubscribed) setLoading(false)
 			}
 		})
 
-		return unsubscribe
+		return () => {
+			isSubscribed = false
+			unsubscribe()
+		}
 	}, [])
 
 	/**

@@ -63,6 +63,12 @@ describe('usePopularProducts Hook', () => {
 		},
 	]
 
+	let consoleErrorSpy: jest.SpyInstance
+
+	beforeAll(() => {
+		consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+	})
+
 	beforeEach(() => {
 		jest.clearAllMocks()
 		localStorage.clear()
@@ -74,6 +80,10 @@ describe('usePopularProducts Hook', () => {
 			jest.clearAllTimers()
 		})
 		jest.useRealTimers()
+	})
+
+	afterAll(() => {
+		consoleErrorSpy.mockRestore()
 	})
 
 	it('should fetch and return popular products successfully', async () => {
