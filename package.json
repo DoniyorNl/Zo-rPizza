@@ -9,7 +9,7 @@
 	"scripts": {
 		"dev": "pnpm --filter frontend dev",
 		"dev:backend": "pnpm --filter backend dev",
-		"dev:both": "pnpm -r --parallel dev",
+		"dev:both": "concurrently -n backend,frontend -c blue,green \"pnpm run dev:backend\" \"pnpm run dev\"",
 		"build": "pnpm -r build",
 		"test": "pnpm -r test",
 		"test:frontend": "pnpm --filter frontend test",
@@ -24,6 +24,7 @@
 		"test:all": "pnpm -r test && pnpm --filter frontend test:e2e"
 	},
 	"devDependencies": {
-		"@types/node": "^25.2.2"
+		"@types/node": "^25.2.2",
+		"concurrently": "^9.1.2"
 	}
 }
