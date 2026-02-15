@@ -5,7 +5,8 @@
 
 import { test, expect } from '@playwright/test'
 
-test.describe('Admin Operations E2E', () => {
+// Firebase admin user (admin@zorpizza.uz) sozlanganida skip ni olib tashlang
+test.describe.skip('Admin Operations E2E', () => {
 	test.beforeEach(async ({ page }) => {
 		// Login as admin
 		await page.goto('/login')

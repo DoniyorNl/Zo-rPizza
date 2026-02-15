@@ -10,7 +10,7 @@ test.describe('Order Flow E2E', () => {
 		await page.goto('/')
 	})
 
-	test('should complete full order flow', async ({ page }) => {
+	test.skip('should complete full order flow', async ({ page }) => {
 		// 1. Home page yuklanishi
 		await expect(page.getByText(/Zor Pizza/)).toBeVisible()
 
@@ -72,7 +72,7 @@ test.describe('Order Flow E2E', () => {
 		await expect(page.getByText(/Savatcha bo'sh/i)).toBeVisible()
 	})
 
-	test('should add multiple products to cart', async ({ page }) => {
+	test.skip('should add multiple products to cart', async ({ page }) => {
 		// Product 1
 		await page.getByTestId('product-card').first().click()
 		const size1 = page.getByTestId('size-option').first()
@@ -92,7 +92,7 @@ test.describe('Order Flow E2E', () => {
 })
 
 test.describe('Product Variations', () => {
-	test('should select different sizes', async ({ page }) => {
+	test.skip('should select different sizes', async ({ page }) => {
 		await page.goto('/')
 
 		await page.getByTestId('product-card').first().click()

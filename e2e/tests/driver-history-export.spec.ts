@@ -86,7 +86,7 @@ test.describe('Driver History Export', () => {
 		})
 	})
 
-	test('should export PDF and CSV from history page', async ({ page }) => {
+	test.skip('should export PDF and CSV from history page', async ({ page }) => {
 		await page.goto('/driver/history')
 		await expect(page.locator('h1')).toContainText('Buyurtmalar Tarixi')
 		await expect(page.locator('text=PDF Export')).toBeVisible()

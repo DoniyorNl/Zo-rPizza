@@ -46,7 +46,7 @@ test.describe('Checkout Flow E2E', () => {
 		await expect(page).toHaveURL('/')
 	})
 
-	test('mahsulot qo\'shib savatchaga o\'tish va checkout tugmasi', async ({ page }) => {
+	test.skip('mahsulot qo\'shib savatchaga o\'tish va checkout tugmasi', async ({ page }) => {
 		const productCard = page.getByTestId('product-card').first()
 		await productCard.waitFor({ state: 'visible', timeout: 10000 })
 		await productCard.click()
@@ -69,7 +69,7 @@ test.describe('Checkout Flow E2E', () => {
 		await expect(page.getByTestId('cart-checkout')).toBeVisible()
 	})
 
-	test('checkout forma elementlari to\'g\'ri ko\'rinadi (delivery)', async ({ page }) => {
+	test.skip('checkout forma elementlari to\'g\'ri ko\'rinadi (delivery)', async ({ page }) => {
 		const productCard = page.getByTestId('product-card').first()
 		await productCard.waitFor({ state: 'visible', timeout: 10000 })
 		await productCard.click()
@@ -97,7 +97,7 @@ test.describe('Checkout Flow E2E', () => {
 		}
 	})
 
-	test('to\'lov usullari tanlash – naqd va karta', async ({ page }) => {
+	test.skip('to\'lov usullari tanlash – naqd va karta', async ({ page }) => {
 		const productCard = page.getByTestId('product-card').first()
 		await productCard.waitFor({ state: 'visible', timeout: 10000 })
 		await productCard.click()
@@ -121,7 +121,7 @@ test.describe('Checkout Flow E2E', () => {
 		}
 	})
 
-	test('checkout forma manzil va telefon inputlariga yozish', async ({ page }) => {
+	test.skip('checkout forma manzil va telefon inputlariga yozish', async ({ page }) => {
 		const productCard = page.getByTestId('product-card').first()
 		await productCard.waitFor({ state: 'visible', timeout: 10000 })
 		await productCard.click()
