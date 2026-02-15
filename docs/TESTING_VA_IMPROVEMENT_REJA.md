@@ -30,13 +30,13 @@
 
 ### 1.1 Backend – Qo‘shimcha testlar
 
-| Prioriteta | Fayl | Test qilish kerak |
-|-----------|------|-------------------|
-| 1 | `branches.controller.test.ts` | resolveMapUrl, createBranch, updateBranch, deleteBranch, getBranchById |
-| 1 | `orders.integration.test.ts` | reorder, deleteOrder, getDriverOrders |
-| 2 | `branches.api.test.ts` (yangi) | GET/POST /api/branches integration |
-| 2 | `delivery.api.test.ts` (yangi) | POST /api/delivery/estimate |
-| 2 | `profile.api.test.ts` (yangi) | addresses CRUD |
+| Prioriteta | Fayl | Test qilish kerak | Holat |
+|-----------|------|-------------------|-------|
+| 1 | `branches.controller.test.ts` | resolveMapUrl, createBranch, updateBranch, deleteBranch, getBranchById | ✅ Unit bor |
+| 1 | `orders.integration.test.ts` | reorder, deleteOrder, getDriverOrders | Pending |
+| 2 | `branches.api.test.ts` (yangi) | GET/POST/PATCH/DELETE /api/branches | ✅ Done (13 test) |
+| 2 | `delivery.api.test.ts` (yangi) | POST /api/delivery/estimate | ✅ Done (5 test) |
+| 2 | `profile.api.test.ts` (yangi) | addresses CRUD | ✅ Done (9 test) |
 | 2 | `tracking.api.test.ts` (yangi) | start, update location, complete |
 | 3 | `loyalty.api.test.ts` (yangi) | balance, redeem |
 | 3 | `promos.api.test.ts` (yangi) | validate promo |
