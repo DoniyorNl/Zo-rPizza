@@ -82,6 +82,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
 
 	return (
 		<Card
+			data-testid="product-card"
 			className='group cursor-pointer hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 overflow-hidden'
 			onClick={handleClick}
 		>
@@ -152,6 +153,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
 				</div>
 
 				<Button
+					data-testid="product-card-select"
 					size='sm'
 					className='bg-orange-600 hover:bg-orange-700'
 					onClick={handleAddToCart}

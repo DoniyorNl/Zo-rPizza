@@ -116,7 +116,7 @@ export default function RegisterPage() {
 				</CardHeader>
 
 				<CardContent>
-					<form onSubmit={handleSubmit} className='space-y-5'>
+					<form data-testid="register-form" onSubmit={handleSubmit} className='space-y-5'>
 						{/* ============================================ */}
 						{/* SUCCESS MESSAGE */}
 						{/* ============================================ */}
@@ -134,7 +134,7 @@ export default function RegisterPage() {
 						{/* ERROR MESSAGE */}
 						{/* ============================================ */}
 						{error && (
-							<div className='bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg flex items-start gap-3 animate-in fade-in slide-in-from-top-2'>
+							<div data-testid="register-error" className='bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg flex items-start gap-3 animate-in fade-in slide-in-from-top-2'>
 								<AlertCircle className='w-5 h-5 flex-shrink-0 mt-0.5' />
 								<p className='text-sm'>{error}</p>
 							</div>
@@ -148,6 +148,7 @@ export default function RegisterPage() {
 								Email Manzil
 							</Label>
 							<Input
+								data-testid="register-email"
 								id='email'
 								type='email'
 								placeholder='example@email.com'
@@ -168,6 +169,7 @@ export default function RegisterPage() {
 								Parol
 							</Label>
 							<Input
+								data-testid="register-password"
 								id='password'
 								type='password'
 								placeholder='Kamida 6 ta belgi'
@@ -189,6 +191,7 @@ export default function RegisterPage() {
 								Parolni Tasdiqlash
 							</Label>
 							<Input
+								data-testid="register-confirm-password"
 								id='confirmPassword'
 								type='password'
 								placeholder='Parolni qayta kiriting'
@@ -205,6 +208,7 @@ export default function RegisterPage() {
 						{/* SUBMIT BUTTON */}
 						{/* ============================================ */}
 						<Button
+							data-testid="register-submit"
 							type='submit'
 							className='w-full h-12 text-base font-semibold bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 shadow-lg hover:shadow-xl transition-all'
 							disabled={loading || success}
