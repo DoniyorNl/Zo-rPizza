@@ -77,7 +77,7 @@ test.describe('Register Page E2E', () => {
 	test('register sahifasi to\'g\'ri yuklanadi', async ({ page }) => {
 		await expect(page).toHaveURL('/register')
 		await expect(page.getByTestId('register-form')).toBeVisible()
-		await expect(page.getByText(/akkaunt yarating|Ro'yxatdan|yarating va buyurtma/i)).toBeVisible()
+		await expect(page.getByText(/Ro'yxatdan O'tish/i).first()).toBeVisible()
 	})
 
 	test('register forma elementlari mavjud', async ({ page }) => {
