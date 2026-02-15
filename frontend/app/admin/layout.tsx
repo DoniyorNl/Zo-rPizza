@@ -106,6 +106,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 							📁 Kategoriyalar
 						</Link>
 
+						{/* Filiallar */}
+						<Link
+							href='/admin/branches'
+							className={`block py-2 px-4 rounded transition ${isActive('/admin/branches') ? 'bg-orange-600' : 'hover:bg-gray-800'
+								}`}
+						>
+							📍 Filiallar
+						</Link>
+
 						{/* Users/Customers */}
 						<Link
 							href='/admin/users'

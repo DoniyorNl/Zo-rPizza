@@ -8,7 +8,7 @@ import prisma from '../lib/prisma'
 // PRISMA TYPES (Auto-generated'dan foydalanish)
 // ============================================================================
 
-// Bugungi buyurtmalar uchun type (include bilan)
+// Bugungi buyurtmalar uchun type (include bilan) — Product da imageUrl/images bor, image yo'q
 type TodayOrderWithRelations = Prisma.OrderGetPayload<{
 	include: {
 		items: {
@@ -16,7 +16,8 @@ type TodayOrderWithRelations = Prisma.OrderGetPayload<{
 				product: {
 					select: {
 						name: true
-						image: true
+						imageUrl: true
+						images: true
 						category: true
 					}
 				}
@@ -105,6 +106,7 @@ export const getDashboardData = async (_req: Request, res: Response): Promise<Re
 						product: {
 							select: {
 								name: true,
+								imageUrl: true,
 								images: true,
 								category: true,
 							},
@@ -262,11 +264,14 @@ export const getDashboardData = async (_req: Request, res: Response): Promise<Re
 					existing.soldToday += item.quantity
 					existing.revenueToday += item.price * item.quantity
 				} else if (item.product) {
+					const p = item.product
+					const image =
+						p.imageUrl ?? (Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : null)
 					productSalesMap.set(productId, {
 						id: productId,
-						name: item.product.name,
-						image: item.product.image,
-						category: item.product.category?.name || 'Umumiy',
+						name: p.name,
+						image,
+						category: p.category?.name ?? 'Umumiy',
 						soldToday: item.quantity,
 						revenueToday: item.price * item.quantity,
 					})

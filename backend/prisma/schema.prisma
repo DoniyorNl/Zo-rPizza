@@ -255,6 +255,7 @@ model Order {
   deliveryPhone       String
   deliveryLat         Float?
   deliveryLng         Float?
+  branchId            String?       // Olib ketish (pickup) – qaysi filialdan
   driverId            String?
   deliveryLocation    Json?
   driverLocation      Json?

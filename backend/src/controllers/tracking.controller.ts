@@ -128,24 +128,46 @@ export async function getOrderTracking(req: Request, res: Response) {
       })
     }
 
-    let tracking = null
-    if (order.driverLocation && order.deliveryLocation) {
-      const driverLoc = order.driverLocation as any
-      const deliveryLoc = order.deliveryLocation as any
-
-      const distance = calculateDistance(driverLoc, deliveryLoc)
-      const eta = calculateETA(distance, {
-        preparationTime: 0,
-        vehicleType: (driver?.vehicleType as any) || 'bike',
+    let branch = null
+    if (order.branchId) {
+      const b = await prisma.branch.findUnique({
+        where: { id: String(order.branchId) },
+        select: { id: true, name: true, address: true, lat: true, lng: true },
       })
+      if (b) branch = b
+    }
 
-      tracking = {
-        driverLocation: driverLoc,
-        deliveryLocation: deliveryLoc,
-        distance,
-        eta,
-        isNearby: isNearDestination(driverLoc, deliveryLoc),
-        lastUpdate: driverLoc.timestamp,
+    let tracking = null
+    let deliveryLoc = order.deliveryLocation as { lat: number; lng: number } | null
+    if (!deliveryLoc && order.deliveryLat != null && order.deliveryLng != null) {
+      deliveryLoc = { lat: Number(order.deliveryLat), lng: Number(order.deliveryLng) }
+    }
+    const driverLoc = order.driverLocation as { lat: number; lng: number; timestamp?: string } | null
+
+    if (deliveryLoc && typeof deliveryLoc.lat === 'number' && typeof deliveryLoc.lng === 'number') {
+      if (driverLoc && typeof driverLoc.lat === 'number' && typeof driverLoc.lng === 'number') {
+        const distance = calculateDistance(driverLoc, deliveryLoc)
+        const eta = calculateETA(distance, {
+          preparationTime: 0,
+          vehicleType: (driver?.vehicleType as any) || 'bike',
+        })
+        tracking = {
+          driverLocation: driverLoc,
+          deliveryLocation: deliveryLoc,
+          distance,
+          eta,
+          isNearby: isNearDestination(driverLoc, deliveryLoc),
+          lastUpdate: driverLoc.timestamp ?? new Date().toISOString(),
+        }
+      } else {
+        tracking = {
+          driverLocation: null,
+          deliveryLocation: deliveryLoc,
+          distance: 0,
+          eta: 0,
+          isNearby: false,
+          lastUpdate: new Date().toISOString(),
+        }
       }
     }
 
@@ -161,7 +183,9 @@ export async function getOrderTracking(req: Request, res: Response) {
           trackingStartedAt: order.trackingStartedAt,
           deliveryStartedAt: order.deliveryStartedAt,
           deliveryCompletedAt: order.deliveryCompletedAt,
+          branchId: order.branchId ?? undefined,
         },
+        branch: branch ?? undefined,
         tracking,
         driver,
       },

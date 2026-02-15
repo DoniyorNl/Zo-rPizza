@@ -59,6 +59,7 @@ export function ProductsTable({ products, filterStatus, onEdit, onDelete, onRest
 														src={product.imageUrl}
 														alt={product.name}
 														fill
+														sizes='64px'
 														className='object-cover'
 													/>
 												</div>

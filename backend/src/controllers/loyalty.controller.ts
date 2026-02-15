@@ -2,12 +2,9 @@
 // 🍕 LOYALTY PROGRAM - balance, earn, redeem
 
 import { Request, Response } from 'express'
-import { REDEEM_POINTS_PER_CURRENCY } from '../constants/loyalty'
+import { POINTS_PER_CURRENCY, REDEEM_POINTS_PER_CURRENCY } from '../constants/loyalty'
 import prisma from '../lib/prisma'
 import type { AuthRequest } from '../middleware/firebase-auth.middleware'
-
-const POINTS_PER_CURRENCY = 1
-const REDEEM_POINTS_PER_CURRENCY = 100
 
 /** GET /api/loyalty/balance - Foydalanuvchi ballari */
 export const getBalance = async (req: Request, res: Response) => {

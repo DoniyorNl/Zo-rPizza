@@ -10,7 +10,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { api } from '@/lib/apiClient'
 import { useAuth } from '@/lib/AuthContext'
 import TrackingModal from '@/components/tracking/TrackingModal'
-import { Clock, MapPin, Package, RotateCcw, ShoppingBag, Trash2 } from 'lucide-react'
+import { CheckSquare, Clock, MapPin, Package, RotateCcw, ShoppingBag, Square, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -56,6 +56,31 @@ export default function OrdersPage() {
 	const [trackingOrderId, setTrackingOrderId] = useState<string | null>(null)
 	const [trackingOrderNumber, setTrackingOrderNumber] = useState<string>('')
 	const [reorderingId, setReorderingId] = useState<string | null>(null)
+	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+	const [bulkDeleting, setBulkDeleting] = useState(false)
+
+	const selectAll = (checked: boolean) => {
+		if (checked) {
+			setSelectedIds(new Set(orders.map(o => o.id)))
+		} else {
+			setSelectedIds(new Set())
+		}
+	}
+
+	const toggleSelect = (orderId: string) => {
+		setSelectedIds(prev => {
+			const next = new Set(prev)
+			if (next.has(orderId)) next.delete(orderId)
+			else next.add(orderId)
+			return next
+		})
+	}
+
+	const isAllSelected = orders.length > 0 && selectedIds.size === orders.length
+	const isSomeSelected = selectedIds.size > 0
+	const selectedDeletableCount = [...selectedIds].filter(
+		id => orders.find(o => o.id === id)?.status === 'PENDING'
+	).length
 
 	const fetchOrders = async () => {
 		if (!user) return
@@ -104,11 +129,43 @@ export default function OrdersPage() {
 		try {
 			await api.delete(`/api/orders/${orderId}`)
 			setOrders(prev => prev.filter(o => o.id !== orderId))
+			setSelectedIds(prev => {
+				const next = new Set(prev)
+				next.delete(orderId)
+				return next
+			})
 		} catch (err: unknown) {
 			const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
 			alert(msg || 'Bekor qilishda xato')
 		} finally {
 			setDeletingId(null)
+		}
+	}
+
+	const handleBulkDelete = async (e: React.MouseEvent) => {
+		e.stopPropagation()
+		const toDelete = [...selectedIds].filter(
+			id => orders.find(o => o.id === id)?.status === 'PENDING'
+		)
+		if (toDelete.length === 0) {
+			alert('Bekor qilinadigan buyurtma topilmadi. Faqat "Kutilmoqda" buyurtmalarni bekor qilish mumkin.')
+			return
+		}
+		if (!confirm(`${toDelete.length} ta buyurtmani bekor qilmoqchimisiz?`)) return
+		setBulkDeleting(true)
+		try {
+			await Promise.all(toDelete.map(id => api.delete(`/api/orders/${id}`)))
+			setOrders(prev => prev.filter(o => !toDelete.includes(o.id)))
+			setSelectedIds(prev => {
+				const next = new Set(prev)
+				toDelete.forEach(id => next.delete(id))
+				return next
+			})
+		} catch (err: unknown) {
+			const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+			alert(msg || 'Bekor qilishda xato')
+		} finally {
+			setBulkDeleting(false)
 		}
 	}
 
@@ -157,6 +214,40 @@ export default function OrdersPage() {
 					</Card>
 				) : (
 					<div className='space-y-4'>
+						{/* Toolbar: Select all, count, bulk actions */}
+						<div className='flex flex-wrap items-center gap-4 p-4 bg-white rounded-xl border shadow-sm'>
+							<button
+								type='button'
+								onClick={() => selectAll(!isAllSelected)}
+								className='flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-orange-600 transition-colors'
+							>
+								{isAllSelected ? (
+									<CheckSquare className='w-5 h-5 text-orange-600' />
+								) : (
+									<Square className='w-5 h-5 border-2 border-gray-400 rounded' />
+								)}
+								<span>Hammasini tanlash</span>
+							</button>
+							<div className='h-4 w-px bg-gray-200' />
+							<span className='text-sm text-gray-600'>
+								<strong className='text-orange-600'>{selectedIds.size}</strong>
+								<span className='mx-1'>/</span>
+								<strong>{orders.length}</strong> tanlangan
+							</span>
+							{selectedDeletableCount > 0 && (
+								<Button
+									variant='outline'
+									size='sm'
+									className='text-red-600 hover:text-red-700 hover:bg-red-50 ml-auto'
+									onClick={handleBulkDelete}
+									disabled={bulkDeleting}
+								>
+									<Trash2 className='w-4 h-4 mr-1' />
+									{bulkDeleting ? 'Bekor qilinmoqda...' : `${selectedDeletableCount} tanasini bekor qilish`}
+								</Button>
+							)}
+						</div>
+
 						{orders.map(order => {
 							const status = statusConfig[order.status] ?? {
 								label: order.status,
@@ -166,10 +257,29 @@ export default function OrdersPage() {
 							return (
 								<Card
 									key={order.id}
-									className='hover:shadow-lg transition-shadow cursor-pointer'
+									className={`hover:shadow-lg transition-shadow cursor-pointer ${
+										selectedIds.has(order.id) ? 'ring-2 ring-orange-500 ring-offset-2' : ''
+									}`}
 									onClick={() => router.push(`/orders/${order.id}`)}
 								>
 									<CardContent className='p-6'>
+										<div className='flex items-start gap-4 mb-4'>
+											<button
+												type='button'
+												onClick={e => {
+													e.stopPropagation()
+													toggleSelect(order.id)
+												}}
+												className='flex-shrink-0 mt-1 p-0.5 rounded hover:bg-orange-50 transition-colors'
+												aria-label={selectedIds.has(order.id) ? 'Tanlamaslik' : 'Tanlash'}
+											>
+												{selectedIds.has(order.id) ? (
+													<CheckSquare className='w-5 h-5 text-orange-600' />
+												) : (
+													<Square className='w-5 h-5 border-2 border-gray-400 rounded' />
+												)}
+											</button>
+											<div className='flex-1 min-w-0'>
 										<div className='flex items-start justify-between mb-4'>
 											<div>
 												<h3 className='text-xl font-bold mb-1'>Buyurtma {order.orderNumber}</h3>
@@ -250,6 +360,8 @@ export default function OrdersPage() {
 											<div className='text-sm text-gray-600'>{order.items.length} ta mahsulot</div>
 											<div className='text-xl font-bold text-orange-600'>
 												{order.totalPrice.toLocaleString()} so&apos;m
+											</div>
+										</div>
 											</div>
 										</div>
 									</CardContent>

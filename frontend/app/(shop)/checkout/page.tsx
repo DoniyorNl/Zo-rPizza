@@ -10,14 +10,18 @@ import api from '@/lib/api'
 import { useAuth } from '@/lib/AuthContext'
 import { geocodeAddress } from '@/lib/geocoding'
 import { useCartStore } from '@/store/cartStore'
+import { useDeliveryStore } from '@/store/deliveryStore'
 import axios from 'axios'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export default function CheckoutPage() {
 	const { items, getTotalPrice, clearCart } = useCartStore()
+	const { method, selectedBranch } = useDeliveryStore()
 	const { user } = useAuth()
 	const router = useRouter()
+	const afterSuccessRef = useRef(false)
 
 	const [deliveryAddress, setDeliveryAddress] = useState('')
 	const [deliveryPhone, setDeliveryPhone] = useState('')
@@ -25,8 +29,13 @@ export default function CheckoutPage() {
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState('')
 
-	// Redirect agar cart bo'sh yoki user yo'q
+	const isPickup = method === 'pickup'
+	const canSubmitPickup = isPickup ? !!selectedBranch : true
+	const effectiveAddress = isPickup && selectedBranch ? selectedBranch.address : deliveryAddress
+
+	// Cart bo'sh yoki user yo'q bo'lsa cart/login ga – lekin buyurtma muvaffaqiyatli bo'lgach emas
 	useEffect(() => {
+		if (afterSuccessRef.current) return
 		if (items.length === 0) {
 			router.push('/cart')
 		} else if (!user) {
@@ -52,17 +61,22 @@ export default function CheckoutPage() {
 		setLoading(true)
 
 		try {
-			// Manzildan koordinatalar olish (tracking xaritasi uchun)
 			let deliveryLat: number | undefined
 			let deliveryLng: number | undefined
-			try {
-				const coords = await geocodeAddress(deliveryAddress)
-				if (coords) {
-					deliveryLat = coords.lat
-					deliveryLng = coords.lng
+			const addressToGeocode = isPickup && selectedBranch ? selectedBranch.address : deliveryAddress
+			if (!isPickup) {
+				try {
+					const coords = await geocodeAddress(addressToGeocode)
+					if (coords) {
+						deliveryLat = coords.lat
+						deliveryLng = coords.lng
+					}
+				} catch {
+					//
 				}
-			} catch {
-				// Geocoding muvaffaqiyatsiz - buyurtma baribir yaratiladi
+			} else if (selectedBranch) {
+				deliveryLat = selectedBranch.lat
+				deliveryLng = selectedBranch.lng
 			}
 
 			const token = await user.getIdToken()
@@ -79,12 +93,16 @@ export default function CheckoutPage() {
 					halfProductId: item.halfProductId,
 				})),
 				paymentMethod,
-				deliveryAddress,
+				deliveryType: method,
+				deliveryAddress: effectiveAddress,
 				deliveryPhone,
 			}
 			if (deliveryLat != null && deliveryLng != null) {
 				orderData.deliveryLat = deliveryLat
 				orderData.deliveryLng = deliveryLng
+			}
+			if (isPickup && selectedBranch) {
+				orderData.branchId = selectedBranch.id
 			}
 
 			const response = await api.post('/api/orders', orderData, {
@@ -93,12 +111,17 @@ export default function CheckoutPage() {
 				},
 			})
 
-			// Muvaffaqiyatli - cart tozalash
+			const order = response.data?.data
+			const id = order?.id
+			const orderNumber = order?.orderNumber ?? ''
+			// Avval success ga yo'naltirish, keyin cart tozalash – aks holda useEffect cartga qaytarib yuboradi
+			afterSuccessRef.current = true
+			if (id) {
+				router.push(`/checkout/success?orderId=${id}&orderNumber=${encodeURIComponent(orderNumber)}`)
+			} else {
+				router.push('/')
+			}
 			clearCart()
-
-			// Success page'ga yo'naltirish (yoki orders page)
-			alert(`Buyurtma muvaffaqiyatli! Order ${response.data.data.orderNumber}`)
-			router.push('/')
 		} catch (err: unknown) {
 			if (axios.isAxiosError(err)) {
 				setError(err.response?.data?.message || 'Buyurtma berishda xatolik')
@@ -117,31 +140,57 @@ export default function CheckoutPage() {
 			<div className='container mx-auto px-4 py-12'>
 				<h1 className='text-4xl font-bold mb-8'>Buyurtma berish</h1>
 
+				{isPickup && !selectedBranch && (
+					<Card className='mb-8 border-amber-200 bg-amber-50'>
+						<CardContent className='pt-6'>
+							<p className='text-amber-800 font-medium mb-2'>
+								Olib ketish uchun bosh sahifada &quot;Olib ketish&quot; va do&apos;konni tanlang.
+							</p>
+							<Button asChild variant='outline' className='border-amber-600 text-amber-800'>
+								<Link href='/'>Bosh sahifaga o&apos;tish</Link>
+							</Button>
+						</CardContent>
+					</Card>
+				)}
+
 				<div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
-					{/* Form */}
 					<div className='lg:col-span-2'>
 						<Card>
 							<CardHeader>
-								<CardTitle>Yetkazib berish ma&apos;lumotlari</CardTitle>
+								<CardTitle>
+									{isPickup ? 'Olib ketish ma\'lumotlari' : 'Yetkazib berish ma\'lumotlari'}
+								</CardTitle>
 							</CardHeader>
 							<CardContent>
 								<form onSubmit={handleSubmit} className='space-y-6'>
 									{error && <div className='bg-red-50 text-red-600 p-3 rounded'>{error}</div>}
 
-									{/* Manzil */}
-									<div>
-										<label className='block text-sm font-medium mb-2'>
-											Yetkazib berish manzili *
-										</label>
-										<textarea
-											value={deliveryAddress}
-											onChange={e => setDeliveryAddress(e.target.value)}
-											className='w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500'
-											rows={3}
-											placeholder='Masalan: Toshkent, Chilonzor 9-kvartal, 12-uy'
-											required
-										/>
-									</div>
+									{isPickup && selectedBranch && (
+										<div className='rounded-lg bg-gray-100 p-4'>
+											<p className='font-semibold text-gray-800'>{selectedBranch.name}</p>
+											<p className='text-sm text-gray-600 mt-1'>{selectedBranch.address}</p>
+											{selectedBranch.phone && (
+												<p className='text-sm text-gray-600'>{selectedBranch.phone}</p>
+											)}
+										</div>
+									)}
+
+									{/* Manzil – faqat yetkazib berishda */}
+									{!isPickup && (
+										<div>
+											<label className='block text-sm font-medium mb-2'>
+												Yetkazib berish manzili *
+											</label>
+											<textarea
+												value={deliveryAddress}
+												onChange={e => setDeliveryAddress(e.target.value)}
+												className='w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500'
+												rows={3}
+												placeholder='Masalan: Toshkent, Chilonzor 9-kvartal, 12-uy'
+												required
+											/>
+										</div>
+									)}
 
 									{/* Telefon */}
 									<div>
@@ -183,8 +232,12 @@ export default function CheckoutPage() {
 										</div>
 									</div>
 
-									{/* Submit */}
-									<Button type='submit' className='w-full' size='lg' disabled={loading}>
+									<Button
+										type='submit'
+										className='w-full'
+										size='lg'
+										disabled={loading || !canSubmitPickup}
+									>
 										{loading ? 'Yuklanmoqda...' : 'Buyurtma berish'}
 									</Button>
 								</form>

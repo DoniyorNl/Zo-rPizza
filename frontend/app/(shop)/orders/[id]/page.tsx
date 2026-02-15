@@ -14,7 +14,7 @@ import { useAuth } from '@/lib/AuthContext'
 import { useCartStore } from '@/store/cartStore'
 import axios from 'axios'
 import { format } from 'date-fns'
-import { ArrowLeft, CheckCircle2, Clock, CreditCard, MapPin, Package, Phone } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Clock, CreditCard, Home, MapPin, Package, Phone } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { use, useEffect, useState } from 'react'
@@ -219,6 +219,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
 												src={item.product.imageUrl}
 												alt={item.product.name}
 												fill
+												sizes='96px'
 												className='object-cover'
 											/>
 										</div>
@@ -305,11 +306,30 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
 						</Card>
 
 						{/* Actions */}
-						{order.status === 'COMPLETED' && (
-							<Button onClick={handleReorder} className='w-full' size='lg'>
-								Qayta buyurtma berish
+						<div className='flex flex-col gap-2'>
+							<Button
+								variant='outline'
+								className='w-full gap-2'
+								onClick={() => router.push('/')}
+							>
+								<Home className='w-4 h-4' />
+								Menuga qaytish
 							</Button>
-						)}
+							{!['CANCELLED', 'COMPLETED'].includes(order.status) && (
+								<Button
+									className='w-full gap-2 bg-orange-600 hover:bg-orange-700'
+									onClick={() => router.push(`/tracking/${order.id}`)}
+								>
+									<MapPin className='w-4 h-4' />
+									Kuzatib borish
+								</Button>
+							)}
+							{order.status === 'COMPLETED' && (
+								<Button onClick={handleReorder} className='w-full' size='lg'>
+									Qayta buyurtma berish
+								</Button>
+							)}
+						</div>
 					</div>
 				</div>
 			</div>
