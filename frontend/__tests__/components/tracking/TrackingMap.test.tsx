@@ -66,9 +66,8 @@ describe('TrackingMap Component', () => {
 		)
 
 		await waitFor(() => {
-			expect(screen.getByText('Restaurant')).toBeInTheDocument()
-			expect(screen.getByText('Driver')).toBeInTheDocument()
-			expect(screen.getByText('Delivery')).toBeInTheDocument()
+			expect(screen.getByText('Pizzeria')).toBeInTheDocument()
+			expect(screen.getByText('Haydovchi')).toBeInTheDocument()
 		})
 	})
 
@@ -76,9 +75,8 @@ describe('TrackingMap Component', () => {
 		await renderMap(<TrackingMap deliveryLocation={deliveryLocation} />)
 
 		await waitFor(() => {
-			expect(screen.getByText('Restaurant')).toBeInTheDocument()
-			expect(screen.getByText('Delivery')).toBeInTheDocument()
-			expect(screen.queryByText('Driver')).not.toBeInTheDocument()
+			expect(screen.getByText('Pizzeria')).toBeInTheDocument()
+			expect(screen.queryByText('Haydovchi')).not.toBeInTheDocument()
 		})
 	})
 

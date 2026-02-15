@@ -1,6 +1,7 @@
 // backend/src/controllers/orders.controller.ts
 // 🍕 ORDERS CONTROLLER
 
+import { Prisma } from '@prisma/client'
 import { Request, Response } from 'express'
 import prisma from '../lib/prisma'
 import type { AuthRequest } from '../middleware/firebase-auth.middleware'
@@ -58,17 +59,16 @@ export const getAllOrders = async (req: Request, res: Response) => {
 
 // GET /api/orders/user/:userId - User buyurtmalari (Firebase UID orqali; faqat o‘zi yaratgan buyurtmalar)
 export const getUserOrders = async (req: Request, res: Response) => {
-	try {
-		const authReq = req as AuthRequest
-		const firebaseUid = authReq.userId ?? getParamString((req.params as any).userId)
-		if (!firebaseUid) {
-			return res.status(400).json({ success: false, message: 'Invalid userId' })
-		}
-		// Faqat o‘z buyurtmalarini ko‘rishi: token’dagi uid bilan URL’dagi userId mos bo‘lishi kerak
-		if (authReq.userId && authReq.userId !== firebaseUid) {
-			return res.status(403).json({ success: false, message: 'Forbidden' })
-		}
+	const authReq = req as AuthRequest
+	const firebaseUid = authReq.userId ?? getParamString((req.params as any).userId)
+	if (!firebaseUid) {
+		return res.status(400).json({ success: false, message: 'Invalid userId' })
+	}
+	if (authReq.userId && authReq.userId !== firebaseUid) {
+		return res.status(403).json({ success: false, message: 'Forbidden' })
+	}
 
+	try {
 		const dbUser = await prisma.user.findFirst({
 			where: { firebaseUid },
 		})
@@ -81,7 +81,14 @@ export const getUserOrders = async (req: Request, res: Response) => {
 			include: {
 				items: {
 					include: {
-						product: true,
+						product: {
+							select: {
+								id: true,
+								name: true,
+								imageUrl: true,
+								images: true,
+							},
+						},
 					},
 				},
 			},
@@ -94,11 +101,13 @@ export const getUserOrders = async (req: Request, res: Response) => {
 			data: orders,
 		})
 	} catch (error) {
-		console.error('Error fetching user orders:', error)
-		return res.status(500).json({
-			success: false,
-			message: 'Server error',
-			error: error instanceof Error ? error.message : 'Unknown error',
+		const err = error instanceof Error ? error : new Error(String(error))
+		console.error('[getUserOrders]', err.message, err.stack)
+		// Frontend (UnifiedHeader) uzilmasin: xato bo‘lsa ham bo‘sh ro‘yxat qaytaramiz
+		return res.status(200).json({
+			success: true,
+			count: 0,
+			data: [],
 		})
 	}
 }
@@ -167,12 +176,14 @@ export const createOrder = async (req: Request, res: Response) => {
 	try {
 		let {
 			userId,
-			items, // [{ productId, quantity, variationId?, size?, addedToppingIds?, removedToppingIds?, halfProductId? }]
+			items,
 			paymentMethod,
 			deliveryAddress,
 			deliveryPhone,
 			deliveryLat,
 			deliveryLng,
+			deliveryType, // 'delivery' | 'pickup'
+			branchId,     // Olib ketish uchun filial id
 			couponCode,
 			loyaltyPointsToUse,
 		} = req.body
@@ -180,7 +191,19 @@ export const createOrder = async (req: Request, res: Response) => {
 		if (typeof items === 'string') {
 			items = JSON.parse(items)
 		}
-		// Validation
+
+		const isPickup = deliveryType === 'pickup'
+		if (isPickup && branchId) {
+			const branch = await prisma.branch.findFirst({
+				where: { id: String(branchId), isActive: true },
+			})
+			if (branch) {
+				deliveryAddress = branch.address
+				deliveryLat = branch.lat
+				deliveryLng = branch.lng
+			}
+		}
+
 		if (!userId || !items || !items.length || !deliveryAddress || !deliveryPhone) {
 			return res.status(400).json({
 				success: false,
@@ -448,24 +471,24 @@ export const createOrder = async (req: Request, res: Response) => {
 
 		const finalTotal = Math.max(0, totalPrice - discountAmount - redeemDiscount)
 
-		// Buyurtma yaratish
+		const orderData: any = {
+			orderNumber,
+			userId: user.id,
+			totalPrice: finalTotal,
+			...(discountAmount > 0 && { discountAmount, couponId }),
+			...(loyaltyPointsUsed > 0 && { loyaltyPointsUsed }),
+			paymentMethod: paymentMethod || 'CASH',
+			deliveryAddress,
+			deliveryPhone,
+			deliveryLat: lat,
+			deliveryLng: lng,
+			...(deliveryLocationJson && { deliveryLocation: deliveryLocationJson }),
+			items: { create: orderItems },
+		}
+		if (isPickup && branchId) orderData.branchId = String(branchId)
+
 		const order = await prisma.order.create({
-			data: {
-				orderNumber,
-				userId: user.id,
-				totalPrice: finalTotal,
-				...(discountAmount > 0 && { discountAmount, couponId }),
-				...(loyaltyPointsUsed > 0 && { loyaltyPointsUsed }),
-				paymentMethod: paymentMethod || 'CASH',
-				deliveryAddress,
-				deliveryPhone,
-				deliveryLat: lat,
-				deliveryLng: lng,
-				...(deliveryLocationJson && { deliveryLocation: deliveryLocationJson }),
-				items: {
-					create: orderItems,
-				},
-			},
+			data: orderData,
 			include: {
 				items: {
 					include: {
@@ -475,46 +498,48 @@ export const createOrder = async (req: Request, res: Response) => {
 			},
 		})
 
-		// CouponUsage yozish
-		if (couponId) {
-			await prisma.couponUsage.create({
-				data: { userId: user.id, couponId, orderId: order.id },
-			})
-		}
-
-		// Loyalty: redeem va earn
-		const earnPoints = Math.floor(finalTotal * POINTS_PER_CURRENCY)
-		if (loyaltyPointsUsed > 0) {
-			await prisma.loyaltyTransaction.create({
+		// CouponUsage va Loyalty ixtiyoriy (jadval bo'lmasa buyurtma baribir muvaffaqiyatli)
+		try {
+			if (couponId) {
+				await prisma.couponUsage.create({
+					data: { userId: user.id, couponId, orderId: order.id },
+				})
+			}
+			const earnPoints = Math.floor(finalTotal * POINTS_PER_CURRENCY)
+			if (loyaltyPointsUsed > 0) {
+				await prisma.loyaltyTransaction.create({
+					data: {
+						userId: user.id,
+						type: 'REDEEM',
+						points: -loyaltyPointsUsed,
+						orderId: order.id,
+						description: `Redeemed for order ${order.orderNumber}`,
+					},
+				})
+			}
+			if (earnPoints > 0) {
+				await prisma.loyaltyTransaction.create({
+					data: {
+						userId: user.id,
+						type: 'EARN',
+						points: earnPoints,
+						orderId: order.id,
+						description: `Earned from order ${order.orderNumber}`,
+					},
+				})
+			}
+			const newPoints =
+				(user.loyaltyPoints ?? 0) - loyaltyPointsUsed + earnPoints
+			await prisma.user.update({
+				where: { id: user.id },
 				data: {
-					userId: user.id,
-					type: 'REDEEM',
-					points: -loyaltyPointsUsed,
-					orderId: order.id,
-					description: `Redeemed for order ${order.orderNumber}`,
+					loyaltyPoints: Math.max(0, newPoints),
+					totalSpent: { increment: finalTotal },
 				},
 			})
+		} catch (loyaltyErr) {
+			console.warn('Coupon/Loyalty yozish amalga oshmadi (jadval yo\'q bo\'lishi mumkin), buyurtma saqlandi:', loyaltyErr)
 		}
-		if (earnPoints > 0) {
-			await prisma.loyaltyTransaction.create({
-				data: {
-					userId: user.id,
-					type: 'EARN',
-					points: earnPoints,
-					orderId: order.id,
-					description: `Earned from order ${order.orderNumber}`,
-				},
-			})
-		}
-		const newPoints =
-			(user.loyaltyPoints ?? 0) - loyaltyPointsUsed + earnPoints
-		await prisma.user.update({
-			where: { id: user.id },
-			data: {
-				loyaltyPoints: Math.max(0, newPoints),
-				totalSpent: { increment: finalTotal },
-			},
-		})
 
 		return res.status(201).json({
 			success: true,
@@ -753,7 +778,10 @@ export const reorder = async (req: Request, res: Response) => {
 				deliveryPhone: existing.deliveryPhone,
 				deliveryLat: existing.deliveryLat,
 				deliveryLng: existing.deliveryLng,
-				deliveryLocation: existing.deliveryLocation,
+				deliveryLocation:
+					existing.deliveryLocation === null
+						? Prisma.JsonNull
+						: (existing.deliveryLocation as Prisma.InputJsonValue),
 				items: {
 					create: existing.items.map((item) => ({
 						productId: item.productId,

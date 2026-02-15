@@ -1,12 +1,14 @@
 // frontend/app/(shop)/tracking/[id]/page.tsx
 'use client'
 
+import { Header } from '@/components/layout/Header'
+import PizzeriaUserMap from '@/components/tracking/PizzeriaUserMap'
 import TrackingMap from '@/components/tracking/TrackingMap'
 import { useAuth } from '@/lib/AuthContext'
 import { buildApiUrl } from '@/lib/apiBaseUrl'
 import { useOrderTrackingSocket } from '@/lib/useOrderTrackingSocket'
 import { useParams, useRouter } from 'next/navigation'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 interface Location {
 	lat: number
@@ -40,12 +42,22 @@ interface OrderData {
 	trackingStartedAt?: string
 	deliveryStartedAt?: string
 	deliveryCompletedAt?: string
+	branchId?: string
+}
+
+interface BranchData {
+	id: string
+	name: string
+	address: string
+	lat: number
+	lng: number
 }
 
 interface TrackingResponse {
 	order: OrderData
 	tracking: TrackingData | null
 	driver: Driver | null
+	branch?: BranchData
 }
 
 export default function OrderTrackingPage() {
@@ -57,6 +69,12 @@ export default function OrderTrackingPage() {
 	const [trackingData, setTrackingData] = useState<TrackingResponse | null>(null)
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
+	// Foydalanuvchi joylashuvi (brauzer) – pizzeria bilan masofa uchun
+	const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+	const [locationLoading, setLocationLoading] = useState(false)
+	const [locationError, setLocationError] = useState<string | null>(null)
+	const hasAutoRequestedLocation = useRef(false)
+	const TRACKING_LOCATION_KEY = 'tracking_user_location'
 
 	const fetchTracking = async () => {
 		try {
@@ -90,6 +108,30 @@ export default function OrderTrackingPage() {
 			fetchTracking()
 		}
 	}, [user, orderId])
+
+	// Joylashuvni olish: sessionStorage (Kuzatib borish dan) yoki brauzerdan bir marta so‘rash. Har doim urinamiz, shunda xaritada "sizning joyingiz" ko‘rinadi.
+	useEffect(() => {
+		if (!trackingData || !orderId) return
+		if (userLocation || hasAutoRequestedLocation.current) return
+
+		try {
+			const stored = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem(TRACKING_LOCATION_KEY) : null
+			if (stored) {
+				const parsed = JSON.parse(stored) as { lat: number; lng: number }
+				if (Number.isFinite(parsed?.lat) && Number.isFinite(parsed?.lng)) {
+					setUserLocation({ lat: parsed.lat, lng: parsed.lng })
+					sessionStorage.removeItem(TRACKING_LOCATION_KEY)
+					hasAutoRequestedLocation.current = true
+					return
+				}
+			}
+		} catch {}
+
+		if (typeof navigator !== 'undefined' && navigator.geolocation) {
+			hasAutoRequestedLocation.current = true
+			requestUserLocation()
+		}
+	}, [trackingData, orderId])
 
 	// Live updates via Socket.io
 	const onOrderUpdate = useCallback(
@@ -125,6 +167,30 @@ export default function OrderTrackingPage() {
 		}
 	}, [trackingData?.order.status])
 
+	const requestUserLocation = () => {
+		if (!navigator.geolocation) {
+			setLocationError('Brauzeringiz joylashuvni qo‘llab-quvvatlamaydi')
+			return
+		}
+		setLocationError(null)
+		setLocationLoading(true)
+		navigator.geolocation.getCurrentPosition(
+			(pos) => {
+				setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+				setLocationLoading(false)
+			},
+			(err) => {
+				setLocationLoading(false)
+				if (err.code === 1) {
+					setLocationError('Joylashuv ruxsati berilmadi. Xaritada masofani ko‘rish uchun ruxsat bering.')
+				} else {
+					setLocationError('Joylashuvni aniqlashda xatolik')
+				}
+			},
+			{ enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+		)
+	}
+
 	const getStatusColor = (status: string) => {
 		const colors: Record<string, string> = {
 			PENDING: 'bg-yellow-100 text-yellow-800',
@@ -146,38 +212,45 @@ export default function OrderTrackingPage() {
 
 	if (loading) {
 		return (
-			<div className='min-h-screen flex items-center justify-center'>
-				<div className='text-center'>
-					<div className='animate-spin rounded-full h-16 w-16 border-b-2 border-orange-500 mx-auto mb-4'></div>
-					<p className='text-gray-600'>Loading tracking information...</p>
+			<main className='min-h-screen bg-gray-50'>
+				<Header />
+				<div className='flex items-center justify-center py-20'>
+					<div className='text-center'>
+						<div className='animate-spin rounded-full h-16 w-16 border-b-2 border-orange-500 mx-auto mb-4'></div>
+						<p className='text-gray-600'>Loading tracking information...</p>
+					</div>
 				</div>
-			</div>
+			</main>
 		)
 	}
 
 	if (error || !trackingData) {
 		return (
-			<div className='min-h-screen flex items-center justify-center'>
-				<div className='text-center'>
-					<div className='text-6xl mb-4'>❌</div>
-					<h2 className='text-2xl font-bold text-gray-800 mb-2'>Unable to Load Tracking</h2>
-					<p className='text-gray-600 mb-6'>{error}</p>
-					<button
-						onClick={() => router.push('/orders')}
-						className='px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600'
-					>
-						Back to Orders
-					</button>
+			<main className='min-h-screen bg-gray-50'>
+				<Header />
+				<div className='flex items-center justify-center py-20'>
+					<div className='text-center'>
+						<div className='text-6xl mb-4'>❌</div>
+						<h2 className='text-2xl font-bold text-gray-800 mb-2'>Unable to Load Tracking</h2>
+						<p className='text-gray-600 mb-6'>{error}</p>
+						<button
+							onClick={() => router.push('/orders')}
+							className='px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600'
+						>
+							Back to Orders
+						</button>
+					</div>
 				</div>
-			</div>
+			</main>
 		)
 	}
 
-	const { order, tracking, driver } = trackingData
+	const { order, tracking, driver, branch } = trackingData
 
 	return (
-		<div className='min-h-screen bg-gray-50 py-8'>
-			<div className='max-w-6xl mx-auto px-4'>
+		<main className='min-h-screen bg-gray-50'>
+			<Header />
+			<div className='max-w-6xl mx-auto px-4 py-8'>
 				<div className='mb-6'>
 					<button
 						onClick={() => router.push('/orders')}
@@ -195,38 +268,50 @@ export default function OrderTrackingPage() {
 						<div className='bg-white rounded-xl shadow-lg p-6'>
 							<h2 className='text-xl font-bold text-gray-800 mb-4'>Live Tracking</h2>
 
-							{tracking && tracking.driverLocation ? (
+							{tracking && tracking.deliveryLocation ? (
 								<>
 									<TrackingMap
 										deliveryLocation={tracking.deliveryLocation}
-										driverLocation={tracking.driverLocation}
+										driverLocation={tracking.driverLocation ?? undefined}
+										userCurrentLocation={userLocation ?? undefined}
+										restaurantLocation={branch ? { lat: branch.lat, lng: branch.lng } : undefined}
+										restaurantName={branch ? branch.name : undefined}
 										height='500px'
-										showRoute
+										showRoute={!!tracking.driverLocation}
 									/>
 
-									{/* Stats Grid */}
-									<div className='grid grid-cols-3 gap-4 mt-6'>
-										<div className='text-center p-4 bg-blue-50 rounded-lg'>
-											<div className='text-2xl font-bold text-blue-600'>
-												{tracking.distance.toFixed(1)} km
-											</div>
-											<div className='text-sm text-gray-600'>Masofa</div>
-										</div>
-										<div className='text-center p-4 bg-orange-50 rounded-lg'>
-											<div className='text-2xl font-bold text-orange-600'>
-												{formatETA(tracking.eta)}
-											</div>
-											<div className='text-sm text-gray-600'>Taxminiy vaqt</div>
-										</div>
-										<div className='text-center p-4 bg-green-50 rounded-lg'>
-											<div className='text-2xl font-bold text-green-600'>
-												{tracking.isNearby ? '✓' : '○'}
-											</div>
-											<div className='text-sm text-gray-600'>Yaqinlashdi</div>
-										</div>
-									</div>
+									{!tracking.driverLocation && (
+										<p className='text-amber-700 bg-amber-50 rounded-lg p-3 mb-4'>
+											📍 Yetkazib berish manzili. Haydovchi yo‘lda bo‘lganda joyi xaritada ko‘rinadi.
+										</p>
+									)}
 
-									{/* ETA Progress Bar */}
+									{/* Stats Grid - faqat haydovchi bor bo'lsa */}
+									{tracking.driverLocation && (
+										<div className='grid grid-cols-3 gap-4 mt-6'>
+											<div className='text-center p-4 bg-blue-50 rounded-lg'>
+												<div className='text-2xl font-bold text-blue-600'>
+													{tracking.distance.toFixed(1)} km
+												</div>
+												<div className='text-sm text-gray-600'>Masofa</div>
+											</div>
+											<div className='text-center p-4 bg-orange-50 rounded-lg'>
+												<div className='text-2xl font-bold text-orange-600'>
+													{formatETA(tracking.eta)}
+												</div>
+												<div className='text-sm text-gray-600'>Taxminiy vaqt</div>
+											</div>
+											<div className='text-center p-4 bg-green-50 rounded-lg'>
+												<div className='text-2xl font-bold text-green-600'>
+													{tracking.isNearby ? '✓' : '○'}
+												</div>
+												<div className='text-sm text-gray-600'>Yaqinlashdi</div>
+											</div>
+										</div>
+									)}
+
+									{/* ETA Progress Bar - faqat haydovchi bor bo'lsa */}
+									{tracking.driverLocation && (
 									<div className='mt-6 p-6 bg-gradient-to-r from-orange-50 to-pink-50 rounded-lg'>
 										<div className='flex items-center justify-between mb-3'>
 											<h3 className='text-lg font-bold text-gray-800'>Yetkazib berish jarayoni</h3>
@@ -277,12 +362,39 @@ export default function OrderTrackingPage() {
 											</div>
 										</div>
 									</div>
+									)}
+								</>
+							) : userLocation ? (
+								<>
+									<PizzeriaUserMap userLocation={userLocation} height='500px' />
+									<p className='text-sm text-gray-500 mt-3'>
+										Pizzeria va sizning joylashuvingiz orasidagi masofa. Haydovchi yo‘lda bo‘lganda uning joyi ham ko‘rinadi.
+									</p>
 								</>
 							) : (
-								<div className='h-[500px] bg-gray-100 rounded-lg flex items-center justify-center'>
-									<div className='text-center'>
+								<div className='rounded-xl border-2 border-orange-200 bg-orange-50/50 p-8'>
+									<div className='text-center max-w-md mx-auto'>
 										<div className='text-6xl mb-4'>📍</div>
-										<p className='text-gray-600'>Tracking will start when driver begins delivery</p>
+										<h3 className='text-xl font-bold text-gray-800 mb-2'>
+											Joylashuvni yoqing
+										</h3>
+										<p className='text-gray-600 mb-6'>
+											Pizzeria bilan oranizdagi masofani ko‘rish uchun joylashuvga ruxsat bering. Brauzer «Joylashuvni yoqing» so‘raydi.
+										</p>
+										{locationError && (
+											<p className='text-red-600 text-sm mb-4'>{locationError}</p>
+										)}
+										<button
+											type='button'
+											onClick={requestUserLocation}
+											disabled={locationLoading}
+											className='px-6 py-3 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white font-semibold rounded-xl transition-colors'
+										>
+											{locationLoading ? 'Aniqlanmoqda...' : 'Joylashuvni yoqing'}
+										</button>
+										<p className='text-xs text-gray-500 mt-4'>
+											Haydovchi yetkazib berishni boshlagach, uning joyi xaritada avtomatik ko‘rinadi.
+										</p>
 									</div>
 								</div>
 							)}
@@ -395,8 +507,20 @@ export default function OrderTrackingPage() {
 						)}
 
 						<div className='bg-white rounded-xl shadow-lg p-6'>
-							<h3 className='text-lg font-bold text-gray-800 mb-4'>Delivery Address</h3>
-							<p className='text-gray-700'>{order.deliveryAddress}</p>
+							<h3 className='text-lg font-bold text-gray-800 mb-4'>
+								{branch ? 'Pizzeria (filial)' : 'Delivery Address'}
+							</h3>
+							<p className='text-gray-700'>
+								{branch ? (
+									<>
+										<span className='font-semibold'>{branch.name}</span>
+										<br />
+										{branch.address}
+									</>
+								) : (
+									order.deliveryAddress
+								)}
+							</p>
 						</div>
 
 						<div className='bg-white rounded-xl shadow-lg p-6'>
@@ -408,6 +532,6 @@ export default function OrderTrackingPage() {
 					</div>
 				</div>
 			</div>
-		</div>
+		</main>
 	)
 }

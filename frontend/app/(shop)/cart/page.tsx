@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Minus, Plus, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import Link from 'next/link'
 
 export default function CartPage() {
 	const { items, updateQuantity, removeItem, getTotalPrice, clearCart } = useCartStore()
@@ -24,7 +25,9 @@ export default function CartPage() {
 					<div className='text-center py-20'>
 						<h2 className='text-3xl font-bold mb-4'>Savatcha bo&apos;sh</h2>
 						<p className='text-gray-600 mb-8'>Hozircha hech narsa qo&apos;shilmagan</p>
-						<Button onClick={() => router.push('/')}>Menyu&apos;ga qaytish</Button>
+						<Button asChild>
+							<Link href='/'>Menyu&apos;ga qaytish</Link>
+						</Button>
 					</div>
 				</div>
 			</main>
@@ -56,6 +59,7 @@ export default function CartPage() {
 											src={item.imageUrl}
 											alt={item.name}
 											fill
+											sizes='96px'
 											className='object-cover rounded-lg'
 										/>
 									</div>

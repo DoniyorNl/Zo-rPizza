@@ -1,13 +1,14 @@
 # Zo-rPizza Dokumentatsiyasi
 
-Bu Zo-rPizza loyihasining to'liq dokumentatsiyasi.
+Bu Zo-rPizza loyihasining dokumentatsiyasi.
 
 ## 📚 Tarkibi
 
-- [API Dokumentatsiyasi](./api/) - Backend API endpointlar va ularning foydalanish qo'llanmalari
-- [Arxitektura](./architecture/) - Loyiha arxitekturasi va dizayn qarorlari
-- [Deployment](./deployment/) - Loyihani serverga joylashtirish bo'yicha yo'riqnoma
-- [Development](./development/) - Dasturchilar uchun qo'llanma
+- [Sahifalar va API](./SAHIFALAR_VA_ENDPOINTLAR.md) - Endpointlar va sahifalar
+- [Features](./FEATURES_IMPLEMENTATION.md) - Feature reja
+- [Testing va Improvement](./TESTING_VA_IMPROVEMENT_REJA.md) - To'liq testing va platform yaxshilash rejasi
+- [Deployment](./deployment/) - Loyihani serverga joylashtirish
+- [Development](./development/CONTRIBUTING.md) - Dasturchilar uchun qo'llanma
 
 ## 🏗️ Loyiha Tuzilmasi
 
@@ -34,7 +35,7 @@ Zo-rPizza/
 2. **Ishga tushurish:**
 
    ```bash
-   pnpm dev
+   pnpm run dev:both
    ```
 
 3. **Testlar:**

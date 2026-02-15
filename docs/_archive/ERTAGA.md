@@ -1,6 +1,35 @@
 # 🚀 ERTAGA DAVOM ETTIRISH UCHUN
 
-## ✅ Bugun Bajarildi (2026-02-07)
+## ✅ Bugun Bajarildi (2026-02-14)
+
+### 1. Cache tozalash va dev muhit
+
+- ✅ Barcha **node_modules**, **.next**, **dist**, **.jest-cache** tozalandi
+- ✅ **pnpm install** qayta ishlatildi, Prisma generate avtomatik
+- ✅ **pnpm run dev:both** endi ishlaydi (backend + frontend birga)
+
+### 2. Backend pnpm filter
+
+- ✅ Root `package.json` da backend paket nomi **zor-pizza-backend** ga tuzatildi
+- ✅ `dev:backend`, `test:backend`, `test:backend:watch`, `test:backend:coverage` to‘g‘ri ishlaydi
+
+### 3. Frontend dev server
+
+- ✅ Next.js **-H 127.0.0.1** qo‘shildi (uv_interface_addresses xatosi oldini olindi)
+- ✅ **turbopack.root: '..'** — workspace ogohlantirishi yopildi
+
+### 4. Local API URL va CORS
+
+- ✅ **127.0.0.1** ham local hisoblanadi (apiBaseUrl.ts)
+- ✅ Local da frontend **http://localhost:5001** ga so‘rov yuboradi (production emas)
+- ✅ "Error fetching categories" / CORS / Network Error bartaraf etildi
+- ✅ SSR (development) ham local backend ishlatadi
+
+**Batafsil:** `docs/DAILY_LOG_2026_02_14.md`
+
+---
+
+## ✅ Ilgari (2026-02-07) bajarilgan
 
 ### 1. Login & Authentication System
 
@@ -25,13 +54,25 @@
 
 ---
 
-## 🎯 ERTAGA QILISH KERAK (2026-02-08)
+## 🎯 ERTAGA QILISH KERAK (2026-02-15)
 
-### Priority 1: Test Order Yaratish
+### Ishga tushirish (birinchi ish)
+
+```bash
+pnpm run dev:both
+# Frontend: http://127.0.0.1:3000  |  Backend: http://localhost:5001
+```
+
+### Priority 1: Feature ishlariga davom
+
+- `docs/FEATURES_IMPLEMENTATION.md` bo‘yicha qolgan feature’lar
+- Branch finder, delivery time, saved addresses, promo, loyalty, order history, tracking — keraklilarini ketma-ket amalga oshirish
+
+### Priority 2: Test Order va GPS Tracking (agar kerak bo‘lsa)
 
 ```bash
 # 1. Admin panel orqali order yaratish:
-- http://localhost:3000/admin/orders
+- http://localhost:3000/admin/orders  (yoki http://127.0.0.1:3000)
 - Yoki script orqali test order yaratish
 
 # 2. Driver ga assign qilish:
@@ -44,7 +85,7 @@
 - GPS tracking ishlashi
 ```
 
-### Priority 2: GPS Tracking Test
+### Priority 3: GPS Tracking Test
 
 ```bash
 # 1. Driver sifatida login:
@@ -63,7 +104,7 @@
 - Distance/ETA hisoblash
 ```
 
-### Priority 3: Order Flow
+### Priority 4: Order Flow
 
 ```bash
 # To'liq order lifecycle test:
@@ -213,6 +254,6 @@ Muammolar bo'lsa:
 
 ---
 
-_Last Updated: 2026-02-07 22:40_
-_Status: ✅ Ready for testing_
-_Next: Create test order and test GPS tracking_
+_Last Updated: 2026-02-14_  
+_Status: ✅ dev:both ishlaydi, local API/CORS tuzatildi_  
+_Next: Ertaga feature ishlariga qattiq davom (FEATURES_IMPLEMENTATION.md)_

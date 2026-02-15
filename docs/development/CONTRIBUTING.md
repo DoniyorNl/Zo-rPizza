@@ -117,5 +117,5 @@ pnpm --filter backend build
 
 Savollar uchun:
 
-- Team lead ga murojaat qiling
+- Team lead ga murojaat qiling +31684702089 as a call as a watsup
 - [Issues](../../issues) oching
