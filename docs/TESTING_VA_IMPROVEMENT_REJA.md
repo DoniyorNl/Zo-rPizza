@@ -7,22 +7,24 @@
 - ✅ Integration: auth, products, orders
 - ❌ Integration: branches, delivery, profile, tracking, loyalty, promos, deals, coupons
 
-### Frontend (132 test)
+### Frontend (160 test)
 - ✅ Hooks: usePopularProducts, useDeals, useCategories, useNotifications
 - ✅ Store: cartStore
 - ✅ Components: HeroSection, DealsSection, ProductCard, CategoryNav, DeliveryToggle, TrackingMap, ErrorBoundary, MemberSection, PopularProducts, DriverHistoryPage
-- ❌ Pages: Checkout, Cart, Orders, Profile, Tracking, Login, Menu
-- ❌ Components: PromoCodeInput, LoyaltyDisplay, BranchModal, Toast, TrackingModal, PizzeriaUserMap
+- ✅ Pages: Checkout, Cart
+- ✅ Components: PromoCodeInput, LoyaltyDisplay
+- ❌ Pages: Orders, Profile, Tracking, Login, Menu
+- ❌ Components: BranchModal, Toast, TrackingModal, PizzeriaUserMap
 
 ### E2E (4 spec, 26 test)
 - ✅ Admin: dashboard, products, orders, analytics, users
 - ✅ Order flow: full harid
 - ✅ Tracking flow
 - ✅ Driver history
-- ❌ Checkout (promo, loyalty, pickup)
+- ✅ Checkout (cart, delivery forma, to'lov usullari)
+- ✅ Login/Register (forma, validatsiya, navigatsiya)
 - ❌ Profile (addresses, favorites)
 - ❌ Branches page
-- ❌ Login/Register flows
 
 ---
 
@@ -45,10 +47,10 @@
 
 | Prioriteta | Komponent/Sahifa | Test qilish kerak |
 |-----------|------------------|-------------------|
-| 1 | CheckoutPage | forma validatsiya, submit, pickup/delivery |
-| 1 | CartPage | mahsulotlar, miqdor, checkout tugmasi |
-| 1 | PromoCodeInput | promo apply, xato, success |
-| 1 | LoyaltyDisplay | ballar, redeem |
+| 1 | CheckoutPage | forma validatsiya, submit, pickup/delivery | ✅ Done |
+| 1 | CartPage | mahsulotlar, miqdor, checkout tugmasi | ✅ Done |
+| 1 | PromoCodeInput | promo apply, xato, success | ✅ Done |
+| 1 | LoyaltyDisplay | ballar, redeem | ✅ Done |
 | 2 | OrdersPage | ro‘yxat, select all, bulk delete |
 | 2 | ProfilePage | stats, addresses, favorites |
 | 2 | TrackingModal | xarita, status |
@@ -68,7 +70,7 @@
 
 ### 1.4 Test infrastruktura
 
-- [ ] E2E uchun `data-testid` lar tekshirish va qo‘shish (checkout, cart, login form)
+- [x] E2E uchun `data-testid` lar qo‘shish (checkout, cart, login form)
 - [ ] CI/CD (GitHub Actions): `pnpm test`, `pnpm run test:e2e`
 - [ ] Coverage target: backend 80%+, frontend 70%+
 - [ ] Test database (Supabase test yoki SQLite in-memory)

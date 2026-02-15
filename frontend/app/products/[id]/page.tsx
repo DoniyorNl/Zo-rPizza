@@ -312,6 +312,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 									{product.variations.map(variation => (
 										<button
 											key={variation.id}
+											data-testid="size-option"
 											onClick={() => setSelectedVariation(variation)}
 											className={`p-3 border-2 rounded-xl transition-all text-left ${selectedVariation?.id === variation.id
 												? 'border-orange-600 bg-orange-50 shadow-sm'
@@ -468,6 +469,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 									)}
 								</div>
 								<Button
+									data-testid="add-to-cart"
 									onClick={handleAddToCart}
 									disabled={!selectedVariation}
 									className='bg-white text-orange-600 hover:bg-stone-100 rounded-xl px-6 disabled:opacity-50'

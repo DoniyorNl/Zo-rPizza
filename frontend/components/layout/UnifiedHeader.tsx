@@ -106,6 +106,7 @@ export function UnifiedHeader({ variant = 'user' }: UnifiedHeaderProps) {
 					{/* Cart Button - Faqat user uchun */}
 					{!isAdmin && (
 						<button
+							data-testid="cart-button"
 							onClick={() => router.push('/cart')}
 							className='relative flex items-center justify-center w-10 h-10 rounded-full
 							bg-orange-500 hover:bg-orange-700
@@ -114,7 +115,7 @@ export function UnifiedHeader({ variant = 'user' }: UnifiedHeaderProps) {
 						>
 							<ShoppingCart className='w-5 h-5' />
 							{totalItems > 0 && (
-								<Badge className='absolute -top-1.5 -right-1.5 bg-orange-900 text-white px-1.5 py-0.5 text-xs shadow'>
+								<Badge data-testid="cart-count" className='absolute -top-1.5 -right-1.5 bg-orange-900 text-white px-1.5 py-0.5 text-xs shadow'>
 									{totalItems}
 								</Badge>
 							)}
