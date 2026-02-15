@@ -72,10 +72,10 @@ export default function LoginPage() {
 				</CardHeader>
 
 				<CardContent>
-					<form onSubmit={handleSubmit} className='space-y-5'>
+					<form data-testid="login-form" onSubmit={handleSubmit} className='space-y-5'>
 						{/* Error Message */}
 						{error && (
-							<div className='bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg flex items-start gap-3'>
+							<div data-testid="login-error" className='bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg flex items-start gap-3'>
 								<AlertCircle className='w-5 h-5 flex-shrink-0 mt-0.5' />
 								<p className='text-sm'>{error}</p>
 							</div>
@@ -85,6 +85,7 @@ export default function LoginPage() {
 						<div className='space-y-2'>
 							<Label htmlFor='email'>Email Manzil</Label>
 							<Input
+								data-testid="login-email"
 								id='email'
 								type='email'
 								placeholder='example@email.com'
@@ -108,6 +109,7 @@ export default function LoginPage() {
 								</Link>
 							</div>
 							<Input
+								data-testid="login-password"
 								id='password'
 								type='password'
 								placeholder='••••••••'
@@ -121,6 +123,7 @@ export default function LoginPage() {
 
 						{/* Submit Button */}
 						<Button
+							data-testid="login-submit"
 							type='submit'
 							className='w-full h-11 text-base font-semibold bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700'
 							disabled={loading}

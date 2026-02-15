@@ -9,5 +9,8 @@ export default defineConfig({
 	},
 	use: {
 		baseURL: 'http://localhost:3000',
+		// macOS da Playwright Chromium SIGSEGV bersa: channel: 'chrome' qo‘yib tizim Chrome ishlating
+		channel: 'chrome',
+		trace: 'on-first-retry',
 	},
 })

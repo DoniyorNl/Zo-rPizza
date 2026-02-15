@@ -162,8 +162,8 @@ export default function CheckoutPage() {
 								</CardTitle>
 							</CardHeader>
 							<CardContent>
-								<form onSubmit={handleSubmit} className='space-y-6'>
-									{error && <div className='bg-red-50 text-red-600 p-3 rounded'>{error}</div>}
+								<form data-testid="checkout-form" onSubmit={handleSubmit} className='space-y-6'>
+									{error && <div data-testid="checkout-error" className='bg-red-50 text-red-600 p-3 rounded'>{error}</div>}
 
 									{isPickup && selectedBranch && (
 										<div className='rounded-lg bg-gray-100 p-4'>
@@ -182,6 +182,7 @@ export default function CheckoutPage() {
 												Yetkazib berish manzili *
 											</label>
 											<textarea
+												data-testid="checkout-address"
 												value={deliveryAddress}
 												onChange={e => setDeliveryAddress(e.target.value)}
 												className='w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500'
@@ -196,6 +197,7 @@ export default function CheckoutPage() {
 									<div>
 										<label className='block text-sm font-medium mb-2'>Telefon raqam *</label>
 										<input
+											data-testid="checkout-phone"
 											type='tel'
 											value={deliveryPhone}
 											onChange={e => setDeliveryPhone(e.target.value)}
@@ -211,6 +213,7 @@ export default function CheckoutPage() {
 										<div className='grid grid-cols-2 gap-4'>
 											<button
 												type='button'
+												data-testid="payment-cash"
 												onClick={() => setPaymentMethod('CASH')}
 												className={`p-4 border-2 rounded-lg font-semibold transition-all ${paymentMethod === 'CASH'
 													? 'border-orange-600 bg-orange-50 text-orange-600'
@@ -221,6 +224,7 @@ export default function CheckoutPage() {
 											</button>
 											<button
 												type='button'
+												data-testid="payment-card"
 												onClick={() => setPaymentMethod('CARD')}
 												className={`p-4 border-2 rounded-lg font-semibold transition-all ${paymentMethod === 'CARD'
 													? 'border-orange-600 bg-orange-50 text-orange-600'
@@ -233,6 +237,7 @@ export default function CheckoutPage() {
 									</div>
 
 									<Button
+										data-testid="checkout-submit"
 										type='submit'
 										className='w-full'
 										size='lg'
@@ -251,7 +256,7 @@ export default function CheckoutPage() {
 							<CardHeader>
 								<CardTitle>Buyurtma tafsilotlari</CardTitle>
 							</CardHeader>
-							<CardContent className='space-y-4'>
+							<CardContent className='space-y-4' data-testid="checkout-summary">
 								{/* Items */}
 								<div className='space-y-2'>
 									{items.map(item => (

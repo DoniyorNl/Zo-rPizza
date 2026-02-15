@@ -22,11 +22,11 @@ export default function CartPage() {
 				<Header />
 
 				<div className='container mx-auto px-4 py-12'>
-					<div className='text-center py-20'>
+					<div data-testid="cart-empty" className='text-center py-20'>
 						<h2 className='text-3xl font-bold mb-4'>Savatcha bo&apos;sh</h2>
 						<p className='text-gray-600 mb-8'>Hozircha hech narsa qo&apos;shilmagan</p>
 						<Button asChild>
-							<Link href='/'>Menyu&apos;ga qaytish</Link>
+							<Link href='/' data-testid="cart-empty-menu-link">Menyu&apos;ga qaytish</Link>
 						</Button>
 					</div>
 				</div>
@@ -41,7 +41,7 @@ export default function CartPage() {
 			<div className='container mx-auto px-4 py-12'>
 				<div className='flex items-center justify-between mb-8'>
 					<h1 className='text-4xl font-bold'>Savatcha</h1>
-					<Button variant='outline' onClick={clearCart} className='text-red-600'>
+					<Button data-testid="cart-clear" variant='outline' onClick={clearCart} className='text-red-600'>
 						<Trash2 className='w-4 h-4 mr-2' />
 						Hammasini o&apos;chirish
 					</Button>
@@ -49,7 +49,7 @@ export default function CartPage() {
 
 				<div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
 					{/* Cart Items */}
-					<div className='lg:col-span-2 space-y-4'>
+					<div data-testid="cart-items" className='lg:col-span-2 space-y-4'>
 						{items.map(item => (
 							<Card key={item.id}>
 								<CardContent className='p-6 flex items-center gap-6'>
@@ -128,7 +128,7 @@ export default function CartPage() {
 									</div>
 								</div>
 
-								<Button className='w-full' size='lg' onClick={() => router.push('/checkout')}>
+								<Button data-testid="cart-checkout" className='w-full' size='lg' onClick={() => router.push('/checkout')}>
 									Buyurtma berish
 								</Button>
 							</CardContent>
