@@ -85,9 +85,9 @@ npx prisma studio
 
 | Component | Tests | Status |
 |-----------|-------|--------|
-| Backend | 34 | ✅ 100% |
-| Frontend | 9 | ✅ 100% |
-| **Total** | **43** | **✅ PASS** |
+| Backend | 480 | ✅ 100% |
+| Frontend | 160 | ✅ 100% |
+| **Total** | **640** | **✅ PASS** |
 
 ### Run Tests
 
@@ -326,6 +326,6 @@ pnpm test
 
 ---
 
-**Last Updated**: 2026-01-19
+**Last Updated**: 2026-02-21
 
-**Quick Links**: [README](/README.md) | [Setup](/docs/INSTALLATION_GUIDE.md) | [Tests](/docs/TESTING.md) | [Structure](/docs/PROJECT_STRUCTURE.md)
+**Quick Links**: [README](/README.md) | [2 kunlik reja](/docs/BUGUN_ERTAGA_REJA_2_KUN.md) | [Setup](/docs/INSTALLATION_GUIDE.md) | [Structure](/docs/PROJECT_STRUCTURE.md)
