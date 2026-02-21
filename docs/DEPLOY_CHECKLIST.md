@@ -1,28 +1,45 @@
 # Deploy Checklist
 
-## Olib tashlangan (cleanup)
+## Pre-deploy (har safar)
 
-- **Unused packages:** `@react-google-maps/api`, `chart.js`, `react-chartjs-2`, `recharts`, `@types/recharts`, `tw-animate-css`
-- **Unused file:** `GoogleTrackingMap.tsx` (Leaflet ishlatiladi)
-- **Bo'sh fayl:** `Users`
-- **Docs:** 38 ta vaqtinchalik/duplicate doc `docs/_archive/` ga ko'chirildi
+- [ ] `pnpm install` (root)
+- [ ] `pnpm build` – xatosiz
+- [ ] `pnpm test` – barcha unit/integration o'tadi
+- [ ] (Ixtiyoriy) `pnpm test:e2e` – backend + frontend ishlab turgan holda
 
-## Qolgan asosiy docs
+## Production env (hech narsani commit qilmaslik)
 
-- `docs/README.md`
-- `docs/INSTALLATION_GUIDE.md`
-- `docs/SAHIFALAR_VA_ENDPOINTLAR.md`
-- `docs/FEATURES_IMPLEMENTATION.md`
-- `docs/QUICK_REFERENCE.md`
-- `docs/deployment/`
-- `docs/development/`
-- `BUYRUQLAR.md` (root)
+### Backend (Railway / Render / server)
+
+| O'zgaruvchi | Majburiy | Izoh |
+|-------------|----------|------|
+| `DATABASE_URL` | Ha | PostgreSQL connection string |
+| `FRONTEND_URLS` | Ha | Frontend origin(lar), vergul bilan |
+| `FIREBASE_SERVICE_ACCOUNT_BASE64` | Ha | Service account JSON, Base64 |
+| `PORT` | Yo'q | Default 5001 |
+| `NODE_ENV` | Yo'q | production |
+
+### Frontend (Vercel / Netlify)
+
+| O'zgaruvchi | Majburiy | Izoh |
+|-------------|----------|------|
+| `NEXT_PUBLIC_API_URL` | Ha | Backend URL (https://...) |
+| `NEXT_PUBLIC_FIREBASE_*` | Ha | Firebase client (API_KEY, AUTH_DOMAIN, PROJECT_ID, ...) |
+
+Namuna: `backend/.env.example`, `frontend/.env.example`.
 
 ## Keyingi qadamlar
 
 ```bash
 pnpm install
-pnpm run build
-# Yoki test:
-pnpm run dev:both
+pnpm build
+pnpm run dev:both   # local tekshirish
 ```
+
+Batafsil: `docs/deployment/DEPLOYMENT_GUIDE.md`, `docs/deployment/ENVIRONMENT_SETUP.md`.
+
+---
+
+## Arxiv (cleanup)
+
+- Unused packages/filelar olib tashlangan; docs `_archive/` da.

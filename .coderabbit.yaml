@@ -1,0 +1,12 @@
+# CodeRabbit – PR tekshiruvi sozlamalari
+# https://docs.coderabbit.ai/reference/configuration-schema
+
+language: "en-US"
+
+reviews:
+  profile: "chill"        # kamroq shovqin, muhim takliflar
+  auto_review:
+    enabled: true
+
+chat:
+  auto_reply: true
