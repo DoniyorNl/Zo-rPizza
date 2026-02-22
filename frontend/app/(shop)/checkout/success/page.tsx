@@ -6,6 +6,7 @@
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { useCartStore } from '@/store/cartStore'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { CheckCircle2, Home, MapPin } from 'lucide-react'
@@ -15,8 +16,10 @@ const TRACKING_LOCATION_KEY = 'tracking_user_location'
 export default function CheckoutSuccessPage() {
 	const router = useRouter()
 	const searchParams = useSearchParams()
+	const clearCart = useCartStore(state => state.clearCart)
 	const orderId = searchParams.get('orderId')
 	const orderNumber = searchParams.get('orderNumber')
+	const isPaid = searchParams.get('paid') === '1'
 	const [locationRequesting, setLocationRequesting] = useState(false)
 
 	// orderId bo'lmasa asosiy sahifaga (direct URL ochilganda)
@@ -25,6 +28,11 @@ export default function CheckoutSuccessPage() {
 			router.replace('/')
 		}
 	}, [orderId, router])
+
+	useEffect(() => {
+		// Online payment flow qaytganda savatni tozalaymiz
+		if (isPaid) clearCart()
+	}, [isPaid, clearCart])
 
 	if (!orderId) {
 		return (

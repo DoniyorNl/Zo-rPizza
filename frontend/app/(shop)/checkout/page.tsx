@@ -25,7 +25,7 @@ export default function CheckoutPage() {
 
 	const [deliveryAddress, setDeliveryAddress] = useState('')
 	const [deliveryPhone, setDeliveryPhone] = useState('')
-	const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'CARD'>('CASH')
+	const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'CARD' | 'CLICK' | 'PAYME'>('CASH')
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState('')
 
@@ -114,13 +114,33 @@ export default function CheckoutPage() {
 			const order = response.data?.data
 			const id = order?.id
 			const orderNumber = order?.orderNumber ?? ''
-			// Avval success ga yo'naltirish, keyin cart tozalash – aks holda useEffect cartga qaytarib yuboradi
 			afterSuccessRef.current = true
-			if (id) {
-				router.push(`/checkout/success?orderId=${id}&orderNumber=${encodeURIComponent(orderNumber)}`)
-			} else {
+
+			if (!id) {
 				router.push('/')
+				return
 			}
+
+			if (paymentMethod === 'CLICK' || paymentMethod === 'PAYME') {
+				const payRes = await api.post(
+					'/api/payments/initiate',
+					{ orderId: id, provider: paymentMethod },
+					{
+						headers: {
+							Authorization: `Bearer ${token}`,
+						},
+					},
+				)
+				const redirectUrl = payRes.data?.data?.redirectUrl
+				if (redirectUrl) {
+					window.location.href = redirectUrl
+					return
+				}
+				throw new Error('Payment redirect URL topilmadi')
+			}
+
+			// Avval success ga yo'naltirish, keyin cart tozalash – aks holda useEffect cartga qaytarib yuboradi
+			router.push(`/checkout/success?orderId=${id}&orderNumber=${encodeURIComponent(orderNumber)}`)
 			clearCart()
 		} catch (err: unknown) {
 			if (axios.isAxiosError(err)) {
@@ -232,6 +252,28 @@ export default function CheckoutPage() {
 													}`}
 											>
 												💳 Karta
+											</button>
+											<button
+												type='button'
+												data-testid="payment-click"
+												onClick={() => setPaymentMethod('CLICK')}
+												className={`p-4 border-2 rounded-lg font-semibold transition-all ${paymentMethod === 'CLICK'
+													? 'border-orange-600 bg-orange-50 text-orange-600'
+													: 'border-gray-300 hover:border-orange-300'
+													}`}
+											>
+												🟢 Click
+											</button>
+											<button
+												type='button'
+												data-testid="payment-payme"
+												onClick={() => setPaymentMethod('PAYME')}
+												className={`p-4 border-2 rounded-lg font-semibold transition-all ${paymentMethod === 'PAYME'
+													? 'border-orange-600 bg-orange-50 text-orange-600'
+													: 'border-gray-300 hover:border-orange-300'
+													}`}
+											>
+												🔵 Payme
 											</button>
 										</div>
 									</div>
