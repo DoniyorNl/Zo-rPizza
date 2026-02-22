@@ -26,6 +26,17 @@ jest.mock('@/lib/api', () => ({
 }))
 jest.mock('@/lib/geocoding')
 jest.mock('@/components/layout/UnifiedHeader', () => ({ UnifiedHeader: () => null }))
+jest.mock('@stripe/react-stripe-js', () => ({
+  Elements: ({ children }: { children: unknown }) => <div>{children as any}</div>,
+  PaymentElement: () => <div data-testid="stripe-payment-element">Stripe PaymentElement</div>,
+  useStripe: () => ({
+    confirmPayment: jest.fn().mockResolvedValue({}),
+  }),
+  useElements: () => ({}),
+}))
+jest.mock('@stripe/stripe-js', () => ({
+  loadStripe: jest.fn().mockResolvedValue({}),
+}))
 
 const mockUser = {
   uid: 'user-123',
@@ -58,6 +69,7 @@ const mockBranch = {
 describe('CheckoutPage', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = 'pk_test_mock'
     ;(useAuth as jest.Mock).mockReturnValue({ user: mockUser })
     act(() => {
       useCartStore.getState().clearCart()
@@ -106,8 +118,6 @@ describe('CheckoutPage', () => {
     expect(screen.getByPlaceholderText('+998901234567')).toBeInTheDocument()
     expect(screen.getByText(/Naqd pul/i)).toBeInTheDocument()
     expect(screen.getByText(/Karta/i)).toBeInTheDocument()
-    expect(screen.getByText(/Click/i)).toBeInTheDocument()
-    expect(screen.getByText(/Payme/i)).toBeInTheDocument()
     expect(screen.getByText(/Buyurtma tafsilotlari/i)).toBeInTheDocument()
   })
 
@@ -139,16 +149,12 @@ describe('CheckoutPage', () => {
     const cashBtn = screen.getByText('💵 Naqd pul')
     fireEvent.click(cashBtn)
     expect(cashBtn.closest('button')).toHaveClass('border-orange-600')
-
-    const clickBtn = screen.getByText('🟢 Click')
-    fireEvent.click(clickBtn)
-    expect(clickBtn.closest('button')).toHaveClass('border-orange-600')
   })
 
-  it('should initiate online payment for CLICK', async () => {
+  it('should open card payment modal and request client secret', async () => {
     ;(api.post as jest.Mock)
       .mockResolvedValueOnce({ data: { data: { id: 'order-1', orderNumber: 'ORD-001' } } })
-      .mockResolvedValueOnce({ data: { data: { redirectUrl: 'http://example.com/pay' } } })
+      .mockResolvedValueOnce({ data: { data: { clientSecret: 'pi_secret_test' } } })
 
     render(<CheckoutPage />)
 
@@ -158,17 +164,20 @@ describe('CheckoutPage', () => {
     fireEvent.change(screen.getByPlaceholderText('+998901234567'), {
       target: { value: '+998901234567' },
     })
-    fireEvent.click(screen.getByText('🟢 Click'))
+    fireEvent.click(screen.getByText('💳 Karta'))
     fireEvent.click(screen.getByRole('button', { name: 'Buyurtma berish' }))
 
     await waitFor(() => {
       expect(api.post).toHaveBeenNthCalledWith(
         2,
-        '/api/payments/initiate',
-        { orderId: 'order-1', provider: 'CLICK' },
+        '/api/payment/create-intent',
+        { orderId: 'order-1' },
         expect.any(Object),
       )
     })
+
+    expect(screen.getByText(/Karta orqali to'lash/i)).toBeInTheDocument()
+    expect(screen.getByTestId('stripe-payment-element')).toBeInTheDocument()
   })
 
   it('should submit order successfully for delivery', async () => {
@@ -241,7 +250,7 @@ describe('CheckoutPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Buyurtma berish' }))
 
     await waitFor(() => {
-      expect(screen.getByText(/Buyurtma berishda xatolik/i)).toBeInTheDocument()
+      expect(screen.getByTestId('checkout-error')).toBeInTheDocument()
     })
   })
 })

@@ -1,77 +1,167 @@
-# Loyiha buyruqlari (qisqa havola)
+# Loyiha Buyruqlari (copy-friendly)
 
-Barcha buyruqlar **loyiha root** papkasidan (`Zo-rPizza/`). Root’da `pnpm run <script>` yoki quyidagi jadvaldagi buyruqlar.
-
----
-
-## Root’dan: install va package qo‘shish
-
-| Buyruq | Nima qiladi |
-|--------|--------------|
-| `pnpm install` | Barcha package’larni o‘rnatish (frontend + backend) |
-| `pnpm install --frozen-lockfile` | Lockfile’dan o‘rnatish (CI, versiya o‘zgarmasin) |
-| `pnpm add <package> --filter frontend` | Frontend’ga dependency qo‘shish |
-| `pnpm add -D <package> --filter frontend` | Frontend’ga devDependency qo‘shish |
-| `pnpm add <package> --filter zor-pizza-backend` | Backend’ga dependency qo‘shish |
-| `pnpm add -D <package> --filter zor-pizza-backend` | Backend’ga devDependency qo‘shish |
+Barcha buyruqlarni loyiha root papkasidan (`Zo-rPizza/`) ishlating.
 
 ---
 
-## Root’dan: ishga tushirish (dev)
+## Install va package qo‘shish
 
-| Buyruq | Nima qiladi |
-|--------|--------------|
-| `pnpm dev` | Faqat frontend dev server (Next.js) |
-| `pnpm dev:backend` | Faqat backend dev server (tsx watch) |
-| `pnpm dev:both` | Frontend va backend birga parallel |
+- Barcha package’larni o‘rnatish:
+```bash
+pnpm install
+```
 
----
+- Lockfile bo‘yicha o‘rnatish (CI):
+```bash
+pnpm install --frozen-lockfile
+```
 
-## Root’dan: build va start
+- Frontend dependency qo‘shish:
+```bash
+pnpm add <package> --filter frontend
+```
 
-| Buyruq | Nima qiladi |
-|--------|--------------|
-| `pnpm build` | Frontend + backend build (backend no-op) |
-| `pnpm --filter frontend start` | Frontend production (next start) |
-| `pnpm --filter zor-pizza-backend start` | Backend production (tsx server) |
+- Frontend devDependency qo‘shish:
+```bash
+pnpm add -D <package> --filter frontend
+```
 
----
+- Backend dependency qo‘shish:
+```bash
+pnpm add <package> --filter zor-pizza-backend
+```
 
-## Root’dan: test
-
-| Buyruq | Nima qiladi |
-|--------|--------------|
-| `pnpm test` | Backend va frontend testlar |
-| `pnpm test:frontend` | Faqat frontend testlar |
-| `pnpm test:backend` | Faqat backend testlar |
-| `pnpm test:changed` | Faqat o‘zgargan fayllar bo‘yicha test (main’dan) |
-| `pnpm test:frontend:watch` | Frontend testlar watch rejimida |
-| `pnpm test:backend:watch` | Backend testlar watch rejimida |
-| `pnpm test:frontend:coverage` | Frontend coverage |
-| `pnpm test:backend:coverage` | Backend coverage |
-| `pnpm test:e2e` | Playwright e2e testlar |
-| `pnpm test:e2e:ui` | Playwright e2e UI rejimida |
-| `pnpm test:all` | Barcha unit/integration + e2e |
+- Backend devDependency qo‘shish:
+```bash
+pnpm add -D <package> --filter zor-pizza-backend
+```
 
 ---
 
-## Root’dan: backend (Prisma)
+## Dev ishga tushirish
 
-| Buyruq | Nima qiladi |
-|--------|--------------|
-| `pnpm --filter zor-pizza-backend run prisma:generate` | Prisma client generatsiya |
-| `pnpm --filter zor-pizza-backend run prisma:push` | Schema’ni DB’ga push (dev) |
-| `pnpm --filter zor-pizza-backend run prisma:migrate` | Migration’larni deploy qilish |
-| `pnpm --filter zor-pizza-backend run prisma:seed` | Seed ishga tushirish |
+- Faqat frontend:
+```bash
+pnpm dev
+```
+
+- Faqat backend:
+```bash
+pnpm dev:backend
+```
+
+- Frontend + backend birga:
+```bash
+pnpm dev:both
+```
 
 ---
 
-## Qisqa: eng keraklilari
+## Build va start
 
-| Vazifa | Buyruq |
-|--------|--------|
-| Loyihani ishga tushirish | `pnpm install` → `pnpm dev:backend` (bitta terminal), `pnpm dev` (ikkinchi terminal) |
-| Frontend’ga package qo‘shish | `pnpm add <package> --filter frontend` |
-| Backend’ga package qo‘shish | `pnpm add <package> --filter zor-pizza-backend` |
-| Testlar | `pnpm test` yoki `pnpm test:frontend` / `pnpm test:backend` |
-| Build | `pnpm build` |
+- Build:
+```bash
+pnpm build
+```
+
+- Frontend production start:
+```bash
+pnpm --filter frontend start
+```
+
+- Backend production start:
+```bash
+pnpm --filter zor-pizza-backend start
+```
+
+---
+
+## Testlar
+
+- Barcha testlar:
+```bash
+pnpm test
+```
+
+- Faqat frontend testlar:
+```bash
+pnpm test:frontend
+```
+
+- Faqat backend testlar:
+```bash
+pnpm test:backend
+```
+
+- O‘zgargan fayllar bo‘yicha test:
+```bash
+pnpm test:changed
+```
+
+- Frontend watch:
+```bash
+pnpm test:frontend:watch
+```
+
+- Backend watch:
+```bash
+pnpm test:backend:watch
+```
+
+- Frontend coverage:
+```bash
+pnpm test:frontend:coverage
+```
+
+- Backend coverage:
+```bash
+pnpm test:backend:coverage
+```
+
+- E2E test:
+```bash
+pnpm test:e2e
+```
+
+- E2E UI:
+```bash
+pnpm test:e2e:ui
+```
+
+- Hammasi (unit/integration + e2e):
+```bash
+pnpm test:all
+```
+
+---
+
+## Backend (Prisma)
+
+- Prisma client generatsiya:
+```bash
+pnpm --filter zor-pizza-backend run prisma:generate
+```
+
+- Schema’ni DB’ga push (dev):
+```bash
+pnpm --filter zor-pizza-backend run prisma:push
+```
+
+- Migration deploy:
+```bash
+pnpm --filter zor-pizza-backend run prisma:migrate
+```
+
+- Seed:
+```bash
+pnpm --filter zor-pizza-backend run prisma:seed
+```
+
+---
+
+## Stripe (local webhook)
+
+- Stripe eventlarini local backend webhook endpointiga forward qilish:
+```bash
+stripe listen --forward-to localhost:5001/api/payment/webhook
+```

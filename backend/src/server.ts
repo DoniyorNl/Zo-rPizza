@@ -26,6 +26,7 @@ import dealsRoutes from './routes/deals.routes'
 import deliveryRoutes from './routes/delivery.routes'
 import loyaltyRoutes from './routes/loyalty.routes'
 import ordersRoutes from './routes/orders.routes'
+import paymentRoutes, { stripeWebhook } from './routes/payment.routes'
 import paymentsRoutes from './routes/payments.routes'
 import productsRoutes from './routes/products.routes'
 import profileRoutes from './routes/profile.routes'
@@ -131,6 +132,8 @@ const generalLimiter = rateLimit({
 // ============================================
 
 app.use(morgan('dev'))
+// Stripe webhook raw body kerak (imzo tekshiruvi uchun) – json dan oldin
+app.use('/api/payment/webhook', express.raw({ type: 'application/json' }), stripeWebhook)
 app.use(express.json({ limit: '10kb' }))
 app.use(express.urlencoded({ extended: true, limit: '10kb' }))
 
@@ -162,6 +165,7 @@ app.get('/', (_req: Request, res: Response) => {
 			analytics: '/api/analytics',
 			products: '/api/products',
 			orders: '/api/orders',
+			payment: '/api/payment',
 			payments: '/api/payments',
 			users: '/api/users',
 			categories: '/api/categories',
@@ -203,6 +207,7 @@ app.get('/api', (_req: Request, res: Response) => {
 			{ method: 'GET', path: '/api/analytics', description: 'Analytics', protected: false },
 			{ method: 'GET', path: '/api/products', description: 'Products', protected: false },
 			{ method: 'GET', path: '/api/orders', description: 'Orders', protected: true },
+			{ method: 'POST', path: '/api/payment/create-intent', description: 'Stripe PaymentIntent', protected: true },
 			{ method: 'POST', path: '/api/payments/initiate', description: 'Init payment', protected: true },
 			{ method: 'GET', path: '/api/users', description: 'Users', protected: true },
 			{ method: 'GET', path: '/api/categories', description: 'Categories', protected: false },
@@ -241,6 +246,7 @@ app.use('/api/promos', generalLimiter, promosRoutes)
 app.use('/api/products', generalLimiter, productsRoutes)
 app.use('/api/toppings', generalLimiter, toppingsRoutes)
 app.use('/api/orders', generalLimiter, ordersRoutes)
+app.use('/api/payment', generalLimiter, paymentRoutes)
 app.use('/api/payments', generalLimiter, paymentsRoutes)
 app.use('/api/users', generalLimiter, usersRoutes)
 app.use('/api/profile', generalLimiter, profileRoutes)

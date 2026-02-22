@@ -251,6 +251,7 @@ model Order {
   loyaltyPointsUsed   Int?         @default(0)
   paymentMethod       PaymentMethod
   paymentStatus       PaymentStatus @default(PENDING)
+  payment_intent_id   String?       // Stripe PaymentIntent (CARD to'lov uchun)
   deliveryAddress     String
   deliveryPhone       String
   deliveryLat         Float?
