@@ -269,6 +269,7 @@ model Order {
   items               OrderItem[]
   user                User          @relation(fields: [userId], references: [id])
   reviews             Review?
+  payments            Payment[]
 
   @@map("orders")
 }
@@ -385,6 +386,8 @@ enum OrderStatus {
 enum PaymentMethod {
   CASH
   CARD
+  CLICK
+  PAYME
 }
 
 enum PaymentStatus {
@@ -392,6 +395,30 @@ enum PaymentStatus {
   PAID
   FAILED
   REFUNDED
+}
+
+model Payment {
+  id          String          @id @default(uuid())
+  orderId     String
+  provider    PaymentProvider
+  externalId  String?
+  amount      Float
+  status      PaymentStatus   @default(PENDING)
+  redirectUrl String?
+  metadata    Json?
+  paidAt      DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  order       Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId, provider])
+  @@index([externalId, provider])
+  @@map("payments")
+}
+
+enum PaymentProvider {
+  CLICK
+  PAYME
 }
 
 // ============================================

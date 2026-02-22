@@ -106,6 +106,8 @@ describe('CheckoutPage', () => {
     expect(screen.getByPlaceholderText('+998901234567')).toBeInTheDocument()
     expect(screen.getByText(/Naqd pul/i)).toBeInTheDocument()
     expect(screen.getByText(/Karta/i)).toBeInTheDocument()
+    expect(screen.getByText(/Click/i)).toBeInTheDocument()
+    expect(screen.getByText(/Payme/i)).toBeInTheDocument()
     expect(screen.getByText(/Buyurtma tafsilotlari/i)).toBeInTheDocument()
   })
 
@@ -137,6 +139,36 @@ describe('CheckoutPage', () => {
     const cashBtn = screen.getByText('💵 Naqd pul')
     fireEvent.click(cashBtn)
     expect(cashBtn.closest('button')).toHaveClass('border-orange-600')
+
+    const clickBtn = screen.getByText('🟢 Click')
+    fireEvent.click(clickBtn)
+    expect(clickBtn.closest('button')).toHaveClass('border-orange-600')
+  })
+
+  it('should initiate online payment for CLICK', async () => {
+    ;(api.post as jest.Mock)
+      .mockResolvedValueOnce({ data: { data: { id: 'order-1', orderNumber: 'ORD-001' } } })
+      .mockResolvedValueOnce({ data: { data: { redirectUrl: 'http://example.com/pay' } } })
+
+    render(<CheckoutPage />)
+
+    fireEvent.change(screen.getByPlaceholderText(/Toshkent, Chilonzor/), {
+      target: { value: 'Toshkent, Chilonzor 9' },
+    })
+    fireEvent.change(screen.getByPlaceholderText('+998901234567'), {
+      target: { value: '+998901234567' },
+    })
+    fireEvent.click(screen.getByText('🟢 Click'))
+    fireEvent.click(screen.getByRole('button', { name: 'Buyurtma berish' }))
+
+    await waitFor(() => {
+      expect(api.post).toHaveBeenNthCalledWith(
+        2,
+        '/api/payments/initiate',
+        { orderId: 'order-1', provider: 'CLICK' },
+        expect.any(Object),
+      )
+    })
   })
 
   it('should submit order successfully for delivery', async () => {
