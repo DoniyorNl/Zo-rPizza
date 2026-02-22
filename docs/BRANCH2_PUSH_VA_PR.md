@@ -25,9 +25,9 @@ pnpm build
 ## 2. Branch2 ga push
 
 ```bash
-# Barcha o‘zgarishlarni stage qilish (keraklilari)
-git add .
-# Yoki aniq fayllar: git add .github docs frontend/app/layout.tsx ...
+# O‘zgargan yoki yangi fayllarni stage qilish
+git add .                    # barcha o‘zgarishlar
+# Yoki aniq: git add pnpm-lock.yaml docs/CI_LOCKFILE_XATO.md ...
 
 # Keraksiz fayllarni olib tashlash (agar add qilingan bo‘lsa)
 git reset HEAD .env
