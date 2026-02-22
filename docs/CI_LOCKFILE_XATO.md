@@ -45,4 +45,18 @@ Push dan keyin GitHub Actions (yoki Docker build) qayta ishlaydi; endi `pnpm ins
 
 ---
 
+---
+
+## Railway: 502 Bad Gateway (pnpm yuklab olinmayapti)
+
+**Xato:** `mise ERROR Failed to install ... pnpm@9.15.9: HTTP status server error (502 Bad Gateway or Proxy Error) for url (https://github.com/pnpm/pnpm/releases/...)`
+
+**Sabab:** GitHub vaqtincha 502 qaytardi – Railway (mise) pnpm ni GitHub dan yuklab ololmayapti.
+
+**Qilingan:** Root `package.json` ga **`"packageManager": "pnpm@9.15.9"`** qo‘shildi. Railpack bu maydon bor bo‘lsa **Corepack** orqali pnpm ishlatadi (GitHub releases dan yuklab olish shart emas).
+
+**Agar yana 502 chiqsa:** Bir necha daqiqadan keyin **Redeploy** qiling – 502 ko‘pincha vaqtincha. Yoki Railway dashboard da **Clear build cache** dan keyin qayta deploy.
+
+---
+
 _Oxirgi yangilanish: 2026-02-22_
