@@ -18,8 +18,10 @@
 		"test:e2e": "playwright test --config ../e2e/playwright.config.ts",
 		"test:e2e:ui": "playwright test --config ../e2e/playwright.config.ts --ui"
 	},
-	"dependencies": {
-		"@ducanh2912/next-pwa": "^10.2.9",
+"dependencies": {
+    "@stripe/react-stripe-js": "^2.8.0",
+    "@stripe/stripe-js": "^4.8.0",
+    "@ducanh2912/next-pwa": "^10.2.9",
 		"@hookform/resolvers": "^5.2.2",
 		"@radix-ui/react-dropdown-menu": "^2.1.16",
 		"@radix-ui/react-label": "^2.1.8",

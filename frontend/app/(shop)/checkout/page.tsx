@@ -11,12 +11,86 @@ import { useAuth } from '@/lib/AuthContext'
 import { geocodeAddress } from '@/lib/geocoding'
 import { useCartStore } from '@/store/cartStore'
 import { useDeliveryStore } from '@/store/deliveryStore'
+import { loadStripe } from '@stripe/stripe-js'
+import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js'
 import axios from 'axios'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+
+// Stripe to'lov formasi (wallet + karta)
+function CardPaymentForm({
+	orderId,
+	orderNumber,
+	totalAmount,
+	onClose,
+	onSuccess,
+}: {
+	orderId: string
+	orderNumber: string
+	totalAmount: number
+	onClose: () => void
+	onSuccess: () => void
+}) {
+	const stripe = useStripe()
+	const elements = useElements()
+	const [loading, setLoading] = useState(false)
+	const [error, setError] = useState('')
+
+	const handlePay = async (e: React.FormEvent) => {
+		e.preventDefault()
+		if (!stripe || !elements) return
+		setError('')
+		setLoading(true)
+		try {
+			const origin = typeof window !== 'undefined' ? window.location.origin : ''
+			const returnUrl = `${origin}/checkout/success?orderId=${orderId}&orderNumber=${encodeURIComponent(orderNumber)}&paid=1`
+			const { error: confirmError } = await stripe.confirmPayment({
+				elements,
+				confirmParams: { return_url: returnUrl },
+			})
+			if (confirmError) {
+				setError(confirmError.message ?? 'To\'lov amalga oshmadi')
+				setLoading(false)
+				return
+			}
+			onSuccess()
+		} catch {
+			setError('To\'lov amalga oshmadi')
+		} finally {
+			setLoading(false)
+		}
+	}
+
+	return (
+		<form onSubmit={handlePay} className="space-y-6 pb-2">
+			<div className="rounded-lg bg-orange-50 border border-orange-200 p-3">
+				<p className="text-sm text-orange-800">
+					Buyurtma: <span className="font-semibold">{orderNumber || orderId}</span>
+				</p>
+				<p className="text-sm text-orange-800">
+					Jami: <span className="font-semibold">{totalAmount.toLocaleString()} so&apos;m</span>
+				</p>
+			</div>
+			<p className="text-sm text-gray-600">
+				Qo&apos;llab-quvvatlanadigan qurilmalarda Google Pay avtomatik ko&apos;rinadi. Aks holda karta raqami orqali to&apos;lang.
+			</p>
+			<PaymentElement />
+			{error && <div className="bg-red-50 text-red-600 p-3 rounded text-sm">{error}</div>}
+			<div className="flex gap-3 sticky bottom-0 bg-white pt-2">
+				<Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+					Yopish
+				</Button>
+				<Button type="submit" disabled={!stripe || loading}>
+					{loading ? 'To\'lanmoqda...' : 'To\'lash'}
+				</Button>
+			</div>
+		</form>
+	)
+}
 
 export default function CheckoutPage() {
+	const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 	const { items, getTotalPrice, clearCart } = useCartStore()
 	const { method, selectedBranch } = useDeliveryStore()
 	const { user } = useAuth()
@@ -25,9 +99,17 @@ export default function CheckoutPage() {
 
 	const [deliveryAddress, setDeliveryAddress] = useState('')
 	const [deliveryPhone, setDeliveryPhone] = useState('')
-	const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'CARD' | 'CLICK' | 'PAYME'>('CASH')
+	const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'CARD'>('CASH')
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState('')
+	const [preparingCardPayment, setPreparingCardPayment] = useState(false)
+	// Stripe: buyurtma yaratilgach modal ochiladi
+	const [cardStep, setCardStep] = useState<{ orderId: string; orderNumber: string; clientSecret: string; totalAmount: number } | null>(null)
+	// Stripe modal uchun promise
+	const stripePromise = useMemo(
+		() => (stripePublishableKey ? loadStripe(stripePublishableKey) : null),
+		[stripePublishableKey],
+	)
 
 	const isPickup = method === 'pickup'
 	const canSubmitPickup = isPickup ? !!selectedBranch : true
@@ -42,6 +124,18 @@ export default function CheckoutPage() {
 			router.push('/login')
 		}
 	}, [items.length, user, router])
+
+	useEffect(() => {
+		const onEsc = (e: KeyboardEvent) => {
+			if (e.key === 'Escape' && cardStep) {
+				if (window.confirm('To\'lov modalini yopmoqchimisiz?')) {
+					setCardStep(null)
+				}
+			}
+		}
+		window.addEventListener('keydown', onEsc)
+		return () => window.removeEventListener('keydown', onEsc)
+	}, [cardStep])
 
 	// Agar yo'q bo'lsa, loading ko'rsatish
 	if (items.length === 0 || !user) {
@@ -121,35 +215,44 @@ export default function CheckoutPage() {
 				return
 			}
 
-			if (paymentMethod === 'CLICK' || paymentMethod === 'PAYME') {
-				const payRes = await api.post(
-					'/api/payments/initiate',
-					{ orderId: id, provider: paymentMethod },
-					{
-						headers: {
-							Authorization: `Bearer ${token}`,
-						},
-					},
-				)
-				const redirectUrl = payRes.data?.data?.redirectUrl
-				if (redirectUrl) {
-					window.location.href = redirectUrl
-					return
+			if (paymentMethod === 'CARD') {
+				if (!stripePublishableKey) {
+					throw new Error('Stripe sozlanmagan. NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY tekshiring.')
 				}
-				throw new Error('Payment redirect URL topilmadi')
+				setPreparingCardPayment(true)
+				const intentRes = await api.post(
+					'/api/payment/create-intent',
+					{ orderId: id },
+					{ headers: { Authorization: `Bearer ${token}` } },
+				)
+				const clientSecret = intentRes.data?.data?.clientSecret
+				if (!clientSecret) {
+					throw new Error('Karta to\'lovi uchun clientSecret olinmadi')
+				}
+				afterSuccessRef.current = true
+				setCardStep({
+					orderId: id,
+					orderNumber,
+					clientSecret,
+					totalAmount: Number(order?.totalPrice ?? getTotalPrice()),
+				})
+				return
 			}
 
-			// Avval success ga yo'naltirish, keyin cart tozalash – aks holda useEffect cartga qaytarib yuboradi
+			// Naqd: success ga yo'naltirish
 			router.push(`/checkout/success?orderId=${id}&orderNumber=${encodeURIComponent(orderNumber)}`)
 			clearCart()
 		} catch (err: unknown) {
 			if (axios.isAxiosError(err)) {
 				setError(err.response?.data?.message || 'Buyurtma berishda xatolik')
+			} else if (err instanceof Error) {
+				setError(err.message)
 			} else {
 				setError('Buyurtma berishda xatolik')
 			}
 		} finally {
 			setLoading(false)
+			setPreparingCardPayment(false)
 		}
 	}
 
@@ -230,7 +333,7 @@ export default function CheckoutPage() {
 									{/* To&apos;lov usuli */}
 									<div>
 										<label className='block text-sm font-medium mb-2'>To&apos;lov usuli *</label>
-										<div className='grid grid-cols-2 gap-4'>
+										<div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
 											<button
 												type='button'
 												data-testid="payment-cash"
@@ -252,28 +355,6 @@ export default function CheckoutPage() {
 													}`}
 											>
 												💳 Karta
-											</button>
-											<button
-												type='button'
-												data-testid="payment-click"
-												onClick={() => setPaymentMethod('CLICK')}
-												className={`p-4 border-2 rounded-lg font-semibold transition-all ${paymentMethod === 'CLICK'
-													? 'border-orange-600 bg-orange-50 text-orange-600'
-													: 'border-gray-300 hover:border-orange-300'
-													}`}
-											>
-												🟢 Click
-											</button>
-											<button
-												type='button'
-												data-testid="payment-payme"
-												onClick={() => setPaymentMethod('PAYME')}
-												className={`p-4 border-2 rounded-lg font-semibold transition-all ${paymentMethod === 'PAYME'
-													? 'border-orange-600 bg-orange-50 text-orange-600'
-													: 'border-gray-300 hover:border-orange-300'
-													}`}
-											>
-												🔵 Payme
 											</button>
 										</div>
 									</div>
@@ -329,6 +410,73 @@ export default function CheckoutPage() {
 					</div>
 				</div>
 			</div>
+			{preparingCardPayment && (
+				<div className='fixed inset-0 z-50 bg-black/60 p-4 flex items-center justify-center'>
+					<Card className='w-full max-w-md'>
+						<CardContent className='pt-6'>
+							<div className='flex items-center gap-3'>
+								<div className='h-5 w-5 rounded-full border-2 border-orange-600 border-t-transparent animate-spin' />
+								<p className='font-medium text-gray-800'>To&apos;lov oynasi tayyorlanmoqda...</p>
+							</div>
+						</CardContent>
+					</Card>
+				</div>
+			)}
+			{cardStep && stripePromise && (
+				<div
+					className='fixed inset-0 z-50 bg-black/60 p-2 sm:p-4 flex items-end sm:items-center justify-center'
+					onClick={() => {
+						if (window.confirm('To\'lov modalini yopmoqchimisiz?')) setCardStep(null)
+					}}
+				>
+					<Card
+						className='w-full max-w-2xl h-[92vh] sm:h-auto sm:max-h-[92vh] overflow-hidden flex flex-col rounded-2xl'
+						onClick={e => e.stopPropagation()}
+					>
+						<CardHeader className='border-b shrink-0'>
+							<div className='flex items-center justify-between gap-2'>
+								<div>
+									<CardTitle>Karta orqali to&apos;lash</CardTitle>
+									<p className='text-xs text-gray-500 mt-1'>Xavfsiz Stripe checkout</p>
+								</div>
+								<Button
+									type='button'
+									variant='outline'
+									onClick={() => {
+										if (window.confirm('To\'lov modalini yopmoqchimisiz?')) setCardStep(null)
+									}}
+								>
+									✕
+								</Button>
+							</div>
+						</CardHeader>
+						<CardContent className='space-y-4 pt-5 overflow-y-auto'>
+							<Elements
+								stripe={stripePromise}
+								options={{
+									clientSecret: cardStep.clientSecret,
+									appearance: {
+										theme: 'stripe',
+										variables: { colorPrimary: '#ea580c' },
+									},
+								}}
+							>
+								<CardPaymentForm
+									orderId={cardStep.orderId}
+									orderNumber={cardStep.orderNumber}
+									totalAmount={cardStep.totalAmount}
+									onClose={() => setCardStep(null)}
+									onSuccess={() => {
+										setCardStep(null)
+										clearCart()
+										router.push(`/checkout/success?orderId=${cardStep.orderId}&orderNumber=${encodeURIComponent(cardStep.orderNumber)}&paid=1`)
+									}}
+								/>
+							</Elements>
+						</CardContent>
+					</Card>
+				</div>
+			)}
 		</main>
 	)
 }
