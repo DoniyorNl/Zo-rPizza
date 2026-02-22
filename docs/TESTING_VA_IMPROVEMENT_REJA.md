@@ -39,7 +39,7 @@
 | 2 | `branches.api.test.ts` (yangi) | GET/POST/PATCH/DELETE /api/branches | ✅ Done (13 test) |
 | 2 | `delivery.api.test.ts` (yangi) | POST /api/delivery/estimate | ✅ Done (5 test) |
 | 2 | `profile.api.test.ts` (yangi) | addresses CRUD | ✅ Done (9 test) |
-| 2 | `tracking.api.test.ts` (yangi) | start, update location, complete |
+| 2 | `tracking.api.test.ts` (yangi) | start, update location, complete | ✅ Done (13 test) |
 | 3 | `loyalty.api.test.ts` (yangi) | balance, redeem |
 | 3 | `promos.api.test.ts` (yangi) | validate promo |
 
