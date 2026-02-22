@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { useCartStore } from '@/store/cartStore'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { CheckCircle2, Home, MapPin } from 'lucide-react'
+import { CheckCircle2, Home, MapPin, Phone } from 'lucide-react'
 
 const TRACKING_LOCATION_KEY = 'tracking_user_location'
 
@@ -68,6 +68,17 @@ export default function CheckoutSuccessPage() {
 								</p>
 							)}
 							{!orderNumber && <div className='mb-8' />}
+
+							<div className='mb-6 p-3 bg-gray-50 rounded-lg border border-gray-200'>
+								<p className='text-xs text-gray-500 mb-1'>Muammo yuzaga kelsa:</p>
+								<a
+									href='tel:+998901234567'
+									className='flex items-center justify-center gap-2 text-orange-600 hover:text-orange-700 font-semibold transition-colors'
+								>
+									<Phone className='w-4 h-4' />
+									<span>+998 90 123 45 67</span>
+								</a>
+							</div>
 
 							<div className='flex flex-col gap-3 sm:flex-row sm:justify-center'>
 								<Button
