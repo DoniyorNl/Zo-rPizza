@@ -364,7 +364,6 @@ const startServer = async () => {
      1. DATABASE_URL da parol to‘g‘ri ekanligini tekshiring (Supabase → Settings → Database).
      2. Pooler URL ishlatilayotganiga ishonch hosil qiling: port 6543, host ...pooler.supabase.com, oxirida ?sslmode=require
      3. Agar circuit breaker ochilgan bo‘lsa: 20–30 daqiqa kuting yoki Supabase loyihasini restart qiling, keyin to‘g‘ri DATABASE_URL bilan qayta deploy qiling.
-   • Batafsil: docs/deployment/RAILWAY_SUPABASE_FIX.md va docs/deployment/CIRCUIT_BREAKER_FIX.md
 `)
 		}
 		try {

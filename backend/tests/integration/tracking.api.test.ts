@@ -1,7 +1,6 @@
 // =====================================
 // 📁 backend/tests/integration/tracking.api.test.ts
 // 🧪 TRACKING API INTEGRATION TESTS (Controller-level)
-// Reja: TESTING_VA_IMPROVEMENT_REJA – tracking.api.test
 // Controllers throw AppError; global error handler maps to response.
 // =====================================
 
