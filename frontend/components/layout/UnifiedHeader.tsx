@@ -19,7 +19,7 @@ import {
 import api from '@/lib/api'
 import { useAuth } from '@/lib/AuthContext'
 import { useCartStore } from '@/store/cartStore'
-import { CircleUser, Home, LogOut, Navigation, Settings, ShoppingCart, Truck, User } from 'lucide-react'
+import { CircleUser, Home, LogOut, Navigation, Phone, Settings, ShoppingCart, Truck, User } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 
@@ -102,7 +102,23 @@ export function UnifiedHeader({ variant = 'user' }: UnifiedHeaderProps) {
 				</div>
 
 				{/* Right Side - Actions */}
-				<div className='flex items-center gap-4'>
+				<div className='flex items-center gap-3 sm:gap-4'>
+					{/* Contact phone - Faqat user uchun */}
+					{!isAdmin && (
+						<a
+							href='tel:+998901234567'
+							className='flex items-center justify-center w-10 h-10 rounded-full
+							bg-white/20 hover:bg-white/30
+							transition-all duration-200
+							hover:scale-105 active:scale-95 cursor-pointer
+							sm:w-auto sm:px-4 sm:gap-2'
+							title='Aloqa: +998 90 123 45 67'
+						>
+							<Phone className='w-5 h-5' />
+							<span className='hidden sm:inline text-sm font-medium'>+998 90 123 45 67</span>
+						</a>
+					)}
+
 					{/* Cart Button - Faqat user uchun */}
 					{!isAdmin && (
 						<button

@@ -3,6 +3,7 @@
 
 import { AuthProvider } from '@/lib/AuthContext'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { Footer } from '@/components/layout/Footer'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
@@ -40,9 +41,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 					rel='stylesheet'
 				/>
 			</head>
-			<body className='font-sans antialiased'>
+			<body className='font-sans antialiased flex flex-col min-h-screen'>
 				<ErrorBoundary>
-					<AuthProvider>{children}</AuthProvider>
+					<AuthProvider>
+						<div className='flex-1'>{children}</div>
+						<Footer />
+					</AuthProvider>
 				</ErrorBoundary>
 				<SpeedInsights />
 			</body>
