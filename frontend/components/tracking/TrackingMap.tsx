@@ -33,7 +33,7 @@ export default function TrackingMap({
 	showRoute = true,
 }: TrackingMapProps) {
 	const mapRef = useRef<HTMLDivElement>(null)
-	const mapInstanceRef = useRef<any>(null)
+	const mapInstanceRef = useRef<import('leaflet').Map | null>(null)
 	const [isMapReady, setIsMapReady] = useState(false)
 
 	useEffect(() => {
@@ -47,16 +47,15 @@ export default function TrackingMap({
 		wrapper.innerHTML = ''
 		wrapper.appendChild(container)
 
-		let map: any
-		let L: any
+		let map: import('leaflet').Map
+		let L: typeof import('leaflet')
 
 		const initMap = async () => {
 			L = (await import('leaflet')).default
-			// @ts-ignore - CSS import for leaflet
 			await import('leaflet/dist/leaflet.css')
 
 			// Fix default marker icons
-			delete (L.Icon.Default.prototype as any)._getIconUrl
+			delete (L.Icon.Default.prototype as { _getIconUrl?: unknown })._getIconUrl
 			L.Icon.Default.mergeOptions({
 				iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
 				iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',

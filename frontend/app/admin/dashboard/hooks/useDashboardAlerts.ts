@@ -39,6 +39,7 @@ export const useDashboardAlerts = ({
 		const filteredAlerts = newAlerts.filter(alert => !dismissedIds.has(alert.id))
 
 		// Merge with existing (avoid duplicates by type)
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setAlerts(prev => {
 			const existingTypes = new Set(prev.map(a => a.type))
 			const uniqueNew = filteredAlerts.filter(a => !existingTypes.has(a.type))

@@ -3,6 +3,13 @@
 // 🧪 ORDERS API INTEGRATION TESTS (Controller-level)
 // =====================================
 
+jest.mock('../../src/services/email.service', () => ({
+	sendOrderConfirmationEmail: jest.fn().mockResolvedValue(true),
+	sendOrderStatusUpdateEmail: jest.fn().mockResolvedValue(true),
+	getStatusText: jest.fn((s: string) => s),
+	getStatusMessage: jest.fn((s: string) => s),
+}))
+
 import { Request, Response } from 'express'
 import {
 	createOrder,
@@ -101,6 +108,37 @@ describe('Orders API Integration Tests (Controller-level)', () => {
 					message: expect.stringContaining('not available'),
 				}),
 			)
+		})
+
+		it('should create guest order without userId', async () => {
+			mockReq.body = {
+				name: 'Guest User',
+				email: 'guest@test.com',
+				items: [{ productId: 'prod-1', quantity: 1 }],
+				deliveryAddress: 'Test Address',
+				deliveryPhone: '+998901234567',
+			}
+
+			const product = generateMockProduct({ id: 'prod-1', basePrice: 50000 })
+			prismaMock.product.findUnique.mockResolvedValue(product as any)
+			prismaMock.order.findFirst.mockResolvedValue(null)
+			prismaMock.order.create.mockResolvedValue({
+				id: 'order-guest',
+				orderNumber: '#0001',
+				userId: null,
+				customerName: 'Guest User',
+				customerEmail: 'guest@test.com',
+				totalPrice: 50000,
+			} as any)
+
+			await createOrder(mockReq as Request, mockRes as Response)
+
+			expect(mockStatus).toHaveBeenCalledWith(201)
+			expect(prismaMock.user.create).not.toHaveBeenCalled()
+			const createCall = prismaMock.order.create.mock.calls[0][0]
+			expect(createCall.data.customerName).toBe('Guest User')
+			expect(createCall.data.customerEmail).toBe('guest@test.com')
+			expect(createCall.data.userId).toBeUndefined()
 		})
 
 		it('should auto-create user if not found', async () => {

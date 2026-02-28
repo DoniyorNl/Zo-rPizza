@@ -32,7 +32,7 @@ export const AlertsPanel: React.FC<AlertsPanelProps> = ({
 				</div>
 				<div className='text-center py-8'>
 					<div className='text-gray-400 text-5xl mb-3'>📭</div>
-					<p className='text-gray-500'>Hozircha ogohlantirishlar yo'q</p>
+					<p className='text-gray-500'>Hozircha ogohlantirishlar yo&apos;q</p>
 				</div>
 			</div>
 		)
@@ -57,7 +57,7 @@ export const AlertsPanel: React.FC<AlertsPanelProps> = ({
 							onClick={onMarkAllAsRead}
 							className='text-sm text-blue-600 hover:text-blue-700 font-medium'
 						>
-							Barchasini o'qilgan qilish
+							Barchasini o&apos;qilgan qilish
 						</button>
 					)}
 					{alerts.length > 0 && (
@@ -98,7 +98,7 @@ export const AlertsPanel: React.FC<AlertsPanelProps> = ({
 										>
 											{alert.severity === 'critical' && 'Muhim'}
 											{alert.severity === 'warning' && 'Ogohlantirish'}
-											{alert.severity === 'info' && "Ma'lumot"}
+											{alert.severity === 'info' && "Ma&apos;lumot"}
 											{alert.severity === 'success' && 'Muvaffaqiyat'}
 										</span>
 									</div>
@@ -113,7 +113,7 @@ export const AlertsPanel: React.FC<AlertsPanelProps> = ({
 												className='text-blue-600 hover:text-blue-700 font-medium'
 												onClick={e => e.stopPropagation()}
 											>
-												Ko'rish →
+												Ko&apos;rish →
 											</Link>
 										)}
 									</div>

@@ -25,7 +25,7 @@ export default function PizzeriaUserMap({
 	showDistance = true,
 }: PizzeriaUserMapProps) {
 	const mapRef = useRef<HTMLDivElement>(null)
-	const mapInstanceRef = useRef<any>(null)
+	const mapInstanceRef = useRef<import('leaflet').Map | null>(null)
 	const [isMapReady, setIsMapReady] = useState(false)
 	const straightKm = distanceKm(restaurantLocation, userLocation)
 	const [routeInfo, setRouteInfo] = useState<{
@@ -45,14 +45,14 @@ export default function PizzeriaUserMap({
 		wrapper.innerHTML = ''
 		wrapper.appendChild(container)
 
-		let map: any
-		let L: any
+		let map: import('leaflet').Map
+		let L: typeof import('leaflet')
 
 		const initMap = async () => {
 			L = (await import('leaflet')).default
 			await import('leaflet/dist/leaflet.css')
 
-			delete (L.Icon.Default.prototype as any)._getIconUrl
+			delete (L.Icon.Default.prototype as { _getIconUrl?: unknown })._getIconUrl
 			L.Icon.Default.mergeOptions({
 				iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
 				iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -90,7 +90,7 @@ export default function PizzeriaUserMap({
 				.bindPopup('<b>Sizning joylashuvingiz</b>')
 
 			// Vaqtincha to'g'ri chiziq; OSRM kelgach yo'l chizamiz
-			let straightLine = L.polyline(
+			const straightLine = L.polyline(
 				[
 					[restaurantLocation.lat, restaurantLocation.lng],
 					[userLocation.lat, userLocation.lng],
@@ -144,6 +144,7 @@ export default function PizzeriaUserMap({
 			setIsMapReady(false)
 			setRouteInfo(null)
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [userLocation.lat, userLocation.lng, restaurantLocation.lat, restaurantLocation.lng])
 
 	const displayKm = routeInfo?.roadKm ?? straightKm

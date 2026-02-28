@@ -7,6 +7,7 @@ import { useCartStore } from '@/store/cartStore'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { trackBeginCheckout, trackRemoveFromCart } from '@/lib/analytics'
 import { Minus, Plus, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -15,6 +16,31 @@ import Link from 'next/link'
 export default function CartPage() {
 	const { items, updateQuantity, removeItem, getTotalPrice, clearCart } = useCartStore()
 	const router = useRouter()
+
+	const handleRemoveItem = (item: { id: string; productId: string; name: string; price: number; quantity: number }) => {
+		// 📊 Track remove from cart
+		trackRemoveFromCart({
+			id: item.productId || item.id,
+			name: item.name,
+			price: item.price,
+			quantity: item.quantity,
+		})
+		removeItem(item.id)
+	}
+
+	const handleCheckout = () => {
+		// 📊 Track begin checkout
+		trackBeginCheckout({
+			items: items.map(item => ({
+				id: item.productId || item.id,
+				name: item.name,
+				price: item.price,
+				quantity: item.quantity,
+			})),
+			totalPrice: getTotalPrice(),
+		})
+		router.push('/checkout')
+	}
 
 	if (items.length === 0) {
 		return (
@@ -95,7 +121,7 @@ export default function CartPage() {
 									<Button
 										size='sm'
 										variant='ghost'
-										onClick={() => removeItem(item.id)}
+										onClick={() => handleRemoveItem(item)}
 										className='text-red-600'
 									>
 										<Trash2 className='w-5 h-5' />
@@ -128,9 +154,9 @@ export default function CartPage() {
 									</div>
 								</div>
 
-								<Button data-testid="cart-checkout" className='w-full' size='lg' onClick={() => router.push('/checkout')}>
-									Buyurtma berish
-								</Button>
+							<Button data-testid="cart-checkout" className='w-full' size='lg' onClick={handleCheckout}>
+								Buyurtma berish
+							</Button>
 							</CardContent>
 						</Card>
 					</div>

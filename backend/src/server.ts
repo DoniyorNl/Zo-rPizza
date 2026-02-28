@@ -37,6 +37,7 @@ import paymentsRoutes from './routes/payments.routes'
 import productsRoutes from './routes/products.routes'
 import profileRoutes from './routes/profile.routes'
 import promosRoutes from './routes/promos.routes'
+import pushRoutes from './routes/push.routes'
 import toppingsRoutes from './routes/toppings.routes'
 import trackingRoutes from './routes/tracking.routes'
 import usersRoutes from './routes/users.routes'
@@ -254,6 +255,7 @@ app.use('/api/toppings', generalLimiter, toppingsRoutes)
 app.use('/api/orders', generalLimiter, ordersRoutes)
 app.use('/api/payment', generalLimiter, paymentRoutes)
 app.use('/api/payments', generalLimiter, paymentsRoutes)
+// app.use('/api/push', generalLimiter, pushRoutes) // Temporarily disabled
 app.use('/api/users', generalLimiter, usersRoutes)
 app.use('/api/profile', generalLimiter, profileRoutes)
 app.use('/api/notifications', generalLimiter, notificationsRoutes)

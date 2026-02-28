@@ -1,7 +1,7 @@
 // frontend/__tests__/components/CategoryNav.test.tsx
 // 📂 CATEGORY NAV COMPONENT TESTS - Senior Level
 
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { CategoryNav } from '@/components/home/CategoryNav'
 import { useCategories } from '@/hooks/useCategories'
 

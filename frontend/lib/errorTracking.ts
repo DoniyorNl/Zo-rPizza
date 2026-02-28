@@ -6,7 +6,7 @@
 interface ErrorData {
 	message: string
 	stack?: string
-	context?: Record<string, any>
+	context?: Record<string, unknown>
 	level?: 'error' | 'warning' | 'info'
 	userId?: string
 }
@@ -14,7 +14,7 @@ interface ErrorData {
 /**
  * Log error to backend
  */
-export async function logError(error: Error | string, context?: Record<string, any>) {
+export async function logError(error: Error | string, context?: Record<string, unknown>) {
 	try {
 		const errorData: ErrorData = {
 			message: typeof error === 'string' ? error : error.message,
@@ -35,7 +35,7 @@ export async function logError(error: Error | string, context?: Record<string, a
 				try {
 					const user = JSON.parse(firebaseUser)
 					errorData.userId = user.uid
-				} catch (_) {
+				} catch {
 					// Ignore parse errors
 				}
 			}
@@ -64,7 +64,7 @@ export async function logError(error: Error | string, context?: Record<string, a
 /**
  * Log warning
  */
-export function logWarning(message: string, context?: Record<string, any>) {
+export function logWarning(message: string, context?: Record<string, unknown>) {
 	try {
 		if (process.env.NODE_ENV === 'development') {
 			console.warn('⚠️ Warning:', message, context)
@@ -79,7 +79,7 @@ export function logWarning(message: string, context?: Record<string, any>) {
 /**
  * Log info (for tracking user actions, performance, etc.)
  */
-export function logInfo(message: string, context?: Record<string, any>) {
+export function logInfo(message: string, context?: Record<string, unknown>) {
 	if (process.env.NODE_ENV === 'development') {
 		console.log('ℹ️ Info:', message, context)
 	}
@@ -88,7 +88,7 @@ export function logInfo(message: string, context?: Record<string, any>) {
 /**
  * Track user action (analytics)
  */
-export function trackAction(action: string, properties?: Record<string, any>) {
+export function trackAction(action: string, properties?: Record<string, unknown>) {
 	if (process.env.NODE_ENV === 'development') {
 		console.log('📊 Action:', action, properties)
 	}

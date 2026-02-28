@@ -2,7 +2,7 @@
 // 📁 FILE PATH: frontend/jest.setup.cjs
 // 🧪 JEST SETUP FOR FRONTEND TESTS
 // =====================================
-
+/* eslint-disable @typescript-eslint/no-require-imports */
 require('@testing-library/jest-dom')
 
 // Mock Next.js router

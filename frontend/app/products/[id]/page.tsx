@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { api } from '@/lib/apiClient'
 import { useCartStore } from '@/store/cartStore'
+import { trackProductView } from '@/lib/analytics'
 import { AlertCircle, ArrowLeft, Clock, Flame, Pizza, Plus } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -111,17 +112,25 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 				if (!productData.images) productData.images = []
 				if (!productData.allergens) productData.allergens = []
 
-				setProduct(productData)
+			setProduct(productData)
 
-				// ✅ NEW: Auto-select Medium or first variation
-				if (productData.variations && productData.variations.length > 0) {
-					const mediumVariation = productData.variations.find(
-						(v: ProductVariation) => v.size === 'Medium',
-					)
-					setSelectedVariation(mediumVariation || productData.variations[0])
-				}
+			// ✅ NEW: Auto-select Medium or first variation
+			if (productData.variations && productData.variations.length > 0) {
+				const mediumVariation = productData.variations.find(
+					(v: ProductVariation) => v.size === 'Medium',
+				)
+				setSelectedVariation(mediumVariation || productData.variations[0])
+			}
 
-				console.log('✅ Product loaded:', productData.name)
+			// 📊 Track product view
+			trackProductView({
+				id: productData.id,
+				name: productData.name,
+				price: productData.basePrice,
+				category: productData.category?.name,
+			})
+
+			console.log('✅ Product loaded:', productData.name)
 			} catch (error) {
 				console.error('❌ Error fetching product:', error)
 			} finally {
@@ -167,6 +176,17 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 			removedToppingIds,
 			halfProductId: selectedHalfProduct ? selectedHalfProduct.id : undefined,
 			halfProductName: selectedHalfProduct ? selectedHalfProduct.name : undefined,
+		})
+
+		// 📊 Track add to cart
+		// eslint-disable-next-line @typescript-eslint/no-require-imports
+		const { trackAddToCart } = require('@/lib/analytics')
+		trackAddToCart({
+			id: product.id,
+			name: product.name,
+			price: currentPrice,
+			quantity: 1,
+			category: product.category?.name,
 		})
 
 		console.log('✅ Added to cart:', product.name, selectedVariation.size)

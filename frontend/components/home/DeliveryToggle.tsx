@@ -21,6 +21,7 @@ export function DeliveryToggle() {
 	// Do'konlar ro'yxati – modal ochilganda (pickup) yoki doim bir marta
 	useEffect(() => {
 		if (!isLocationModalOpen || method !== 'pickup') return
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setBranchesLoading(true)
 		fetch(buildApiUrl('/api/branches'))
 			.then((res) => res.json())

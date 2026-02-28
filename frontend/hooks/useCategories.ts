@@ -29,6 +29,7 @@ export function useCategories(options?: CategoryFilterOptions) {
 	// Stabilize options to prevent infinite loops
 	const stableOptions = useMemo(
 		() => options,
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[options?.isActive, options?.hasProducts, options?.search, options?.sortBy, options?.sortOrder],
 	)
 
@@ -54,7 +55,7 @@ export function useCategories(options?: CategoryFilterOptions) {
 							setLoading(false)
 							return
 						}
-					} catch (e) {
+					} catch {
 						// Invalid cache, continue to fetch
 					}
 				}
@@ -130,13 +131,13 @@ export function useCategories(options?: CategoryFilterOptions) {
 							timestamp: Date.now(),
 						}
 						localStorage.setItem('categories_cache', JSON.stringify(cacheData))
-					} catch (e) {
+					} catch {
 						// localStorage error, ignore
 					}
 				}
 			} catch (err) {
 				console.error('❌ Error fetching categories:', err)
-				setError("Kategoriyalar yuklanmadi. Iltimos qayta urinib ko'ring.")
+				setError("Kategoriyalar yuklanmadi. Iltimos qayta urinib ko&apos;ring.")
 			} finally {
 				setLoading(false)
 			}

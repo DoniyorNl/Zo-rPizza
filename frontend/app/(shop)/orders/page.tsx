@@ -9,8 +9,10 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { api } from '@/lib/apiClient'
 import { useAuth } from '@/lib/AuthContext'
+import { generateInvoice, type InvoiceData } from '@/lib/pdfInvoice'
+import type { Order as ReorderOrder } from '@/lib/reorder'
 import TrackingModal from '@/components/tracking/TrackingModal'
-import { CheckSquare, Clock, MapPin, Package, RotateCcw, ShoppingBag, Square, Trash2 } from 'lucide-react'
+import { CheckSquare, Clock, Download, MapPin, Package, RotateCcw, ShoppingBag, Square, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -77,7 +79,6 @@ export default function OrdersPage() {
 	}
 
 	const isAllSelected = orders.length > 0 && selectedIds.size === orders.length
-	const isSomeSelected = selectedIds.size > 0
 	const selectedDeletableCount = [...selectedIds].filter(
 		id => orders.find(o => o.id === id)?.status === 'PENDING'
 	).length
@@ -102,17 +103,49 @@ export default function OrdersPage() {
 		}
 		setLoading(true)
 		fetchOrders()
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [user, router])
 
 	const handleReorder = async (e: React.MouseEvent, orderId: string) => {
 		e.stopPropagation()
 		setReorderingId(orderId)
 		try {
-			const res = await api.post(`/api/orders/${orderId}/reorder`)
-			if (res.data?.data?.id) {
-				router.push(`/orders/${res.data.data.id}`)
-			} else {
-				router.push('/orders')
+			// Find the order
+			const order = orders.find(o => o.id === orderId)
+			if (!order) {
+				alert('Buyurtma topilmadi')
+				return
+			}
+
+			// Use reorder utility - map API order to reorder format
+			const { reorderWithConfirm } = await import('@/lib/reorder')
+			const reorderOrder: ReorderOrder = {
+				id: order.id,
+				orderNumber: order.orderNumber,
+				totalPrice: order.totalPrice,
+				createdAt: order.createdAt,
+				items: order.items.map(item => ({
+					productId: item.product.id,
+					name: item.product.name,
+					price: item.price,
+					quantity: item.quantity,
+					product: {
+						id: item.product.id,
+						name: item.product.name,
+						imageUrl: item.product.imageUrl,
+					},
+					size: (item as { size?: string }).size,
+					variationId: (item as { variationId?: string }).variationId,
+					addedToppingIds: (item as { addedToppingIds?: string[] }).addedToppingIds ?? [],
+					removedToppingIds: (item as { removedToppingIds?: string[] }).removedToppingIds ?? [],
+				})),
+			}
+			const result = await reorderWithConfirm(reorderOrder)
+
+			if (result.success) {
+				// Show success message and redirect to cart
+				alert(`${result.addedCount} ta mahsulot savatchaga qo'shildi`)
+				router.push('/cart')
 			}
 		} catch (err: unknown) {
 			const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
@@ -139,6 +172,47 @@ export default function OrdersPage() {
 			alert(msg || 'Bekor qilishda xato')
 		} finally {
 			setDeletingId(null)
+		}
+	}
+
+	const handleDownloadInvoice = async (e: React.MouseEvent, orderId: string) => {
+		e.stopPropagation()
+		try {
+			const response = await api.get(`/api/orders/${orderId}`)
+			const order = response.data.data
+			if (!order || !user) return
+
+			const statusLabels: Record<string, string> = {
+				PENDING: 'Kutilmoqda',
+				PREPARING: 'Tayyorlanmoqda',
+				DELIVERING: "Yetkazilmoqda",
+				COMPLETED: 'Yetkazildi',
+				CANCELLED: 'Bekor qilindi',
+			}
+
+			const invoiceData: InvoiceData = {
+				orderNumber: order.orderNumber,
+				orderDate: order.createdAt,
+				customerName: user.email || 'Mijoz',
+				customerEmail: user.email || undefined,
+				customerPhone: order.deliveryPhone,
+				deliveryAddress: order.deliveryAddress,
+				items: order.items.map((item: OrderItem & { size?: string }) => ({
+					name: item.product.name,
+					quantity: item.quantity,
+					size: item.size || undefined,
+					price: item.price * item.quantity,
+				})),
+				subtotal: order.totalPrice,
+				total: order.totalPrice,
+				paymentMethod: order.paymentMethod,
+				status: statusLabels[order.status] || order.status,
+			}
+
+			await generateInvoice(invoiceData)
+		} catch (err) {
+			console.error('PDF xatosi:', err)
+			alert('Chekni yuklab olishda xatolik yuz berdi')
 		}
 	}
 
@@ -294,7 +368,17 @@ export default function OrdersPage() {
 													})}
 												</p>
 											</div>
-											<div className='flex items-center gap-2'>
+											<div className='flex items-center gap-2 flex-wrap'>
+												<Button
+													variant='outline'
+													size='sm'
+													className='text-blue-600 hover:text-blue-700 hover:bg-blue-50'
+													onClick={e => handleDownloadInvoice(e, order.id)}
+													aria-label='Chekni yuklab olish'
+												>
+													<Download className='w-4 h-4 mr-1' />
+													Chek
+												</Button>
 												<Button
 													variant='outline'
 													size='sm'

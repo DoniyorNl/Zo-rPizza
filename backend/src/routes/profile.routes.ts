@@ -7,7 +7,9 @@ import {
 	createAddress,
 	deleteAddress,
 	getAddresses,
+	getProfile,
 	getProfileStats,
+	patchProfile,
 	updateAddress,
 	updateProfile,
 } from '@/controllers/profile.controller'
@@ -19,6 +21,18 @@ const router = Router()
 // ==========================================
 // PROFILE ROUTES (all require authentication)
 // ==========================================
+
+/**
+ * GET /api/profile
+ * Get basic user profile (for favorites, etc.)
+ */
+router.get('/', authenticateFirebaseToken, getProfile)
+
+/**
+ * PATCH /api/profile
+ * Update user profile (for favorites, etc.)
+ */
+router.patch('/', authenticateFirebaseToken, patchProfile)
 
 /**
  * GET /api/profile/stats

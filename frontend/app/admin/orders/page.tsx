@@ -617,7 +617,7 @@ export default function AdminOrdersPage() {
 												rel='noopener noreferrer'
 												className='text-orange-600 hover:underline text-xs'
 											>
-												Xaritada ko'rish →
+												Xaritada ko&apos;rish →
 											</a>
 										</div>
 									)}

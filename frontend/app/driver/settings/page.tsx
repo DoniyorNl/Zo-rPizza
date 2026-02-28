@@ -42,7 +42,10 @@ export default function DriverSettingsPage() {
 		if (backendUser) {
 			setName(backendUser.name || '')
 			setPhone(backendUser.phone || '')
-			setVehicleType((backendUser.vehicleType as any) || 'bike')
+			const vt = backendUser.vehicleType
+			setVehicleType(
+				vt === 'car' || vt === 'bike' || vt === 'scooter' ? vt : 'bike'
+			)
 			// Assuming driverStatus is available in backendUser
 			// setDriverStatus(backendUser.driverStatus || 'available')
 		}

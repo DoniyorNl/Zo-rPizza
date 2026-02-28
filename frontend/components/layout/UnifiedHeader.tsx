@@ -19,7 +19,7 @@ import {
 import api from '@/lib/api'
 import { useAuth } from '@/lib/AuthContext'
 import { useCartStore } from '@/store/cartStore'
-import { CircleUser, Home, LogOut, Navigation, Phone, Settings, ShoppingCart, Truck, User } from 'lucide-react'
+import { CircleUser, Heart, Home, LogOut, Navigation, Phone, Settings, ShoppingCart, Truck, User } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 
@@ -51,7 +51,7 @@ export function UnifiedHeader({ variant = 'user' }: UnifiedHeaderProps) {
 				})
 
 				if (response.data.success) {
-					const activeOrder = response.data.data.find((order: any) =>
+					const activeOrder = response.data.data.find((order: { status: string; id?: string }) =>
 						['PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERING'].includes(order.status)
 					)
 					setActiveOrderId(activeOrder?.id || null)
@@ -232,6 +232,13 @@ export function UnifiedHeader({ variant = 'user' }: UnifiedHeaderProps) {
 										>
 											<User className='mr-2 h-4 w-4' />
 											<span>Mening buyurtmalarim</span>
+										</DropdownMenuItem>
+										<DropdownMenuItem
+											className='cursor-pointer'
+											onClick={() => router.push('/favorites')}
+										>
+											<Heart className='mr-2 h-4 w-4' />
+											<span>Sevimli mahsulotlar</span>
 										</DropdownMenuItem>
 										<DropdownMenuItem
 											className='cursor-pointer'

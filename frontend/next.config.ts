@@ -16,6 +16,20 @@ const nextConfig: NextConfig = {
 	turbopack: {
 		root: '..',
 	},
+	// Firebase Google Sign-in popup uchun COOP sozlash (Cross-Origin-Opener-Policy warning'ni bartaraf etish)
+	async headers() {
+		return [
+			{
+				source: '/:path*',
+				headers: [
+					{
+						key: 'Cross-Origin-Opener-Policy',
+						value: 'same-origin-allow-popups',
+					},
+				],
+			},
+		]
+	},
 	images: {
 		remotePatterns: [
 			{

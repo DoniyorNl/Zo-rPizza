@@ -54,13 +54,13 @@ export function PopularProducts() {
 					<div>
 						<Badge className='mb-3 bg-orange-100 text-orange-700 px-4 py-2'>
 							<TrendingUp className='w-4 h-4 mr-2 inline' />
-							Eng Ko'p Sotilgan
+							Eng Ko&apos;p Sotilgan
 						</Badge>
 						<h2 className='text-3xl md:text-4xl font-bold text-gray-900 mb-2'>
 							Mashhur Mahsulotlar
 						</h2>
 						<p className='text-gray-600'>
-							Boshqalar tanlagan va yaxshi ko'rgan pitsalar
+							Boshqalar tanlagan va yaxshi ko&apos;rgan pitsalar
 						</p>
 					</div>
 
@@ -70,7 +70,7 @@ export function PopularProducts() {
 						variant='outline'
 						className='hidden md:flex border-orange-600 text-orange-600 hover:bg-orange-50'
 					>
-						Barchasini ko'rish
+						Barchasini ko&apos;rish
 					</Button>
 				</div>
 
@@ -93,7 +93,7 @@ export function PopularProducts() {
 						variant='outline'
 						className='w-full border-orange-600 text-orange-600 hover:bg-orange-50'
 					>
-						Barchasini ko'rish
+						Barchasini ko&apos;rish
 					</Button>
 				</div>
 			</div>

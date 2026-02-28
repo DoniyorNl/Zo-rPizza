@@ -11,7 +11,7 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 jest.mock('@/lib/apiClient')
 
 // ✅ Dynamic mock - testda o'zgartirilishi mumkin
-let mockUser: any = { id: '1', email: 'test@example.com' }
+let mockUser: { id: string; email: string } = { id: '1', email: 'test@example.com' }
 jest.mock('@/lib/AuthContext', () => ({
 	useAuth: () => ({
 		user: mockUser,
@@ -22,7 +22,7 @@ jest.mock('@/lib/AuthContext', () => ({
 // Suppress expected console errors
 const originalError = console.error
 beforeAll(() => {
-	console.error = (...args: any[]) => {
+	console.error = (...args: unknown[]) => {
 		const firstArg = args[0]
 		if (typeof firstArg === 'string') {
 			if (
@@ -311,8 +311,6 @@ describe('useNotifications Hook', () => {
 				expect(result.current.loading).toBe(false)
 				expect(result.current.notifications.length).toBeGreaterThan(0)
 			})
-
-			const initialLength = result.current.notifications.length
 
 			let success
 			await act(async () => {

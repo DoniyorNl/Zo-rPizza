@@ -6,7 +6,6 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { api } from '@/lib/apiClient'
-import axios from 'axios'
 import { useEffect, useState } from 'react'
 import { Coupon, CouponFormData, CouponFormErrors, DiscountType } from '../types/coupon.types'
 

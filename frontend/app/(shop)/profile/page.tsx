@@ -32,8 +32,8 @@ import {
 	ShoppingBag,
 	TrendingUp,
 	Clock,
-	Star,
 	Heart,
+	Bell,
 } from 'lucide-react'
 import { UnifiedHeader } from '@/components/layout/UnifiedHeader'
 
@@ -52,6 +52,7 @@ interface ProfileData {
 		dietaryPrefs: string[]
 		allergyInfo: string[]
 		loyaltyTier: string
+		emailNotificationsEnabled?: boolean
 	}
 	statistics: {
 		totalOrders: number
@@ -110,6 +111,8 @@ export default function ProfilePage() {
 		gender: '',
 	})
 	const [showAddressForm, setShowAddressForm] = useState(false)
+	const [emailNotifications, setEmailNotifications] = useState(true)
+	const [notificationUpdating, setNotificationUpdating] = useState(false)
 	const [newAddress, setNewAddress] = useState({
 		label: 'Uy',
 		street: '',
@@ -129,6 +132,7 @@ export default function ProfilePage() {
 
 		fetchProfileData()
 		fetchAddresses()
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [user, router])
 
 	const fetchProfileData = async () => {
@@ -138,6 +142,7 @@ export default function ProfilePage() {
 				headers: { Authorization: `Bearer ${token}` },
 			})
 			setProfileData(response.data.data)
+			setEmailNotifications(response.data.data?.user?.emailNotificationsEnabled !== false)
 			setEditedProfile({
 				name: response.data.data.user.name || '',
 				phone: response.data.data.user.phone || '',
@@ -200,6 +205,26 @@ export default function ProfilePage() {
 		} catch (error) {
 			console.error('Error adding address:', error)
 			alert('Manzil qo\'shishda xatolik yuz berdi')
+		}
+	}
+
+	const handleToggleEmailNotifications = async (enabled: boolean) => {
+		setNotificationUpdating(true)
+		try {
+			const token = await user?.getIdToken()
+			await api.patch('/api/profile', { emailNotificationsEnabled: enabled }, {
+				headers: { Authorization: `Bearer ${token}` },
+			})
+			setEmailNotifications(enabled)
+			setProfileData(prev => prev ? {
+				...prev,
+				user: { ...prev.user, emailNotificationsEnabled: enabled },
+			} : null)
+		} catch (error) {
+			console.error('Error updating notification preference:', error)
+			alert('Sozlamani yangilashda xatolik yuz berdi')
+		} finally {
+			setNotificationUpdating(false)
 		}
 	}
 
@@ -526,6 +551,7 @@ export default function ProfilePage() {
 														onClick={() => router.push(`/menu?product=${product.id}`)}
 													>
 														{product.imageUrl && (
+															// eslint-disable-next-line @next/next/no-img-element
 															<img
 																src={product.imageUrl}
 																alt={product.name}
@@ -841,19 +867,34 @@ export default function ProfilePage() {
 										</Button>
 									</div>
 									<div>
-										<h3 className='font-semibold mb-3'>Bildirishnomalar</h3>
+										<h3 className='font-semibold mb-3 flex items-center gap-2'>
+											<Bell className='w-5 h-5 text-orange-600' />
+											Bildirishnomalar
+										</h3>
 										<div className='space-y-2'>
-											<div className='flex items-center justify-between p-3 bg-gray-50 rounded-lg'>
-												<span>Email bildirishnomalar</span>
-												<input type='checkbox' className='w-4 h-4' defaultChecked />
-											</div>
-											<div className='flex items-center justify-between p-3 bg-gray-50 rounded-lg'>
-												<span>SMS bildirishnomalar</span>
-												<input type='checkbox' className='w-4 h-4' defaultChecked />
-											</div>
-											<div className='flex items-center justify-between p-3 bg-gray-50 rounded-lg'>
-												<span>Aksiyalar haqida xabarlar</span>
-												<input type='checkbox' className='w-4 h-4' defaultChecked />
+											<div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200'>
+												<div>
+													<p className='font-medium'>Buyurtma tasdiq xabarlari (Email)</p>
+													<p className='text-sm text-gray-600 mt-0.5'>
+														Buyurtma qabul qilinganda va status o&apos;zgarganda Gmail ga xabar yuboriladi
+													</p>
+												</div>
+												<button
+													type='button'
+													role='switch'
+													aria-checked={emailNotifications}
+													disabled={notificationUpdating}
+													onClick={() => handleToggleEmailNotifications(!emailNotifications)}
+													className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 ${
+														emailNotifications ? 'bg-orange-600' : 'bg-gray-300'
+													}`}
+												>
+													<span
+														className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+															emailNotifications ? 'translate-x-6' : 'translate-x-1'
+														}`}
+													/>
+												</button>
 											</div>
 										</div>
 									</div>
