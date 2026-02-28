@@ -1,0 +1,5 @@
+# Railway/Nixpacks config - pnpm lockfile compatibility
+# Railway uses --frozen-lockfile by default which fails on version mismatch.
+# Use --no-frozen-lockfile to allow lockfile update during build.
+[phases.install]
+cmds = ["pnpm install --no-frozen-lockfile"]
