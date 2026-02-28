@@ -19,6 +19,7 @@
 		"test:e2e:ui": "playwright test --config ../e2e/playwright.config.ts --ui"
 	},
 "dependencies": {
+    "@sentry/nextjs": "^8.46.0",
     "@stripe/react-stripe-js": "^2.8.0",
     "@stripe/stripe-js": "^4.8.0",
     "@ducanh2912/next-pwa": "^10.2.9",

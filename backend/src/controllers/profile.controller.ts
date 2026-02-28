@@ -206,7 +206,7 @@ export const updateProfile = async (req: Request, res: Response) => {
 		if (phone && !isValidPhone(phone)) {
 			return res.status(400).json({
 				success: false,
-				message: 'Invalid phone format. Use +998XXXXXXXXX or 9XXXXXXXX',
+				message: 'Invalid phone format. Use international format: +998901234567, +31684702089, etc.',
 			})
 		}
 
@@ -565,11 +565,18 @@ export const deleteAddress = async (req: Request, res: Response) => {
 // ==========================================
 
 /**
- * Validate phone format (O'zbekiston formati)
+ * Validate phone format (International format)
+ * Supports: +998, +31, +1, +7, etc.
  */
 const isValidPhone = (phone: string): boolean => {
-	const phoneRegex = /^(\+998)?[0-9]{9}$/
-	return phoneRegex.test(phone.replace(/\s/g, ''))
+	// Remove all spaces, dashes, brackets
+	const cleanPhone = phone.replace(/[\s\-\(\)]/g, '')
+	
+	// Must start with + and have at least 10 digits total
+	// Example: +998901234567 (13 chars), +31684702089 (12 chars), +1234567890 (11 chars)
+	const phoneRegex = /^\+[1-9][0-9]{9,14}$/
+	
+	return phoneRegex.test(cleanPhone)
 }
 
 /**

@@ -260,6 +260,8 @@ describe('Orders Controller - Advanced Coverage', () => {
 			const req = mockRequest({
 				body: {
 					userId: 'user-1',
+					email: 'test@example.com',
+					name: 'Test User',
 					items: [
 						{
 							productId: 'product-1',
@@ -302,6 +304,8 @@ describe('Orders Controller - Advanced Coverage', () => {
 			const req = mockRequest({
 				body: {
 					userId: 'user-1',
+					email: 'test@example.com',
+					name: 'Test User',
 					items: JSON.stringify([
 						{
 							productId: 'product-1',
@@ -337,6 +341,8 @@ describe('Orders Controller - Advanced Coverage', () => {
 			const req = mockRequest({
 				body: {
 					userId: 'user-1',
+					email: 'test@example.com',
+					name: 'Test User',
 					items: [
 						{
 							productId: 'product-1',
@@ -371,6 +377,8 @@ describe('Orders Controller - Advanced Coverage', () => {
 			const req = mockRequest({
 				body: {
 					userId: 'user-1',
+					email: 'test@example.com',
+					name: 'Test User',
 					items: [
 						{
 							productId: 'product-1',
