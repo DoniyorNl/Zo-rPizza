@@ -1,0 +1,4 @@
+# Backend build config - used when Railway Root Directory = backend
+# Ensures pnpm v9 and allows lockfile update (monorepo lockfile at repo root)
+[phases.install]
+cmds = ["pnpm install --no-frozen-lockfile --prefer-offline"]
