@@ -2,6 +2,10 @@
 node_modules/
 .pnpm-store/
 
+# Monorepo: faqat root pnpm-lock.yaml ishlatiladi
+backend/pnpm-lock.yaml
+frontend/pnpm-lock.yaml
+
 # Build outputs
 dist/
 build/
