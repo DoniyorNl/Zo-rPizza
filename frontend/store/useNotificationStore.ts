@@ -68,7 +68,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 						return
 					}
 				}
-			} catch (_e) {
+			} catch {
 				// Ignore cache errors
 			}
 		}
@@ -95,7 +95,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 							data: notifData,
 							timestamp: Date.now()
 						}))
-					} catch (_e) {
+					} catch {
 						// Ignore
 					}
 				}

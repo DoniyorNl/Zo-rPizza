@@ -29,7 +29,7 @@ describe('LoyaltyDisplay', () => {
       data: { success: true, data: null },
     })
 
-    const { container, unmount } = render(<LoyaltyDisplay />)
+    const { unmount } = render(<LoyaltyDisplay />)
 
     await waitFor(() => {
       expect(mockedApi.get).toHaveBeenCalledWith('/api/loyalty/balance')
@@ -48,7 +48,7 @@ describe('LoyaltyDisplay', () => {
       },
     })
 
-    const { container: c2 } = render(<LoyaltyDisplay />)
+    render(<LoyaltyDisplay />)
 
     await waitFor(() => {})
 
@@ -126,7 +126,7 @@ describe('LoyaltyDisplay', () => {
   it('should handle API error gracefully', async () => {
     mockedApi.get.mockRejectedValue(new Error('Network error'))
 
-    const { container } = render(<LoyaltyDisplay />)
+    render(<LoyaltyDisplay />)
 
     await waitFor(() => {
       expect(mockedApi.get).toHaveBeenCalled()

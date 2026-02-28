@@ -4,9 +4,12 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
-import { ChefHat, Clock, Plus } from 'lucide-react'
+import { ChefHat, Clock, Heart, Plus } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { getFavorites, toggleFavorite } from '@/lib/favorites'
+import { useAuth } from '@/lib/AuthContext'
 
 /**
  * Product variation interface
@@ -56,6 +59,19 @@ interface ProductCardProps {
  */
 export function ProductCard({ product, onAddToCart }: ProductCardProps) {
 	const router = useRouter()
+	const { user } = useAuth()
+	const [isFavorite, setIsFavorite] = useState(false)
+	const [isLoadingFavorite, setIsLoadingFavorite] = useState(false)
+
+	// Check if product is in favorites
+	useEffect(() => {
+		const checkFavorite = async () => {
+			if (!user) return
+			const favorites = await getFavorites()
+			setIsFavorite(favorites.includes(product.id))
+		}
+		checkFavorite()
+	}, [product.id, user])
 
 	// Get price (handle both old 'price' and new 'basePrice' structures)
 	const displayPrice = product.basePrice || product.price || 0
@@ -78,6 +94,27 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
 			// Default: navigate to product page
 			router.push(`/products/${product.id}`)
 		}
+	}
+
+	// ============================================
+	// TOGGLE FAVORITE
+	// ============================================
+	const handleToggleFavorite = async (e: React.MouseEvent) => {
+		e.stopPropagation() // Prevent card click
+
+		if (!user) {
+			router.push('/login')
+			return
+		}
+
+		setIsLoadingFavorite(true)
+		const success = await toggleFavorite(product.id)
+		
+		if (success) {
+			setIsFavorite(!isFavorite)
+		}
+		
+		setIsLoadingFavorite(false)
 	}
 
 	return (
@@ -111,8 +148,25 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
 					)}
 				</div>
 
+				{/* Favorite Heart Button */}
+				{user && (
+					<button
+						onClick={handleToggleFavorite}
+						disabled={isLoadingFavorite}
+						className='absolute top-3 right-3 p-2 rounded-full bg-white/90 hover:bg-white shadow-md transition-all hover:scale-110 disabled:opacity-50'
+					>
+						<Heart
+							className={`w-5 h-5 transition-colors ${
+								isFavorite
+									? 'fill-red-500 text-red-500'
+									: 'text-gray-600 hover:text-red-500'
+							}`}
+						/>
+					</button>
+				)}
+
 				{product.calories && (
-					<Badge className='absolute top-3 right-3 bg-orange-600 border-0'>
+					<Badge className='absolute bottom-3 right-3 bg-orange-600 border-0'>
 						{product.calories} kkal
 					</Badge>
 				)}

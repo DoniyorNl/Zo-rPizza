@@ -26,7 +26,6 @@ import { useEffect, useState, useCallback } from 'react'
 import type {
 	TrackingResponse,
 	OrderStatus,
-	TrackingData,
 } from '@/types/tracking.types'
 import { ORDER_STATUS_LABELS } from '@/types/tracking.types'
 
@@ -172,7 +171,7 @@ export default function TrackingModal({
 								<div className="animate-spin rounded-full h-16 w-16 border-4 border-orange-200 border-t-orange-500" />
 								<Package className="w-6 h-6 text-orange-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
 </div>
-							<p className="text-gray-600 text-sm">Ma'lumotlar yuklanmoqda...</p>
+							<p className="text-gray-600 text-sm">Ma&apos;lumotlar yuklanmoqda...</p>
 						</div>
 					)}
 
@@ -269,7 +268,7 @@ export default function TrackingModal({
 												</div>
 												<div className="flex items-center space-x-1">
 													<span className="text-lg">🚗</span>
-													<span>Yo'lda</span>
+													<span>Yo&apos;lda</span>
 												</div>
 												<div className="flex items-center space-x-1">
 													<span className="text-lg">🏠</span>
@@ -293,11 +292,11 @@ export default function TrackingModal({
 								<div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 text-center">
 									<Truck className="w-12 h-12 text-blue-500 mx-auto mb-3" />
 									<p className="text-blue-900 font-medium mb-1">
-										Haydovchi yo'lga chiqmadi
+										Haydovchi yo&apos;lga chiqmadi
 									</p>
 									<p className="text-blue-700 text-sm">
-										Haydovchi yo'lga chiqqach GPS kuzatuv va yo'nalishni bu yerda
-										ko'rishingiz mumkin
+										Haydovchi yo&apos;lga chiqqach GPS kuzatuv va yo&apos;nalishni bu yerda
+										ko&apos;rishingiz mumkin
 									</p>
 								</div>
 							)}
@@ -308,7 +307,7 @@ export default function TrackingModal({
 									<div className="flex items-center space-x-2 mb-4">
 										<Truck className="w-5 h-5 text-gray-700" />
 										<h4 className="font-semibold text-gray-800">
-											Haydovchi ma'lumotlari
+											Haydovchi ma&apos;lumotlari
 										</h4>
 									</div>
 									<div className="space-y-3">
@@ -355,7 +354,7 @@ export default function TrackingModal({
 								size="lg"
 							>
 								<Map className="w-5 h-5 mr-2" />
-								Xaritada to'liq ko'rish
+								Xaritada to&apos;liq ko&apos;rish
 							</Button>
 						</div>
 					)}

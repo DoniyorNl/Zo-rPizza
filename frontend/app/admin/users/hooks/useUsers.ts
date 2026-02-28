@@ -117,6 +117,7 @@ export const useUsers = ({
 
 	useEffect(() => {
 		fetchUsers()
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [currentPage, roleFilter, searchTerm])
 
 	return {

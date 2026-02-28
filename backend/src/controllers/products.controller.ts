@@ -5,13 +5,20 @@ import { Request, Response } from 'express'
 import prisma from '../lib/prisma'
 import { createProductSchema, updateProductSchema } from '../validators/product.validator'
 
-// GET /api/products - Barcha mahsulotlar
+// GET /api/products - Barcha mahsulotlar (ids=id1,id2 - faqat shu mahsulotlar)
 export const getAllProducts = async (req: Request, res: Response) => {
 	try {
-		const { categoryId, isActive } = req.query
+		const { categoryId, isActive, ids } = req.query
+
+		// ids - sevimlilar uchun: faqat berilgan ID lardagi mahsulotlar
+		const idsFilter =
+			typeof ids === 'string' && ids.trim()
+				? ids.split(',').map(id => id.trim()).filter(Boolean)
+				: null
 
 		const products = await prisma.product.findMany({
 			where: {
+				...(idsFilter && idsFilter.length > 0 && { id: { in: idsFilter } }),
 				...(categoryId && { categoryId: categoryId as string }),
 				...(isActive !== undefined && { isActive: isActive === 'true' }),
 			},

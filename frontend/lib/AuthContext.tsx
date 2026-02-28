@@ -10,6 +10,7 @@
 import {
 	User,
 	createUserWithEmailAndPassword,
+	getRedirectResult,
 	onAuthStateChanged,
 	signInWithEmailAndPassword,
 	signOut,
@@ -26,7 +27,7 @@ export interface BackendUser {
 	phone: string | null
 	role: 'CUSTOMER' | 'DELIVERY' | 'ADMIN'
 	vehicleType?: string | null
-	currentLocation?: any
+	currentLocation?: { lat: number; lng: number }
 }
 
 interface AuthContextType {
@@ -199,13 +200,79 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 	/**
 	 * Auth state o'zgarishini kuzatish
+	 * getRedirectResult AVVAL chaqirilishi kerak (Firebase talabi)
 	 */
 	useEffect(() => {
 		let isSubscribed = true
+		let unsubscribe: (() => void) | null = null
+
 		const shouldBypassAuth =
 			typeof window !== 'undefined' &&
 			process.env.NEXT_PUBLIC_E2E_BYPASS_AUTH === 'true' &&
 			process.env.NODE_ENV !== 'production'
+
+		const initAuth = async () => {
+			// 1. AVVAL: Redirect result ni qayta ishlash (Google/Facebook dan qaytganida)
+			try {
+				const result = await getRedirectResult(auth)
+				if (result?.user && isSubscribed) {
+					const token = await result.user.getIdToken()
+					localStorage.setItem('firebaseToken', token)
+					localStorage.setItem(
+						'firebaseUser',
+						JSON.stringify({
+							uid: result.user.uid,
+							email: result.user.email,
+						}),
+					)
+					const { api } = await import('@/lib/apiClient')
+					const syncRes = await api.post<{ success?: boolean; data?: BackendUser }>(
+						'/api/auth/sync',
+						{},
+						{ headers: { Authorization: `Bearer ${token}` } },
+					)
+					if (syncRes.data?.success && syncRes.data?.data && isSubscribed) {
+						setBackendUser(syncRes.data.data)
+					}
+					const { trackLogin } = await import('@/lib/analytics')
+					trackLogin('google')
+					console.log('✅ [REDIRECT AUTH] Logged in:', result.user.email)
+				}
+			} catch (err) {
+				if (isSubscribed) console.error('❌ [REDIRECT AUTH] Error:', err)
+			}
+
+			// 2. KEYIN: Auth state listener o'rnatish
+			unsubscribe = onAuthStateChanged(auth, async currentUser => {
+				if (!isSubscribed) return
+
+				setUser(currentUser)
+
+				if (currentUser) {
+					try {
+						const token = await currentUser.getIdToken()
+						localStorage.setItem('firebaseToken', token)
+						localStorage.setItem(
+							'firebaseUser',
+							JSON.stringify({
+								uid: currentUser.uid,
+								email: currentUser.email,
+							}),
+						)
+						await syncWithBackend(currentUser)
+					} catch (error) {
+						console.error('❌ Auth state change error:', error)
+					} finally {
+						if (isSubscribed) setLoading(false)
+					}
+				} else {
+					setBackendUser(null)
+					localStorage.removeItem('firebaseUser')
+					localStorage.removeItem('firebaseToken')
+					if (isSubscribed) setLoading(false)
+				}
+			})
+		}
 
 		if (shouldBypassAuth) {
 			const storedUser = localStorage.getItem('e2eBackendUser')
@@ -218,49 +285,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				}
 			}
 			if (isSubscribed) setLoading(false)
-			return () => {
-				isSubscribed = false
-			}
+		} else {
+			initAuth()
 		}
-
-		const unsubscribe = onAuthStateChanged(auth, async currentUser => {
-			if (!isSubscribed) return
-
-			setUser(currentUser)
-
-			if (currentUser) {
-				// User tizimga kirgan
-				try {
-					// Token olish va saqlash
-					const token = await currentUser.getIdToken()
-					localStorage.setItem('firebaseToken', token)
-					localStorage.setItem(
-						'firebaseUser',
-						JSON.stringify({
-							uid: currentUser.uid,
-							email: currentUser.email,
-						}),
-					)
-
-					// Backend bilan sinxronlashtirish
-					await syncWithBackend(currentUser)
-				} catch (error) {
-					console.error('❌ Auth state change error:', error)
-				} finally {
-					if (isSubscribed) setLoading(false)
-				}
-			} else {
-				// User chiqdi
-				setBackendUser(null)
-				localStorage.removeItem('firebaseUser')
-				localStorage.removeItem('firebaseToken')
-				if (isSubscribed) setLoading(false)
-			}
-		})
 
 		return () => {
 			isSubscribed = false
-			unsubscribe()
+			unsubscribe?.()
 		}
 	}, [])
 
@@ -278,6 +309,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		) // 50 daqiqa
 
 		return () => clearInterval(interval)
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [user])
 
 	const value = {

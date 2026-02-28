@@ -17,7 +17,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
 				</CardHeader>
 				<CardContent>
 					<div className='h-80 flex items-center justify-center text-gray-500'>
-						Ma'lumot topilmadi
+						Ma&apos;lumot topilmadi
 					</div>
 				</CardContent>
 			</Card>

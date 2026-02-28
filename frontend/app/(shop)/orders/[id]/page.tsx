@@ -12,9 +12,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { api } from '@/lib/apiClient'
 import { useAuth } from '@/lib/AuthContext'
 import { useCartStore } from '@/store/cartStore'
+import { generateInvoice, type InvoiceData } from '@/lib/pdfInvoice'
 import axios from 'axios'
 import { format } from 'date-fns'
-import { ArrowLeft, CheckCircle2, Clock, CreditCard, Home, MapPin, Package, Phone } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Clock, CreditCard, Download, Home, MapPin, Package, Phone } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { use, useEffect, useState } from 'react'
@@ -133,6 +134,40 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
 		router.push('/cart')
 	}
 
+	// ============================================
+	// DOWNLOAD PDF INVOICE
+	// ============================================
+	const handleDownloadInvoice = async () => {
+		if (!order || !user) return
+
+		const invoiceData: InvoiceData = {
+			orderNumber: order.orderNumber,
+			orderDate: order.createdAt,
+			customerName: user.email || 'Mijoz',
+			customerEmail: user.email || undefined,
+			customerPhone: order.deliveryPhone,
+			deliveryAddress: order.deliveryAddress,
+			items: order.items.map(item => ({
+				name: item.product.name,
+				quantity: item.quantity,
+				size: item.size || undefined,
+				price: item.price * item.quantity,
+			})),
+			subtotal: order.totalPrice,
+			total: order.totalPrice,
+			paymentMethod: order.paymentMethod,
+			status: getStatusConfig(order.status).label,
+		}
+
+		try {
+			await generateInvoice(invoiceData)
+			console.log('✅ Invoice downloaded')
+		} catch (error) {
+			console.error('❌ Failed to generate invoice:', error)
+			alert('Chekni yuklab olishda xatolik yuz berdi')
+		}
+	}
+
 	if (loading) {
 		return (
 			<main className='min-h-screen bg-gradient-to-b from-orange-50 to-white'>
@@ -173,17 +208,27 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
 				</Button>
 
 				{/* Header */}
-				<div className='flex items-center justify-between mb-8'>
+				<div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8'>
 					<div>
 						<h1 className='text-3xl font-bold mb-2'>Buyurtma {order.orderNumber}</h1>
 						<p className='text-gray-600'>
 							{format(new Date(order.createdAt), 'dd MMMM yyyy, HH:mm')}
 						</p>
 					</div>
-					<Badge className={`${statusConfig.color} text-base px-4 py-2`}>
-						<StatusIcon className='w-4 h-4 mr-2' />
-						{statusConfig.label}
-					</Badge>
+					<div className='flex items-center gap-3 flex-wrap'>
+						<Button
+							variant='default'
+							className='bg-blue-600 hover:bg-blue-700 gap-2'
+							onClick={handleDownloadInvoice}
+						>
+							<Download className='w-4 h-4' />
+							Chekni yuklab olish
+						</Button>
+						<Badge className={`${statusConfig.color} text-base px-4 py-2`}>
+							<StatusIcon className='w-4 h-4 mr-2' />
+							{statusConfig.label}
+						</Badge>
+					</div>
 				</div>
 
 				<div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
@@ -307,6 +352,14 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
 
 						{/* Actions */}
 						<div className='flex flex-col gap-2'>
+							<Button
+								variant='outline'
+								className='w-full gap-2'
+								onClick={handleDownloadInvoice}
+							>
+								<Download className='w-4 h-4' />
+								Chekni yuklab olish
+							</Button>
 							<Button
 								variant='outline'
 								className='w-full gap-2'

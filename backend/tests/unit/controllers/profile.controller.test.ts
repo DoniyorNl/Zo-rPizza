@@ -8,6 +8,7 @@ import {
 	createAddress,
 	updateAddress,
 	deleteAddress,
+	patchProfile,
 } from '@/controllers/profile.controller'
 import { prismaMock } from '../../setup'
 import { generateMockUser } from '../../setup'
@@ -38,6 +39,7 @@ const mockUser = (overrides = {}) => ({
 	dietaryPrefs: null,
 	allergyInfo: null,
 	favoriteProducts: null,
+	emailNotificationsEnabled: true,
 	...overrides,
 })
 
@@ -284,6 +286,69 @@ describe('Profile Controller', () => {
 			expect(res.json).toHaveBeenCalledWith(
 				expect.objectContaining({ success: true, data: expect.any(Object) }),
 			)
+		})
+	})
+
+	describe('patchProfile', () => {
+		it('should return 401 when userId missing', async () => {
+			const req = mockRequest({ body: { emailNotificationsEnabled: false } })
+			const res = mockResponse()
+
+			await patchProfile(req as Request, res as Response)
+
+			expect(res.status).toHaveBeenCalledWith(401)
+		})
+
+		it('should update emailNotificationsEnabled', async () => {
+			const user = mockUser({ id: 'user-1', emailNotificationsEnabled: true })
+			const updated = { ...user, emailNotificationsEnabled: false }
+			prismaMock.user.update.mockResolvedValue(updated as any)
+
+			const req = mockRequest({
+				userId: 'fb-uid',
+				body: { emailNotificationsEnabled: false },
+			} as any)
+			const res = mockResponse()
+
+			await patchProfile(req as Request, res as Response)
+
+			expect(prismaMock.user.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: { firebaseUid: 'fb-uid' },
+					data: expect.objectContaining({
+						emailNotificationsEnabled: false,
+					}),
+				})
+			)
+			expect(res.status).toHaveBeenCalledWith(200)
+			expect(res.json).toHaveBeenCalledWith(
+				expect.objectContaining({
+					success: true,
+					data: expect.objectContaining({ emailNotificationsEnabled: false }),
+				})
+			)
+		})
+
+		it('should update favorites without affecting emailNotifications', async () => {
+			const user = mockUser()
+			prismaMock.user.update.mockResolvedValue(user as any)
+
+			const req = mockRequest({
+				userId: 'fb-uid',
+				body: { favoriteProducts: ['prod-1', 'prod-2'] },
+			} as any)
+			const res = mockResponse()
+
+			await patchProfile(req as Request, res as Response)
+
+			expect(prismaMock.user.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({
+						favoriteProducts: ['prod-1', 'prod-2'],
+					}),
+				})
+			)
+			expect(res.status).toHaveBeenCalledWith(200)
 		})
 	})
 

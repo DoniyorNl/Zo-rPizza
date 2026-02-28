@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import api from '@/lib/api'
 import { useAuth } from '@/lib/AuthContext'
 import { geocodeAddress } from '@/lib/geocoding'
+import { calculateETA, formatETA, getETADescription } from '@/lib/etaCalculation'
 import { useCartStore } from '@/store/cartStore'
 import { useDeliveryStore } from '@/store/deliveryStore'
 import { loadStripe } from '@stripe/stripe-js'
@@ -100,6 +101,8 @@ export default function CheckoutPage() {
 	const [deliveryAddress, setDeliveryAddress] = useState('')
 	const [deliveryPhone, setDeliveryPhone] = useState('')
 	const [email, setEmail] = useState(user?.email || '')
+	// ✅ NEW: Guest checkout fields
+	const [guestName, setGuestName] = useState('')
 	const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'CARD'>('CASH')
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState('')
@@ -116,15 +119,28 @@ export default function CheckoutPage() {
 	const canSubmitPickup = isPickup ? !!selectedBranch : true
 	const effectiveAddress = isPickup && selectedBranch ? selectedBranch.address : deliveryAddress
 
+	// ============================================
+	// ETA CALCULATION
+	// ============================================
+	const eta = useMemo(() => {
+		return calculateETA({
+			distance: 3, // Default 3km
+			productCount: items.length,
+			hasComplexItems: items.some(item => 
+				item.addedToppingIds?.length > 0 || item.halfProductId
+			),
+		})
+	}, [items])
+
 	// Cart bo'sh yoki user yo'q bo'lsa cart/login ga – lekin buyurtma muvaffaqiyatli bo'lgach emas
+	// ✅ UPDATED: Allow guest checkout (don't redirect if no user)
 	useEffect(() => {
 		if (afterSuccessRef.current) return
 		if (items.length === 0) {
 			router.push('/cart')
-		} else if (!user) {
-			router.push('/login')
 		}
-	}, [items.length, user, router])
+		// Don't redirect to login - allow guest checkout
+	}, [items.length, router])
 
 	useEffect(() => {
 		const onEsc = (e: KeyboardEvent) => {
@@ -139,7 +155,7 @@ export default function CheckoutPage() {
 	}, [cardStep])
 
 	// Agar yo'q bo'lsa, loading ko'rsatish
-	if (items.length === 0 || !user) {
+	if (items.length === 0) {
 		return (
 			<main className='min-h-screen bg-gradient-to-b from-orange-50 to-white'>
 				<Header />
@@ -174,12 +190,13 @@ export default function CheckoutPage() {
 				deliveryLng = selectedBranch.lng
 			}
 
-			const token = await user.getIdToken()
+			// ✅ UPDATED: Support guest checkout
+			let token: string | undefined
+			if (user) {
+				token = await user.getIdToken()
+			}
 
 			const orderData: Record<string, unknown> = {
-				userId: user.uid,
-				email: email || user.email,
-				name: user.displayName || 'User',
 				items: items.map(item => ({
 					productId: item.productId,
 					variationId: item.variationId,
@@ -194,6 +211,21 @@ export default function CheckoutPage() {
 				deliveryAddress: effectiveAddress,
 				deliveryPhone,
 			}
+
+			// ✅ Add user data if logged in, otherwise guest data
+			if (user) {
+				orderData.userId = user.uid
+				orderData.email = email || user.email
+				orderData.name = user.displayName || 'User'
+			} else {
+				// Guest checkout
+				orderData.name = guestName
+				orderData.email = email
+				orderData.customerName = guestName
+				orderData.customerEmail = email
+				orderData.customerPhone = deliveryPhone
+			}
+
 			if (deliveryLat != null && deliveryLng != null) {
 				orderData.deliveryLat = deliveryLat
 				orderData.deliveryLng = deliveryLng
@@ -202,11 +234,12 @@ export default function CheckoutPage() {
 				orderData.branchId = selectedBranch.id
 			}
 
-			const response = await api.post('/api/orders', orderData, {
-				headers: {
-					Authorization: `Bearer ${token}`,
-				},
-			})
+			const headers: Record<string, string> = {}
+			if (token) {
+				headers.Authorization = `Bearer ${token}`
+			}
+
+			const response = await api.post('/api/orders', orderData, { headers })
 
 			const order = response.data?.data
 			const id = order?.id
@@ -290,6 +323,42 @@ export default function CheckoutPage() {
 							<CardContent>
 								<form data-testid="checkout-form" onSubmit={handleSubmit} className='space-y-6'>
 									{error && <div data-testid="checkout-error" className='bg-red-50 text-red-600 p-3 rounded'>{error}</div>}
+
+									{/* ✅ Guest Checkout Notice */}
+									{!user && (
+										<div className='bg-blue-50 border border-blue-200 rounded-lg p-4'>
+											<p className='text-sm text-blue-800 mb-2'>
+												<strong>Mehmon sifatida buyurtma berasiz</strong>
+											</p>
+											<p className='text-xs text-blue-700'>
+												Akkaunt yaratish uchun{' '}
+												<Link href='/register' className='underline font-semibold'>
+													ro&apos;yxatdan o&apos;ting
+												</Link>{' '}
+												yoki{' '}
+												<Link href='/login' className='underline font-semibold'>
+													kirish
+												</Link>
+											</p>
+										</div>
+									)}
+
+									{/* ✅ Guest Name Field */}
+									{!user && (
+										<div>
+											<label className='block text-sm font-medium mb-2'>
+												Ismingiz *
+											</label>
+											<input
+												type='text'
+												value={guestName}
+												onChange={e => setGuestName(e.target.value)}
+												className='w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500'
+												placeholder='Masalan: Alisher Navoi'
+												required
+											/>
+										</div>
+									)}
 
 									{isPickup && selectedBranch && (
 										<div className='rounded-lg bg-gray-100 p-4'>
@@ -403,6 +472,23 @@ export default function CheckoutPage() {
 								<CardTitle>Buyurtma tafsilotlari</CardTitle>
 							</CardHeader>
 							<CardContent className='space-y-4' data-testid="checkout-summary">
+								{/* ETA - Estimated Delivery Time */}
+								<div className='bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg p-4 border border-orange-200'>
+									<div className='flex items-center gap-2 mb-2'>
+										<span className='text-2xl'>⏱️</span>
+										<div>
+											<p className='font-semibold text-gray-800'>Taxminiy yetkazish vaqti</p>
+											<p className='text-sm text-gray-600'>{getETADescription(eta)}</p>
+										</div>
+									</div>
+									<div className='text-center mt-3'>
+										<p className='text-3xl font-bold text-orange-600'>{formatETA(eta)}</p>
+										<p className='text-xs text-gray-500 mt-1'>
+											Tayyorlash: {eta.breakdown.prepTime} daqiqa • Yetkazish: {eta.breakdown.deliveryTime} daqiqa
+										</p>
+									</div>
+								</div>
+
 								{/* Items */}
 								<div className='space-y-2'>
 									{items.map(item => (

@@ -163,7 +163,7 @@ export default function DashboardPage() {
 										<div className='w-2 h-2 bg-green-500 rounded-full animate-pulse'></div>
 										<span>Tizim faol</span>
 									</div>
-									<div>Ma'lumotlar har 30 soniyada yangilanadi</div>
+									<div>Ma&apos;lumotlar har 30 soniyada yangilanadi</div>
 								</div>
 								<div>
 									Oxirgi yangilanish:{' '}

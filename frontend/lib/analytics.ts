@@ -23,7 +23,7 @@ export const initGA = () => {
 
 declare global {
 	interface Window {
-		gtag?: (...args: any[]) => void
+		gtag?: (...args: unknown[]) => void
 	}
 }
 
@@ -32,7 +32,7 @@ declare global {
  */
 export const trackEvent = (
 	eventName: string,
-	params?: Record<string, any>,
+	params?: Record<string, unknown>,
 ) => {
 	if (typeof window !== 'undefined' && window.gtag && GA_MEASUREMENT_ID) {
 		window.gtag('event', eventName, params)
@@ -203,7 +203,7 @@ export const trackLogin = (method: string) => {
  */
 export const trackCustomEvent = (
 	eventName: string,
-	params?: Record<string, any>,
+	params?: Record<string, unknown>,
 ) => {
 	trackEvent(eventName, params)
 }

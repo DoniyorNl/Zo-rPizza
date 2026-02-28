@@ -12,7 +12,7 @@
 
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 export interface GPSLocation {
 	lat: number
@@ -43,6 +43,7 @@ export interface UseGPSTrackingReturn {
 	startTracking: () => void
 	stopTracking: () => void
 	requestPermission: () => Promise<boolean>
+	getCurrentLocation: () => Promise<GPSLocation>
 }
 
 const DEFAULT_OPTIONS: Required<UseGPSTrackingOptions> = {
@@ -54,7 +55,7 @@ const DEFAULT_OPTIONS: Required<UseGPSTrackingOptions> = {
 }
 
 export function useGPSTracking(options: UseGPSTrackingOptions = {}): UseGPSTrackingReturn {
-	const opts = { ...DEFAULT_OPTIONS, ...options }
+	const opts = useMemo(() => ({ ...DEFAULT_OPTIONS, ...options }), [options])
 
 	const [location, setLocation] = useState<GPSLocation | null>(null)
 	const [error, setError] = useState<GPSError | null>(null)
@@ -225,6 +226,7 @@ export function useGPSTracking(options: UseGPSTrackingOptions = {}): UseGPSTrack
 	// Auto-start if enabled
 	useEffect(() => {
 		if (opts.autoStart && isSupported && permission === 'granted') {
+			// eslint-disable-next-line react-hooks/set-state-in-effect -- startTracking is intentional on mount
 			startTracking()
 		}
 
@@ -249,6 +251,7 @@ export function useGPSTracking(options: UseGPSTrackingOptions = {}): UseGPSTrack
 		startTracking,
 		stopTracking,
 		requestPermission,
+		getCurrentLocation,
 	}
 }
 

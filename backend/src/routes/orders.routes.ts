@@ -13,7 +13,7 @@ import {
 } from '@/controllers/orders.controller'
 import { Router } from 'express'
 import { adminOnly } from '../middleware/admin.middleware'
-import { authenticateFirebaseToken } from '../middleware/firebase-auth.middleware'
+import { authenticateFirebaseToken, optionalAuth } from '../middleware/firebase-auth.middleware'
 
 const router = Router()
 
@@ -26,7 +26,8 @@ router.get('/driver', authenticateFirebaseToken, getDriverOrders) // Driver buyu
 
 // ✅ USER ROUTES
 router.get('/user/:userId', authenticateFirebaseToken, getUserOrders) // User buyurtmalari
-router.post('/', authenticateFirebaseToken, createOrder) // Yangi buyurtma
+// 🆕 optionalAuth: token bo'lsa userId qo'shadi, bo'lmasa ham guest buyurtma berish mumkin
+router.post('/', optionalAuth, createOrder) // Yangi buyurtma (guest + registered)
 
 // ✅ FALLBACK - GET /api/orders (bo'sh array qaytarish)
 router.get('/', (_req, res) => {

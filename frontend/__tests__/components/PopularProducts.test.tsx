@@ -13,7 +13,9 @@ jest.mock('next/navigation', () => ({
 	}),
 }))
 jest.mock('@/components/products/ProductCard', () => ({
-	ProductCard: ({ product }: any) => <div data-testid={`product-${product.id}`}>{product.name}</div>,
+	ProductCard: ({ product }: { product: { id: string; name: string } }) => (
+		<div data-testid={`product-${product.id}`}>{product.name}</div>
+	),
 }))
 
 const mockUsePopularProducts = usePopularProducts as jest.MockedFunction<typeof usePopularProducts>

@@ -188,7 +188,7 @@ export default function HomePage() {
 									}}
 									className='mt-4 text-orange-600 hover:underline'
 								>
-									Barcha mahsulotlarni ko'rish
+									Barcha mahsulotlarni ko&apos;rish
 								</button>
 							)}
 						</div>

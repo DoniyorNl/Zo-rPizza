@@ -29,6 +29,7 @@ export function useDeals(options?: DealFilterOptions) {
 	// Stabilize options to prevent infinite loops
 	const stableOptions = useMemo(
 		() => options,
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
 			options?.isActive,
 			options?.availableNow,
@@ -61,7 +62,7 @@ export function useDeals(options?: DealFilterOptions) {
 							setLoading(false)
 							return
 						}
-					} catch (e) {
+					} catch {
 						// Invalid cache, continue to fetch
 					}
 				}
@@ -147,13 +148,13 @@ export function useDeals(options?: DealFilterOptions) {
 							timestamp: Date.now(),
 						}
 						localStorage.setItem('deals_cache', JSON.stringify(cacheData))
-					} catch (e) {
+					} catch {
 						// localStorage error, ignore
 					}
 				}
 			} catch (err) {
 				console.error('❌ Error fetching deals:', err)
-				setError("Aksiyalar yuklanmadi. Iltimos qayta urinib ko'ring.")
+				setError("Aksiyalar yuklanmadi. Iltimos qayta urinib ko&apos;ring.")
 			} finally {
 				setLoading(false)
 			}

@@ -6,7 +6,6 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { api } from '@/lib/apiClient'
-import axios from 'axios'
 import { useEffect, useState } from 'react'
 import { Topping, ToppingFormData, ToppingFormErrors } from '../types/topping.types'
 

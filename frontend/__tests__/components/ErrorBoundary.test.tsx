@@ -3,7 +3,7 @@
 // 🧪 ERROR BOUNDARY COMPONENT TESTS
 // =====================================
 
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 // Component that throws error

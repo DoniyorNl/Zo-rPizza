@@ -70,46 +70,47 @@ export function getErrorMessage(code: string, defaultMessage?: string): string {
 /**
  * Get error message from axios error
  */
-export function getAxiosErrorMessage(error: any): string {
+export function getAxiosErrorMessage(error: unknown): string {
 	// Try to get error code from response
-	if (error?.response?.data?.code) {
-		return getErrorMessage(error.response.data.code, error.response.data.message)
+	const err = error as { response?: { data?: { code?: string; message?: string }; status?: number }; code?: string; message?: string }
+	if (err?.response?.data?.code) {
+		return getErrorMessage(err.response.data.code, err.response.data.message)
 	}
 
 	// Try to get message from response
-	if (error?.response?.data?.message) {
-		return error.response.data.message
+	if (err?.response?.data?.message) {
+		return err.response.data.message
 	}
 
 	// Network error
-	if (error?.code === 'ERR_NETWORK' || error?.message?.includes('Network')) {
+	if (err?.code === 'ERR_NETWORK' || err?.message?.includes('Network')) {
 		return ERROR_MESSAGES.NETWORK_ERROR
 	}
 
 	// Timeout error
-	if (error?.code === 'ECONNABORTED' || error?.message?.includes('timeout')) {
+	if (err?.code === 'ECONNABORTED' || err?.message?.includes('timeout')) {
 		return ERROR_MESSAGES.TIMEOUT
 	}
 
 	// HTTP status based errors
-	if (error?.response?.status === 401) {
+	if (err?.response?.status === 401) {
 		return ERROR_MESSAGES.UNAUTHORIZED
 	}
-	if (error?.response?.status === 403) {
+	if (err?.response?.status === 403) {
 		return ERROR_MESSAGES.FORBIDDEN
 	}
-	if (error?.response?.status === 404) {
+	if (err?.response?.status === 404) {
 		return ERROR_MESSAGES.NOT_FOUND
 	}
-	if (error?.response?.status === 429) {
+	if (err?.response?.status === 429) {
 		return ERROR_MESSAGES.RATE_LIMIT
 	}
-	if (error?.response?.status >= 500) {
+	if ((err?.response?.status ?? 0) >= 500) {
 		return ERROR_MESSAGES.SERVER_ERROR
 	}
 
 	// Default
-	return error?.message || ERROR_MESSAGES.UNKNOWN_ERROR
+	return err?.message || ERROR_MESSAGES.UNKNOWN_ERROR
 }
 
 /**
@@ -128,7 +129,8 @@ export const FIREBASE_ERROR_MESSAGES: Record<string, string> = {
 	'auth/network-request-failed': 'Internet ulanishini tekshiring.',
 }
 
-export function getFirebaseErrorMessage(error: any): string {
-	const code = error?.code || error?.message
-	return FIREBASE_ERROR_MESSAGES[code] || 'Autentifikatsiya xatosi'
+export function getFirebaseErrorMessage(error: unknown): string {
+	const err = error as { code?: string; message?: string }
+	const code = err?.code || err?.message
+	return (code ? FIREBASE_ERROR_MESSAGES[code] : undefined) || 'Autentifikatsiya xatosi'
 }

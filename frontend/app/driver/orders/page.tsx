@@ -54,7 +54,7 @@ type OrderStatus =
 	| 'CANCELLED'
 
 export default function DriverOrdersPage() {
-	const { backendUser } = useAuth()
+	useAuth()
 	const [orders, setOrders] = useState<Order[]>([])
 	const [filteredOrders, setFilteredOrders] = useState<Order[]>([])
 	const [loading, setLoading] = useState(true)
@@ -246,7 +246,7 @@ export default function DriverOrdersPage() {
 						<option value='ALL'>Barcha holatlar</option>
 						<option value='CONFIRMED'>Tasdiqlandi</option>
 						<option value='PREPARING'>Tayyorlanmoqda</option>
-						<option value='OUT_FOR_DELIVERY'>Yo'lda</option>
+						<option value='OUT_FOR_DELIVERY'>Yo&apos;lda</option>
 						<option value='DELIVERED'>Yetkazib berildi</option>
 						<option value='CANCELLED'>Bekor qilindi</option>
 					</select>

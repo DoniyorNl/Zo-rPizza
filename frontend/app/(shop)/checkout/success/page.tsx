@@ -1,26 +1,57 @@
 // frontend/app/(shop)/checkout/success/page.tsx
-// ✅ BUYURTMA QABUL QILINDI – xabar, Menuga qaytish, Kuzatib borish
+// ✅ BUYURTMA QABUL QILINDI – xabar, Chek yuklash, Menuga qaytish, Kuzatib borish
 
 'use client'
 
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { api } from '@/lib/apiClient'
+import { useAuth } from '@/lib/AuthContext'
 import { useCartStore } from '@/store/cartStore'
+import { trackPurchase } from '@/lib/analytics'
+import { generateInvoice, type InvoiceData } from '@/lib/pdfInvoice'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { CheckCircle2, Home, MapPin, Phone } from 'lucide-react'
+import { CheckCircle2, Download, Home, MapPin, Phone } from 'lucide-react'
 
 const TRACKING_LOCATION_KEY = 'tracking_user_location'
+
+const statusLabels: Record<string, string> = {
+	PENDING: 'Kutilmoqda',
+	PREPARING: 'Tayyorlanmoqda',
+	DELIVERING: "Yetkazilmoqda",
+	COMPLETED: 'Yetkazildi',
+	CANCELLED: 'Bekor qilindi',
+}
 
 export default function CheckoutSuccessPage() {
 	const router = useRouter()
 	const searchParams = useSearchParams()
+	const { user } = useAuth()
 	const clearCart = useCartStore(state => state.clearCart)
 	const orderId = searchParams.get('orderId')
 	const orderNumber = searchParams.get('orderNumber')
+	const totalPrice = searchParams.get('total')
+	const paymentMethod = searchParams.get('payment')
 	const isPaid = searchParams.get('paid') === '1'
 	const [locationRequesting, setLocationRequesting] = useState(false)
+	const [tracked, setTracked] = useState(false)
+	const [downloading, setDownloading] = useState(false)
+
+	// Track purchase event (once)
+	useEffect(() => {
+		if (orderId && !tracked && totalPrice) {
+			trackPurchase({
+				orderId,
+				orderNumber: orderNumber || orderId,
+				totalPrice: parseFloat(totalPrice),
+				paymentMethod: paymentMethod || 'CASH',
+				items: [], // Items from order (can be enhanced)
+			})
+			setTracked(true)
+		}
+	}, [orderId, tracked, totalPrice, orderNumber, paymentMethod])
 
 	// orderId bo'lmasa asosiy sahifaga (direct URL ochilganda)
 	useEffect(() => {
@@ -33,6 +64,45 @@ export default function CheckoutSuccessPage() {
 		// Online payment flow qaytganda savatni tozalaymiz
 		if (isPaid) clearCart()
 	}, [isPaid, clearCart])
+
+	const handleDownloadInvoice = async () => {
+		if (!orderId) return
+		setDownloading(true)
+		try {
+			const response = await api.get(`/api/orders/${orderId}`)
+			const order = response.data.data
+			if (!order) {
+				alert('Buyurtma ma\'lumotlari topilmadi')
+				return
+			}
+
+			const invoiceData: InvoiceData = {
+				orderNumber: order.orderNumber,
+				orderDate: order.createdAt,
+				customerName: user?.displayName ?? (order as { customerName?: string }).customerName ?? order.deliveryPhone ?? 'Mijoz',
+				customerEmail: user?.email ?? (order as { customerEmail?: string }).customerEmail ?? undefined,
+				customerPhone: order.deliveryPhone,
+				deliveryAddress: order.deliveryAddress,
+				items: order.items.map((item: { quantity: number; price: number; product: { name: string }; size?: string }) => ({
+					name: item.product.name,
+					quantity: item.quantity,
+					size: item.size,
+					price: item.price * item.quantity,
+				})),
+				subtotal: order.totalPrice,
+				total: order.totalPrice,
+				paymentMethod: order.paymentMethod,
+				status: statusLabels[order.status] || order.status,
+			}
+
+			await generateInvoice(invoiceData)
+		} catch (err) {
+			console.error('Chek yuklash xatosi:', err)
+			alert('Chekni yuklab olishda xatolik. Keyinroq "Mening buyurtmalarim" sahifasidan urinib ko\'ring.')
+		} finally {
+			setDownloading(false)
+		}
+	}
 
 	if (!orderId) {
 		return (
@@ -80,7 +150,17 @@ export default function CheckoutSuccessPage() {
 								</a>
 							</div>
 
-							<div className='flex flex-col gap-3 sm:flex-row sm:justify-center'>
+							<div className='flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center'>
+								<Button
+									size='lg'
+									variant='default'
+									className='gap-2 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white border-0'
+									disabled={downloading}
+									onClick={handleDownloadInvoice}
+								>
+									<Download className='w-4 h-4 shrink-0' />
+									{downloading ? 'Yuklanmoqda...' : 'Chekni yuklab olish'}
+								</Button>
 								<Button
 									size='lg'
 									variant='outline'

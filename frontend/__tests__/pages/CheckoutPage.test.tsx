@@ -1,6 +1,7 @@
 // frontend/__tests__/pages/CheckoutPage.test.tsx
 // 💳 CHECKOUT PAGE TESTS
 
+import React from 'react'
 import CheckoutPage from '@/app/(shop)/checkout/page'
 import api from '@/lib/api'
 import { useAuth } from '@/lib/AuthContext'
@@ -8,7 +9,6 @@ import { geocodeAddress } from '@/lib/geocoding'
 import { useCartStore } from '@/store/cartStore'
 import { useDeliveryStore } from '@/store/deliveryStore'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { useRouter } from 'next/navigation'
 
 const mockPush = jest.fn()
 jest.mock('next/navigation', () => ({
@@ -27,7 +27,7 @@ jest.mock('@/lib/api', () => ({
 jest.mock('@/lib/geocoding')
 jest.mock('@/components/layout/UnifiedHeader', () => ({ UnifiedHeader: () => null }))
 jest.mock('@stripe/react-stripe-js', () => ({
-  Elements: ({ children }: { children: unknown }) => <div>{children as any}</div>,
+  Elements: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   PaymentElement: () => <div data-testid="stripe-payment-element">Stripe PaymentElement</div>,
   useStripe: () => ({
     confirmPayment: jest.fn().mockResolvedValue({}),
@@ -94,12 +94,14 @@ describe('CheckoutPage', () => {
     ;(geocodeAddress as jest.Mock).mockResolvedValue({ lat: 41.3, lng: 69.2 })
   })
 
-  it('should show loading when user is not logged in', () => {
+  it('should show guest checkout form when user is not logged in', () => {
     ;(useAuth as jest.Mock).mockReturnValue({ user: null })
 
     render(<CheckoutPage />)
 
-    expect(screen.getByText(/Yuklanmoqda/i)).toBeInTheDocument()
+    expect(screen.getByText(/Mehmon sifatida buyurtma berasiz/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/Alisher Navoi/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Buyurtma berish/i })).toBeInTheDocument()
   })
 
   it('should show loading when cart is empty', () => {

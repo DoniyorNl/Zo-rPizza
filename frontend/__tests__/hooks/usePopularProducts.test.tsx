@@ -114,7 +114,7 @@ describe('usePopularProducts Hook', () => {
 			expect(result.current.loading).toBe(false)
 		})
 
-		const hasInactive = result.current.popularProducts.some((p: any) => !p.isActive)
+		const hasInactive = result.current.popularProducts.some((p: { isActive?: boolean }) => !p.isActive)
 		expect(hasInactive).toBe(false)
 	})
 
@@ -220,8 +220,9 @@ describe('usePopularProducts Hook', () => {
 	})
 
 	it('should handle products without order count (random shuffle)', async () => {
-		const productsWithoutCount = mockProducts.map((p: any) => {
+		const productsWithoutCount = mockProducts.map((p: { _count?: unknown; [key: string]: unknown }) => {
 			const { _count, ...rest } = p
+			void _count
 			return rest
 		})
 

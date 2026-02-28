@@ -27,9 +27,9 @@ export function useProducts() {
 			await api.delete(`/api/products/${id}`)
 			setToast({ message: `"${productName}" menyudan yashirildi`, type: 'success' })
 			fetchProducts()
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error deleting product:', error)
-			const message = error.response?.data?.message || 'Xatolik yuz berdi'
+			const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Xatolik yuz berdi'
 			setToast({ message, type: 'error' })
 		}
 	}
@@ -39,15 +39,16 @@ export function useProducts() {
 			await api.patch(`/api/products/${id}/restore`)
 			setToast({ message: `"${productName}" qayta faollashtirildi`, type: 'success' })
 			fetchProducts()
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error restoring product:', error)
-			const message = error.response?.data?.message || 'Xatolik yuz berdi'
+			const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Xatolik yuz berdi'
 			setToast({ message, type: 'error' })
 		}
 	}
 
 	useEffect(() => {
 		fetchProducts()
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [filterStatus])
 
 	return {

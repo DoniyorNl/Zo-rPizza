@@ -51,7 +51,7 @@ interface Order {
 export default function DeliveryTrackerPage() {
 	const params = useParams()
 	const router = useRouter()
-	const { user } = useAuth()
+	useAuth()
 	const orderId = params.id as string
 
 	const [order, setOrder] = useState<Order | null>(null)
@@ -66,7 +66,6 @@ export default function DeliveryTrackerPage() {
 		error: gpsError,
 		isTracking,
 		isSupported,
-		permission,
 		startTracking,
 		stopTracking,
 		requestPermission,
@@ -79,6 +78,7 @@ export default function DeliveryTrackerPage() {
 	// Fetch order details
 	useEffect(() => {
 		fetchOrderDetails()
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [orderId])
 
 	async function fetchOrderDetails() {

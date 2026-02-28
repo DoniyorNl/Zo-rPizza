@@ -28,7 +28,7 @@ export const initSentry = () => {
 		replaysOnErrorSampleRate: 1.0, // 100% of sessions with errors
 
 		// Filter out sensitive data
-		beforeSend(event, hint) {
+		beforeSend(event) {
 			// Remove sensitive data from breadcrumbs
 			if (event.breadcrumbs) {
 				event.breadcrumbs = event.breadcrumbs.map(breadcrumb => {
@@ -43,7 +43,7 @@ export const initSentry = () => {
 
 			// Remove sensitive request data
 			if (event.request?.data) {
-				const data = event.request.data as any
+				const data = event.request.data as Record<string, unknown>
 				if (data.password) data.password = '[REDACTED]'
 				if (data.token) data.token = '[REDACTED]'
 			}
@@ -70,12 +70,12 @@ export const initSentry = () => {
 /**
  * Capture exception with context
  */
-export const captureException = (error: Error, context?: Record<string, any>) => {
+export const captureException = (error: Error, context?: Record<string, unknown>) => {
 	if (SENTRY_DSN) {
 		Sentry.withScope(scope => {
 			if (context) {
 				Object.entries(context).forEach(([key, value]) => {
-					scope.setContext(key, value)
+					scope.setContext(key, value as Record<string, unknown>)
 				})
 			}
 			Sentry.captureException(error)

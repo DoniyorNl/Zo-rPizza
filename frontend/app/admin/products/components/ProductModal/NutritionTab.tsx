@@ -42,7 +42,7 @@ export function NutritionTab({ formData, setFormData }: NutritionTabProps) {
 					/>
 				</div>
 				<div>
-					<label className='block text-sm font-medium mb-2'>Yog' (g)</label>
+					<label className='block text-sm font-medium mb-2'>Yog&apos; (g)</label>
 					<input
 						type='number'
 						value={formData.fat}

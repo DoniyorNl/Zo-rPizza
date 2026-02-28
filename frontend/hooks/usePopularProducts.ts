@@ -70,7 +70,7 @@ export function usePopularProducts(limit: number = 6) {
 							setLoading(false)
 							return
 						}
-					} catch (e) {
+					} catch {
 						// Invalid cache, continue to fetch
 					}
 				}
@@ -114,7 +114,7 @@ export function usePopularProducts(limit: number = 6) {
 							timestamp: Date.now(),
 						}
 						localStorage.setItem('popular_products_cache', JSON.stringify(cacheData))
-					} catch (e) {
+					} catch {
 						// localStorage error, ignore
 					}
 				}

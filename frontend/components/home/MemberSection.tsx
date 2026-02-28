@@ -81,13 +81,13 @@ export function MemberSection() {
 				{/* Section Header */}
 				<div className='text-center mb-12'>
 					<Badge className='mb-4 bg-purple-100 text-purple-700 px-4 py-2 text-sm'>
-						💎 VIP A'zolik
+						💎 VIP A&apos;zolik
 					</Badge>
 					<h2 className='text-3xl md:text-4xl font-bold text-gray-900 mb-3'>
-						A'zo Bo'ling va Bonuslardan Foydalaning!
+						A&apos;zo Bo&apos;ling va Bonuslardan Foydalaning!
 					</h2>
 					<p className='text-gray-600 max-w-2xl mx-auto'>
-						Har safar buyurtma qiling va ballar to'plang. Ballaringizni maxsus takliflarga
+						Har safar buyurtma qiling va ballar to&apos;plang. Ballaringizni maxsus takliflarga
 						almashtiring!
 					</p>
 				</div>
@@ -113,7 +113,7 @@ export function MemberSection() {
 
 				{/* Exclusive Deals */}
 				<div className='mb-12'>
-					<h3 className='text-2xl font-bold text-center mb-6'>Maxsus A'zolar Takliflari</h3>
+					<h3 className='text-2xl font-bold text-center mb-6'>Maxsus A&apos;zolar Takliflari</h3>
 					<div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
 						{EXCLUSIVE_DEALS.map(deal => (
 							<Card
@@ -135,7 +135,7 @@ export function MemberSection() {
 										onClick={() => router.push('/register')}
 										className='w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
 									>
-										A'zo Bo'lish
+										A&apos;zo Bo&apos;lish
 									</Button>
 								</div>
 							</Card>
@@ -145,9 +145,9 @@ export function MemberSection() {
 
 				{/* CTA Section */}
 				<Card className='p-8 md:p-12 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-center'>
-					<h3 className='text-3xl font-bold mb-4'>Hoziroq A'zo Bo'ling va Bonuslar Oling!</h3>
+					<h3 className='text-3xl font-bold mb-4'>Hoziroq A&apos;zo Bo&apos;ling va Bonuslar Oling!</h3>
 					<p className='text-lg mb-6 opacity-90'>
-						Ro'yxatdan o'ting va birinchi buyurtmangizda 100 bonus ball oling! 🎁
+						Ro&apos;yxatdan o&apos;ting va birinchi buyurtmangizda 100 bonus ball oling! 🎁
 					</p>
 					<div className='flex flex-col sm:flex-row gap-4 justify-center'>
 						<Button
@@ -155,7 +155,7 @@ export function MemberSection() {
 							size='lg'
 							className='bg-white text-purple-600 hover:bg-purple-50 hover:scale-105 font-bold shadow-xl transition-all duration-300 border-2 border-white'
 						>
-							Bepul Ro'yxatdan O'tish
+							Bepul Ro&apos;yxatdan O&apos;tish
 						</Button>
 						<Button
 							onClick={() => router.push('/login')}
@@ -169,7 +169,7 @@ export function MemberSection() {
 
 					{/* Small Print */}
 					<p className='text-sm mt-6 opacity-75'>
-						A'zolik bepul va doimiy. Shartlar va qoidalar amal qiladi.
+						A&apos;zolik bepul va doimiy. Shartlar va qoidalar amal qiladi.
 					</p>
 				</Card>
 
@@ -181,7 +181,7 @@ export function MemberSection() {
 							<div className='w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold'>
 								1
 							</div>
-							<h4 className='font-semibold mb-2'>Ro'yxatdan O'ting</h4>
+							<h4 className='font-semibold mb-2'>Ro&apos;yxatdan O&apos;ting</h4>
 							<p className='text-sm text-gray-600'>Email yoki telefon raqam bilan</p>
 						</div>
 						<div className='text-center'>
@@ -189,7 +189,7 @@ export function MemberSection() {
 								2
 							</div>
 							<h4 className='font-semibold mb-2'>Buyurtma Qiling</h4>
-							<p className='text-sm text-gray-600'>Har 1000 so'mdan 1 ball oling</p>
+							<p className='text-sm text-gray-600'>Har 1000 so&apos;mdan 1 ball oling</p>
 						</div>
 						<div className='text-center'>
 							<div className='w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold'>

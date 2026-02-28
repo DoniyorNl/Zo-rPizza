@@ -8,7 +8,7 @@ import { useCartStore } from '@/store/cartStore'
 // MOCK DATA GENERATORS
 // ============================================================================
 
-const generateMockCartItem = (overrides: any = {}) => ({
+const generateMockCartItem = (overrides: Record<string, unknown> = {}) => ({
 	productId: 'product-1',
 	variationId: 'variation-1',
 	name: 'Pepperoni Pizza',

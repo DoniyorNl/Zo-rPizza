@@ -68,6 +68,12 @@ Built for scalability, maintainability, and modern UX standards — perfect for 
 - 🎁 Loyalty points system and promo codes
 - 📱 PWA support — install as native app
 - 🔔 Push notifications for order updates
+- 🔐 **Google OAuth** — Sign in with Google (NEW ✨)
+- ❤️ **Favorites** — Save favorite products (NEW ✨)
+- 📄 **PDF Invoice** — Download order receipts (NEW ✨)
+- ⏱️ **Real ETA** — Dynamic delivery time calculation (NEW ✨)
+- 👤 **Guest Checkout** — Order without login (NEW ✨)
+- 🔁 **Re-order** — One-click repeat past orders (NEW ✨)
 
 ### For Admins
 - 📊 Real-time dashboard with revenue, order metrics, and analytics
@@ -76,6 +82,7 @@ Built for scalability, maintainability, and modern UX standards — perfect for 
 - 👥 User and driver management
 - 🎉 Deals, coupons, and promotions
 - 📈 Advanced analytics and reports
+- 📊 **Google Analytics** — GA4 integration with e-commerce tracking (NEW ✨)
 
 ### For Drivers
 - 🚗 Accept/reject delivery requests
@@ -84,12 +91,15 @@ Built for scalability, maintainability, and modern UX standards — perfect for 
 - 📱 Mobile-optimized interface
 
 ### Technical Features
-- 🔐 Firebase Authentication with JWT
+- 🔐 Firebase Authentication with JWT + Google OAuth
 - 🔄 Real-time updates via Socket.IO
 - 🛡️ Rate limiting and security (Helmet, CORS)
 - 🧪 Comprehensive test coverage (Unit, Integration, E2E)
 - 📦 Monorepo architecture with pnpm workspaces
 - 🚀 CI/CD ready with Railway (backend) and Vercel (frontend)
+- 📧 Email notifications (Resend)
+- 🔔 Web Push notifications (VAPID)
+- 📊 Google Analytics 4 with e-commerce events
 
 ---
 

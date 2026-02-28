@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Users, Package } from 'lucide-react'
+import { DollarSign, ShoppingCart, Users, Package } from 'lucide-react'
 import { AnalyticsOverview } from '../types/analytics.types'
 import { formatCurrency, formatNumber } from '../utils/chartHelpers'
 
@@ -57,7 +57,7 @@ export function StatsCards({ overview }: StatsCardsProps) {
 							<div className='text-2xl font-bold'>{stat.value}</div>
 							{stat.title === 'Jami buyurtmalar' && (
 								<p className='text-xs text-gray-600 mt-1'>
-									O'rtacha: {formatCurrency(overview.averageOrderValue)}
+									O&apos;rtacha: {formatCurrency(overview.averageOrderValue)}
 								</p>
 							)}
 						</CardContent>

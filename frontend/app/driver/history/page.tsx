@@ -543,7 +543,7 @@ export default function DriverHistoryPage() {
 				{/* Period Filter */}
 				<div className='bg-white/95 backdrop-blur-md rounded-xl shadow-md p-6 md:sticky md:top-6 z-10'>
 					<div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4'>
-						<h3 className='text-lg font-semibold text-gray-900'>Davr bo'yicha filter</h3>
+						<h3 className='text-lg font-semibold text-gray-900'>Davr bo&apos;yicha filter</h3>
 						<div className='flex items-center gap-3'>
 							<button
 								onClick={() => fetchHistory({ showLoader: false })}
@@ -679,7 +679,7 @@ export default function DriverHistoryPage() {
 				<div className='bg-white rounded-2xl shadow-lg p-6'>
 					<h2 className='text-xl font-bold text-gray-900 mb-6 flex items-center'>
 						<CheckCircle className='w-6 h-6 text-green-600 mr-3' />
-						Buyurtmalar ro'yxati ({filteredOrders.length})
+						Buyurtmalar ro&apos;yxati ({filteredOrders.length})
 					</h2>
 
 					{filteredOrders.length === 0 ? (

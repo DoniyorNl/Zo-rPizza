@@ -135,7 +135,7 @@ function DealCard({ deal }: { deal: Deal }) {
 				{/* Min Order Amount */}
 				{deal.minOrderAmount && (
 					<p className='text-xs text-gray-500 mb-4'>
-						Minimal buyurtma: {deal.minOrderAmount.toLocaleString()} so'm
+						Minimal buyurtma: {deal.minOrderAmount.toLocaleString()} so&apos;m
 					</p>
 				)}
 
@@ -240,7 +240,7 @@ export function DealsSection() {
 							size='lg'
 							className='border-orange-600 text-orange-600 hover:bg-orange-50'
 						>
-							Barcha aksiyalarni ko'rish ({deals.length})
+							Barcha aksiyalarni ko&apos;rish ({deals.length})
 						</Button>
 					</div>
 				)}

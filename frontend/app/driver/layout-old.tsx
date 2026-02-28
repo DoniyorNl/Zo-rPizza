@@ -10,24 +10,19 @@
 
 import { useAuth } from '@/lib/AuthContext'
 import {
-	ChevronDown,
-	History,
 	LayoutDashboard,
 	LogOut,
 	MapPin,
-	Package,
-	Settings,
 	Truck,
 	User,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 
 export default function DriverLayout({ children }: { children: React.ReactNode }) {
 	const { user, backendUser, logout, loading } = useAuth()
 	const router = useRouter()
-	const [showUserMenu, setShowUserMenu] = useState(false)
 
 	// Auth Guard: faqat DELIVERY role kirishi mumkin
 	useEffect(() => {

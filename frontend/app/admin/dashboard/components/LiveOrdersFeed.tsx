@@ -43,7 +43,7 @@ export const LiveOrdersFeed: React.FC<LiveOrdersFeedProps> = ({ orders, isLoadin
 				<h3 className='text-lg font-semibold text-gray-900 mb-4'>🔴 Jonli Buyurtmalar</h3>
 				<div className='text-center py-8'>
 					<div className='text-gray-400 text-5xl mb-3'>📦</div>
-					<p className='text-gray-500'>Hozirda faol buyurtmalar yo'q</p>
+					<p className='text-gray-500'>Hozirda faol buyurtmalar yo&apos;q</p>
 				</div>
 			</div>
 		)
@@ -58,7 +58,7 @@ export const LiveOrdersFeed: React.FC<LiveOrdersFeedProps> = ({ orders, isLoadin
 					href='/admin/orders'
 					className='text-sm text-blue-600 hover:text-blue-700 font-medium'
 				>
-					Barchasini ko'rish →
+					Barchasini ko&apos;rish →
 				</Link>
 			</div>
 

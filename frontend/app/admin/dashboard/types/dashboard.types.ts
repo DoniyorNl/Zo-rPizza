@@ -94,6 +94,6 @@ export interface DashboardApiResponse {
 // Real-time Update Payload (WebSocket)
 export interface RealTimeUpdate {
 	type: 'order_created' | 'order_updated' | 'stats_updated'
-	data: any
+	data: Record<string, unknown>
 	timestamp: string
 }

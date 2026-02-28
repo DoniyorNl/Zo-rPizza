@@ -107,6 +107,7 @@ export default function OrderTrackingPage() {
 		if (user && orderId) {
 			fetchTracking()
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [user, orderId])
 
 	// Joylashuvni olish: sessionStorage (Kuzatib borish dan) yoki brauzerdan bir marta so‘rash. Har doim urinamiz, shunda xaritada "sizning joyingiz" ko‘rinadi.
@@ -131,6 +132,7 @@ export default function OrderTrackingPage() {
 			hasAutoRequestedLocation.current = true
 			requestUserLocation()
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [trackingData, orderId])
 
 	// Live updates via Socket.io
@@ -165,6 +167,7 @@ export default function OrderTrackingPage() {
 			const interval = setInterval(fetchTracking, 15000)
 			return () => clearInterval(interval)
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [trackingData?.order.status])
 
 	const requestUserLocation = () => {
@@ -345,7 +348,7 @@ export default function OrderTrackingPage() {
 													}`}>
 													🏍️
 												</div>
-												<span>Yo'lda</span>
+												<span>Yo&apos;lda</span>
 											</div>
 											<div className='flex flex-col items-center'>
 												<div className={`w-8 h-8 rounded-full flex items-center justify-center text-white mb-1 ${tracking.isNearby ? 'bg-green-500 animate-pulse' : 'bg-gray-300'

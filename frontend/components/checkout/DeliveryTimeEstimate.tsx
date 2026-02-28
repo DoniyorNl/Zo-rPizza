@@ -23,6 +23,7 @@ export default function DeliveryTimeEstimate({ lat, lng, className = '' }: Deliv
 
   useEffect(() => {
     if (lat == null || lng == null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setData(null)
       return
     }

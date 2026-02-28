@@ -210,15 +210,21 @@ export const createOrder = async (req: Request, res: Response) => {
 			}
 		}
 
-		if (!userId || !items || !items.length || !deliveryAddress || !deliveryPhone) {
-			return res.status(400).json({
-				success: false,
-				message: 'Missing required fields',
-			})
-		}
+	if (!items || !items.length || !deliveryAddress || !deliveryPhone) {
+		return res.status(400).json({
+			success: false,
+			message: 'Missing required fields',
+		})
+	}
 
-		// User mavjudligini tekshirish (firebaseUid bilan)
-		let user = await prisma.user.findUnique({
+	// 🆕 GUEST CHECKOUT SUPPORT
+	// If no userId, this is a guest order
+	let user = null
+	let isGuestOrder = false
+
+	if (userId) {
+		// Registered user - find or create user
+		user = await prisma.user.findUnique({
 			where: { firebaseUid: userId },
 		})
 
@@ -263,7 +269,7 @@ export const createOrder = async (req: Request, res: Response) => {
 				})
 			}
 		} else {
-			// User mavjud - faqat name va phone'ni yangilash (email unique bo'lgani uchun yangilanmaydi)
+			// User mavjud - faqat name va phone'ni yangilash
 			const nameFromRequest = req.body.name?.trim()
 			
 			const updateData: any = {}
@@ -274,7 +280,6 @@ export const createOrder = async (req: Request, res: Response) => {
 				updateData.phone = deliveryPhone
 			}
 			
-			// Agar yangilanish kerak bo'lsa
 			if (Object.keys(updateData).length > 0) {
 				user = await prisma.user.update({
 					where: { id: user.id },
@@ -282,6 +287,38 @@ export const createOrder = async (req: Request, res: Response) => {
 				})
 			}
 		}
+	} else {
+		// 🆕 GUEST ORDER - No authentication required
+		isGuestOrder = true
+		
+		// Validate required guest info
+		const guestName = req.body.name?.trim()
+		const guestEmail = req.body.email?.trim().toLowerCase()
+		
+		if (!guestName || guestName.length < 2) {
+			return res.status(400).json({
+				success: false,
+				message: 'Name is required for guest checkout',
+			})
+		}
+
+		if (!guestEmail || !guestEmail.includes('@')) {
+			return res.status(400).json({
+				success: false,
+				message: 'Valid email is required for guest checkout',
+			})
+		}
+
+		// Try to find existing user by email (optional link)
+		const existingUser = await prisma.user.findUnique({
+			where: { email: guestEmail },
+		})
+
+		if (existingUser) {
+			// Use existing user (but don't require login)
+			user = existingUser
+		}
+	}
 
 		// Mahsulotlar narxlarini hisoblash
 		let totalPrice = 0
@@ -452,41 +489,43 @@ export const createOrder = async (req: Request, res: Response) => {
 				? ({ lat, lng } as object)
 				: undefined
 
-		// Promo code (coupon) qo'llash
-		let discountAmount = 0
-		let couponId: string | null = null
-		if (couponCode && typeof couponCode === 'string' && couponCode.trim()) {
-			const coupon = await prisma.coupon.findFirst({
-				where: { code: couponCode.trim().toUpperCase(), isActive: true },
-			})
-			if (coupon) {
-				const now = new Date()
-				const valid =
-					(!coupon.startsAt || now >= coupon.startsAt) &&
-					(!coupon.endsAt || now <= coupon.endsAt) &&
-					(coupon.minOrderTotal == null || totalPrice >= coupon.minOrderTotal)
-				if (valid) {
-					const usageCount = await prisma.couponUsage.count({
-						where: { couponId: coupon.id },
-					})
-					const userUsageCount = await prisma.couponUsage.count({
-						where: { userId: user.id, couponId: coupon.id },
-					})
-					const underLimit =
-						(coupon.usageLimit == null || usageCount < coupon.usageLimit) &&
-						(coupon.perUserLimit == null || userUsageCount < coupon.perUserLimit)
-					if (underLimit) {
-						discountAmount =
-							coupon.discountType === 'PERCENT'
-								? (totalPrice * coupon.discountValue) / 100
-								: Math.min(coupon.discountValue, totalPrice)
-						couponId = coupon.id
-					}
+	// Promo code (coupon) qo'llash (faqat registered users uchun)
+	let discountAmount = 0
+	let couponId: string | null = null
+	if (user && couponCode && typeof couponCode === 'string' && couponCode.trim()) {
+		const coupon = await prisma.coupon.findFirst({
+			where: { code: couponCode.trim().toUpperCase(), isActive: true },
+		})
+		if (coupon) {
+			const now = new Date()
+			const valid =
+				(!coupon.startsAt || now >= coupon.startsAt) &&
+				(!coupon.endsAt || now <= coupon.endsAt) &&
+				(coupon.minOrderTotal == null || totalPrice >= coupon.minOrderTotal)
+			if (valid) {
+				const usageCount = await prisma.couponUsage.count({
+					where: { couponId: coupon.id },
+				})
+				const userUsageCount = await prisma.couponUsage.count({
+					where: { userId: user.id, couponId: coupon.id },
+				})
+				const underLimit =
+					(coupon.usageLimit == null || usageCount < coupon.usageLimit) &&
+					(coupon.perUserLimit == null || userUsageCount < coupon.perUserLimit)
+				if (underLimit) {
+					discountAmount =
+						coupon.discountType === 'PERCENT'
+							? (totalPrice * coupon.discountValue) / 100
+							: Math.min(coupon.discountValue, totalPrice)
+					couponId = coupon.id
 				}
 			}
 		}
+	}
 
-		let loyaltyPointsUsed = 0
+	// Loyalty points (faqat registered users uchun)
+	let loyaltyPointsUsed = 0
+	if (user) {
 		const { REDEEM_POINTS_PER_CURRENCY, POINTS_PER_CURRENCY } = await import(
 			'../constants/loyalty'
 		)
@@ -504,24 +543,31 @@ export const createOrder = async (req: Request, res: Response) => {
 		if (redeemDiscount > 0) {
 			loyaltyPointsUsed = Math.floor(redeemDiscount * REDEEM_POINTS_PER_CURRENCY)
 		}
+	}
 
-		const finalTotal = Math.max(0, totalPrice - discountAmount - redeemDiscount)
+	const finalTotal = Math.max(0, totalPrice - discountAmount - (loyaltyPointsUsed / (await import('../constants/loyalty')).REDEEM_POINTS_PER_CURRENCY))
 
-		const orderData: any = {
-			orderNumber,
-			userId: user.id,
-			totalPrice: finalTotal,
-			...(discountAmount > 0 && { discountAmount, couponId }),
-			...(loyaltyPointsUsed > 0 && { loyaltyPointsUsed }),
-			paymentMethod: paymentMethod || 'CASH',
-			deliveryAddress,
-			deliveryPhone,
-			deliveryLat: lat,
-			deliveryLng: lng,
-			...(deliveryLocationJson && { deliveryLocation: deliveryLocationJson }),
-			items: { create: orderItems },
-		}
-		if (isPickup && branchId) orderData.branchId = String(branchId)
+	const orderData: any = {
+		orderNumber,
+		...(user && { userId: user.id }), // 🆕 Optional userId for guest orders
+		totalPrice: finalTotal,
+		...(discountAmount > 0 && { discountAmount, couponId }),
+		...(loyaltyPointsUsed > 0 && { loyaltyPointsUsed }),
+		paymentMethod: paymentMethod || 'CASH',
+		deliveryAddress,
+		deliveryPhone,
+		deliveryLat: lat,
+		deliveryLng: lng,
+		...(deliveryLocationJson && { deliveryLocation: deliveryLocationJson }),
+		// 🆕 Store guest info in order for non-authenticated users
+		...(!user && {
+			customerName: req.body.name,
+			customerEmail: req.body.email,
+			customerPhone: deliveryPhone,
+		}),
+		items: { create: orderItems },
+	}
+	if (isPickup && branchId) orderData.branchId = String(branchId)
 
 		const order = await prisma.order.create({
 			data: orderData,
@@ -534,77 +580,83 @@ export const createOrder = async (req: Request, res: Response) => {
 			},
 		})
 
-		// CouponUsage va Loyalty ixtiyoriy (jadval bo'lmasa buyurtma baribir muvaffaqiyatli)
-		try {
-			if (couponId) {
-				await prisma.couponUsage.create({
-					data: { userId: user.id, couponId, orderId: order.id },
-				})
-			}
-			const earnPoints = Math.floor(finalTotal * POINTS_PER_CURRENCY)
-			if (loyaltyPointsUsed > 0) {
-				await prisma.loyaltyTransaction.create({
+		// CouponUsage va Loyalty — faqat ro'yxatdan o'tgan foydalanuvchilar uchun
+		if (user) {
+			try {
+				if (couponId) {
+					await prisma.couponUsage.create({
+						data: { userId: user.id, couponId, orderId: order.id },
+					})
+				}
+				const { POINTS_PER_CURRENCY } = await import('../constants/loyalty')
+				const earnPoints = Math.floor(finalTotal * POINTS_PER_CURRENCY)
+				if (loyaltyPointsUsed > 0) {
+					await prisma.loyaltyTransaction.create({
+						data: {
+							userId: user.id,
+							type: 'REDEEM',
+							points: -loyaltyPointsUsed,
+							orderId: order.id,
+							description: `Redeemed for order ${order.orderNumber}`,
+						},
+					})
+				}
+				if (earnPoints > 0) {
+					await prisma.loyaltyTransaction.create({
+						data: {
+							userId: user.id,
+							type: 'EARN',
+							points: earnPoints,
+							orderId: order.id,
+							description: `Earned from order ${order.orderNumber}`,
+						},
+					})
+				}
+				const newPoints =
+					(user.loyaltyPoints ?? 0) - loyaltyPointsUsed + earnPoints
+				await prisma.user.update({
+					where: { id: user.id },
 					data: {
-						userId: user.id,
-						type: 'REDEEM',
-						points: -loyaltyPointsUsed,
-						orderId: order.id,
-						description: `Redeemed for order ${order.orderNumber}`,
+						loyaltyPoints: Math.max(0, newPoints),
+						totalSpent: { increment: finalTotal },
 					},
 				})
+			} catch (loyaltyErr) {
+				console.warn('Coupon/Loyalty yozish amalga oshmadi (jadval yo\'q bo\'lishi mumkin), buyurtma saqlandi:', loyaltyErr)
 			}
-			if (earnPoints > 0) {
-				await prisma.loyaltyTransaction.create({
-					data: {
-						userId: user.id,
-						type: 'EARN',
-						points: earnPoints,
-						orderId: order.id,
-						description: `Earned from order ${order.orderNumber}`,
-					},
-				})
-			}
-			const newPoints =
-				(user.loyaltyPoints ?? 0) - loyaltyPointsUsed + earnPoints
-			await prisma.user.update({
-				where: { id: user.id },
-				data: {
-					loyaltyPoints: Math.max(0, newPoints),
-					totalSpent: { increment: finalTotal },
-				},
-			})
-		} catch (loyaltyErr) {
-			console.warn('Coupon/Loyalty yozish amalga oshmadi (jadval yo\'q bo\'lishi mumkin), buyurtma saqlandi:', loyaltyErr)
 		}
 
 		// ============================================================================
-		// 📧 SEND ORDER CONFIRMATION EMAIL
+		// 📧 SEND ORDER CONFIRMATION EMAIL (faqat user emailNotificationsEnabled bo'lsa)
 		// ============================================================================
 		try {
-			// Email'ni user object'dan yoki request'dan olish
-			const emailToUse = req.body.email?.trim().toLowerCase() || user.email
-			
-			const emailData = {
-				customerName: user.name || req.body.name || 'Mijoz',
-				customerEmail: emailToUse,
-				orderNumber: order.orderNumber,
-				orderId: order.id,
-				items: order.items.map(item => ({
-					name: item.product?.name || 'Mahsulot',
-					quantity: item.quantity,
-					size: item.size || undefined,
-					price: item.price,
-				})),
-				totalPrice: finalTotal,
-				deliveryAddress,
-				paymentMethod: paymentMethod === 'CASH' ? 'Naqd pul' : paymentMethod === 'CARD' ? 'Karta' : paymentMethod,
-				estimatedDelivery: '30-40 daqiqa',
-			}
+			const shouldSendEmail = !user || user.emailNotificationsEnabled !== false
+			if (shouldSendEmail) {
+				// Email'ni user object'dan yoki request'dan olish (guest uchun req.body)
+				const emailToUse = req.body.email?.trim().toLowerCase() || user?.email
+				
+				const emailData = {
+					customerName: user?.name || req.body.name || 'Mijoz',
+					customerEmail: emailToUse,
+					orderNumber: order.orderNumber,
+					orderId: order.id,
+					items: order.items.map(item => ({
+						name: item.product?.name || 'Mahsulot',
+						quantity: item.quantity,
+						size: item.size || undefined,
+						price: item.price,
+					})),
+					totalPrice: finalTotal,
+					deliveryAddress,
+					paymentMethod: paymentMethod === 'CASH' ? 'Naqd pul' : paymentMethod === 'CARD' ? 'Karta' : paymentMethod,
+					estimatedDelivery: '30-40 daqiqa',
+				}
 
-			// Async email sending (non-blocking)
-			sendOrderConfirmationEmail(emailData).catch(err => {
-				console.error('Failed to send order confirmation email:', err)
-			})
+				// Async email sending (non-blocking)
+				sendOrderConfirmationEmail(emailData).catch(err => {
+					console.error('Failed to send order confirmation email:', err)
+				})
+			}
 		} catch (emailError) {
 			// Email yuborilmasa ham buyurtma yaratilgan, shuning uchun xatolikni log qilamiz
 			console.error('Error preparing order confirmation email:', emailError)
@@ -681,7 +733,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 					},
 				},
 				user: {
-					select: { name: true, email: true },
+					select: { name: true, email: true, emailNotificationsEnabled: true },
 				},
 			},
 		})
@@ -697,27 +749,73 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 		// 📧 SEND ORDER STATUS UPDATE EMAIL
 		// ============================================================================
 		try {
-			// Only send email for important status changes
-			const emailStatuses = ['CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED']
-			if (status && emailStatuses.includes(status) && order.user?.email) {
-				const emailData = {
-					customerName: order.user.name || 'Mijoz',
-					customerEmail: order.user.email,
-					orderNumber: order.orderNumber,
-					orderId: order.id,
-					status: status,
-					statusText: getStatusText(status),
-					message: getStatusMessage(status),
-				}
+		// Only send email for important status changes (va faqat user emailNotificationsEnabled bo'lsa)
+		const emailStatuses = ['CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED']
+		const userWantsEmail = order.user && order.user.emailNotificationsEnabled !== false
+		if (status && emailStatuses.includes(status) && order.user?.email && userWantsEmail) {
+			const emailData = {
+				customerName: order.user.name || 'Mijoz',
+				customerEmail: order.user.email,
+				orderNumber: order.orderNumber,
+				orderId: order.id,
+				status: status,
+				statusText: getStatusText(status),
+				message: getStatusMessage(status),
+			}
 
-				// Async email sending (non-blocking)
-				sendOrderStatusUpdateEmail(emailData).catch(err => {
-					console.error('Failed to send order status update email:', err)
+			// Async email sending (non-blocking)
+			sendOrderStatusUpdateEmail(emailData).catch(err => {
+				console.error('Failed to send order status update email:', err)
+			})
+
+			// 🔔 Send push notification (async, non-blocking)
+			if (order.userId) {
+				import('../services/push.service').then(({ sendOrderStatusPush, getStatusText, getStatusMessage }) => {
+					// Get user's active push subscriptions
+					prisma.pushSubscription.findMany({
+						where: {
+							userId: order.userId!,
+							isActive: true,
+						},
+					}).then(subscriptions => {
+						if (subscriptions.length > 0) {
+							const pushData = {
+								orderNumber: order.orderNumber,
+								orderId: order.id,
+								status: status!,
+								statusText: getStatusText(status!),
+								message: getStatusMessage(status!),
+							}
+
+							// Send to all user's subscriptions
+							Promise.all(
+								subscriptions.map(sub =>
+									sendOrderStatusPush(
+										{
+											endpoint: sub.endpoint,
+											keys: {
+												p256dh: sub.p256dh,
+												auth: sub.auth,
+											},
+										},
+										pushData,
+									),
+								),
+							).catch(err => {
+								console.error('Failed to send order status push notifications:', err)
+							})
+						}
+					}).catch(err => {
+						console.error('Failed to fetch push subscriptions:', err)
+					})
+				}).catch(err => {
+					console.error('Failed to import push service:', err)
 				})
 			}
-		} catch (emailError) {
-			console.error('Error preparing order status update email:', emailError)
 		}
+	} catch (emailError) {
+		console.error('Error preparing order status update email:', emailError)
+	}
 
 		return res.status(200).json({
 			success: true,

@@ -7,6 +7,70 @@ import { Request, Response } from 'express'
 import prisma from '../lib/prisma'
 
 // ==========================================
+// GET SIMPLE PROFILE
+// ==========================================
+
+/**
+ * GET /api/profile - Foydalanuvchi profilini olish (favorites uchun)
+ */
+export const getProfile = async (req: Request, res: Response) => {
+	const startTime = Date.now()
+
+	try {
+		const firebaseUid = (req as any).userId
+
+		if (!firebaseUid) {
+			return res.status(401).json({
+				success: false,
+				message: 'Authentication required',
+			})
+		}
+
+		// Find user by firebaseUid
+		const user = await prisma.user.findUnique({
+			where: { firebaseUid },
+			select: {
+				id: true,
+				email: true,
+				name: true,
+				phone: true,
+				avatar: true,
+				loyaltyPoints: true,
+				totalSpent: true,
+				favoriteProducts: true,
+				emailNotificationsEnabled: true,
+			},
+		})
+
+		if (!user) {
+			return res.status(404).json({
+				success: false,
+				message: 'User not found',
+			})
+		}
+
+		const duration = Date.now() - startTime
+		console.log(`[GET_PROFILE] ✓ Profile fetched: ${user.email} | ${duration}ms`)
+
+		return res.status(200).json({
+			success: true,
+			data: user,
+		})
+	} catch (error) {
+		const duration = Date.now() - startTime
+		console.error(`[GET_PROFILE] Error:`, {
+			error: error instanceof Error ? error.message : 'Unknown error',
+			duration: `${duration}ms`,
+		})
+
+		return res.status(500).json({
+			success: false,
+			message: 'Server error while fetching profile',
+		})
+	}
+}
+
+// ==========================================
 // GET PROFILE WITH STATISTICS
 // ==========================================
 
@@ -44,6 +108,7 @@ export const getProfileStats = async (req: Request, res: Response) => {
 				dietaryPrefs: true,
 				allergyInfo: true,
 				favoriteProducts: true,
+				emailNotificationsEnabled: true,
 			},
 		})
 
@@ -186,14 +251,14 @@ export const getProfileStats = async (req: Request, res: Response) => {
 // ==========================================
 
 /**
- * PUT /api/profile - Profil ma'lumotlarini yangilash
+ * PATCH /api/profile - Profil ma'lumotlarini yangilash (favorites uchun ham)
  */
-export const updateProfile = async (req: Request, res: Response) => {
+export const patchProfile = async (req: Request, res: Response) => {
 	const startTime = Date.now()
 
 	try {
 		const firebaseUid = (req as any).userId
-		const { name, phone, avatar, dateOfBirth, gender, dietaryPrefs, allergyInfo } = req.body
+		const { name, phone, avatar, dateOfBirth, gender, dietaryPrefs, allergyInfo, favoriteProducts, emailNotificationsEnabled } = req.body
 
 		if (!firebaseUid) {
 			return res.status(401).json({
@@ -221,6 +286,8 @@ export const updateProfile = async (req: Request, res: Response) => {
 				...(gender !== undefined && { gender }),
 				...(dietaryPrefs !== undefined && { dietaryPrefs }),
 				...(allergyInfo !== undefined && { allergyInfo }),
+				...(favoriteProducts !== undefined && { favoriteProducts }),
+				...(emailNotificationsEnabled !== undefined && { emailNotificationsEnabled: Boolean(emailNotificationsEnabled) }),
 			},
 			select: {
 				id: true,
@@ -234,6 +301,84 @@ export const updateProfile = async (req: Request, res: Response) => {
 				allergyInfo: true,
 				loyaltyPoints: true,
 				totalSpent: true,
+				favoriteProducts: true,
+				emailNotificationsEnabled: true,
+			},
+		})
+
+		const duration = Date.now() - startTime
+		console.log(`[PATCH_PROFILE] ✓ Profile updated: ${user.email} | ${duration}ms`)
+
+		return res.status(200).json({
+			success: true,
+			message: 'Profile updated successfully',
+			data: user,
+		})
+	} catch (error) {
+		const duration = Date.now() - startTime
+		console.error(`[PATCH_PROFILE] Error:`, {
+			error: error instanceof Error ? error.message : 'Unknown error',
+			duration: `${duration}ms`,
+		})
+
+		return res.status(500).json({
+			success: false,
+			message: 'Server error while updating profile',
+		})
+	}
+}
+
+/**
+ * PUT /api/profile - Profil ma'lumotlarini yangilash
+ */
+export const updateProfile = async (req: Request, res: Response) => {
+	const startTime = Date.now()
+
+	try {
+		const firebaseUid = (req as any).userId
+		const { name, phone, avatar, dateOfBirth, gender, dietaryPrefs, allergyInfo, emailNotificationsEnabled } = req.body
+
+		if (!firebaseUid) {
+			return res.status(401).json({
+				success: false,
+				message: 'Authentication required',
+			})
+		}
+
+		// Validate phone format if provided
+		if (phone && !isValidPhone(phone)) {
+			return res.status(400).json({
+				success: false,
+				message: 'Invalid phone format. Use international format: +998901234567, +31684702089, etc.',
+			})
+		}
+
+		// Update user profile
+		const user = await prisma.user.update({
+			where: { firebaseUid },
+			data: {
+				...(name !== undefined && { name: name.trim() }),
+				...(phone !== undefined && { phone: phone.replace(/\s/g, '') }),
+				...(avatar !== undefined && { avatar }),
+				...(dateOfBirth !== undefined && { dateOfBirth: new Date(dateOfBirth) }),
+				...(gender !== undefined && { gender }),
+				...(dietaryPrefs !== undefined && { dietaryPrefs }),
+				...(allergyInfo !== undefined && { allergyInfo }),
+				...(emailNotificationsEnabled !== undefined && { emailNotificationsEnabled: Boolean(emailNotificationsEnabled) }),
+			},
+			select: {
+				id: true,
+				email: true,
+				name: true,
+				phone: true,
+				avatar: true,
+				dateOfBirth: true,
+				gender: true,
+				dietaryPrefs: true,
+				allergyInfo: true,
+				loyaltyPoints: true,
+				totalSpent: true,
+				emailNotificationsEnabled: true,
 			},
 		})
 

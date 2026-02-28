@@ -54,7 +54,7 @@ export const TopProductsToday: React.FC<TopProductsTodayProps> = ({ products, is
 					href='/admin/products'
 					className='text-sm text-blue-600 hover:text-blue-700 font-medium'
 				>
-					Barchasini ko'rish →
+					Barchasini ko&apos;rish →
 				</Link>
 			</div>
 

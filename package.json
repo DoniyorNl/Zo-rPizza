@@ -8,6 +8,7 @@
 		"pnpm": ">=8"
 	},
 	"scripts": {
+		"lint": "pnpm --filter frontend run lint",
 		"dev": "pnpm --filter frontend dev",
 		"dev:backend": "pnpm --filter zor-pizza-backend dev",
 		"dev:both": "concurrently -n backend,frontend -c blue,green \"pnpm run dev:backend\" \"pnpm run dev\"",
