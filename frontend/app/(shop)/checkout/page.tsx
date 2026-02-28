@@ -99,6 +99,7 @@ export default function CheckoutPage() {
 
 	const [deliveryAddress, setDeliveryAddress] = useState('')
 	const [deliveryPhone, setDeliveryPhone] = useState('')
+	const [email, setEmail] = useState(user?.email || '')
 	const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'CARD'>('CASH')
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState('')
@@ -177,6 +178,8 @@ export default function CheckoutPage() {
 
 			const orderData: Record<string, unknown> = {
 				userId: user.uid,
+				email: email || user.email,
+				name: user.displayName || 'User',
 				items: items.map(item => ({
 					productId: item.productId,
 					variationId: item.variationId,
@@ -316,6 +319,23 @@ export default function CheckoutPage() {
 										</div>
 									)}
 
+									{/* Email */}
+									<div>
+										<label className='block text-sm font-medium mb-2'>Email *</label>
+										<input
+											data-testid="checkout-email"
+											type='email'
+											value={email}
+											onChange={e => setEmail(e.target.value)}
+											className='w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500'
+											placeholder='sizning@email.com'
+											required
+										/>
+										<p className='text-xs text-gray-500 mt-1'>
+											Buyurtma tasdiqnomasi bu email ga yuboriladi
+										</p>
+									</div>
+
 									{/* Telefon */}
 									<div>
 										<label className='block text-sm font-medium mb-2'>Telefon raqam *</label>
@@ -328,6 +348,9 @@ export default function CheckoutPage() {
 											placeholder='+998901234567'
 											required
 										/>
+										<p className='text-xs text-gray-500 mt-1'>
+											SMS xabar bu raqamga yuboriladi
+										</p>
 									</div>
 
 									{/* To&apos;lov usuli */}

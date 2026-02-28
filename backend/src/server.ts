@@ -10,6 +10,12 @@ import errorsRoutes from './routes/errors.routes'
 import notificationsRoutes from './routes/notifications.routes'
 
 // ============================================================================
+// SENTRY INITIALIZATION (must be first!)
+// ============================================================================
+import { initSentry } from './lib/sentry'
+initSentry()
+
+// ============================================================================
 // RATE LIMIT IMPORT
 // ============================================================================
 import { rateLimit } from 'express-rate-limit'
@@ -277,6 +283,18 @@ app.use((err: AppError, _req: Request, res: Response, _next: NextFunction) => {
 	const message = err.message || 'Ichki server xatosi'
 
 	console.error(`[ERROR] ${new Date().toISOString()}:`, err)
+
+	// ============================================================================
+	// 🐛 SEND TO SENTRY
+	// ============================================================================
+	if (statusCode >= 500) {
+		const { captureException } = require('./lib/sentry')
+		captureException(err, {
+			statusCode,
+			path: _req.path,
+			method: _req.method,
+		})
+	}
 
 	res.status(statusCode).json({
 		success: false,

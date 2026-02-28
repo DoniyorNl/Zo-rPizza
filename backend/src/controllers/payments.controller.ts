@@ -1,6 +1,27 @@
+// backend/src/controllers/payments.controller.ts
+// 💳 PAYMENTS CONTROLLER - Click/Payme Integration (Production-ready)
+
 import { Request, Response } from 'express'
 import prisma from '../lib/prisma'
 import type { AuthRequest } from '../middleware/firebase-auth.middleware'
+import {
+	createClickPaymentURL,
+	handleClickPrepare,
+	handleClickComplete,
+	type ClickCallbackParams,
+} from '../services/click.service'
+import {
+	createPaymePaymentURL,
+	verifyPaymeAuth,
+	handleCheckPerformTransaction,
+	handleCreateTransaction,
+	handlePerformTransaction,
+	handleCancelTransaction,
+	handleCheckTransaction,
+	handleGetStatement,
+	type PaymeRPCRequest,
+	type PaymeRPCResponse,
+} from '../services/payme.service'
 
 type Provider = 'CLICK' | 'PAYME'
 
@@ -17,84 +38,47 @@ async function getCurrentDbUser(firebaseUid?: string) {
 	return prisma.user.findFirst({ where: { firebaseUid }, select: { id: true } })
 }
 
-async function markPaymentPaid(paymentId: string, externalId?: string, metadata?: object) {
-	const payment = await prisma.payment.findUnique({
-		where: { id: paymentId },
-		include: { order: true },
-	})
-	if (!payment) return null
-	if (payment.status === 'PAID') return payment
-
-	await prisma.$transaction([
-		prisma.payment.update({
-			where: { id: payment.id },
-			data: {
-				status: 'PAID',
-				paidAt: new Date(),
-				...(externalId ? { externalId } : {}),
-				...(metadata ? { metadata } : {}),
-			},
-		}),
-		prisma.order.update({
-			where: { id: payment.orderId },
-			data: { paymentStatus: 'PAID' },
-		}),
-	])
-
-	return prisma.payment.findUnique({
-		where: { id: payment.id },
-		include: { order: true },
-	})
-}
-
-function createClickUrl(orderId: string, amount: number, fallbackUrl: string) {
-	const serviceId = process.env.CLICK_SERVICE_ID
-	const merchantId = process.env.CLICK_MERCHANT_ID
-	if (!serviceId || !merchantId) return fallbackUrl
-
-	const returnUrl = `${FRONTEND_URL}/checkout/success?orderId=${encodeURIComponent(orderId)}&paid=1&provider=CLICK`
-	return `https://my.click.uz/services/pay?service_id=${encodeURIComponent(serviceId)}&merchant_id=${encodeURIComponent(merchantId)}&amount=${encodeURIComponent(
-		String(Math.round(amount)),
-	)}&transaction_param=${encodeURIComponent(orderId)}&return_url=${encodeURIComponent(returnUrl)}`
-}
-
-function createPaymeUrl(orderId: string, amount: number, fallbackUrl: string) {
-	const merchantId = process.env.PAYME_MERCHANT_ID
-	if (!merchantId) return fallbackUrl
-
-	const payload = {
-		m: merchantId,
-		ac: { order_id: orderId },
-		a: Math.round(amount * 100), // tiyin
-		c: `${BACKEND_URL}/api/payments/callback/payme`,
-	}
-	return `https://checkout.paycom.uz/${Buffer.from(JSON.stringify(payload)).toString('base64')}`
-}
+// ============================================================================
+// INITIATE PAYMENT (Click/Payme)
+// ============================================================================
 
 export const initiatePayment = async (req: Request, res: Response) => {
 	try {
 		const authReq = req as AuthRequest
 		const { orderId, provider } = req.body as { orderId?: string; provider?: Provider }
+
+		// Validation
 		if (!orderId || !provider) {
 			return res.status(400).json({ success: false, message: 'orderId va provider majburiy' })
 		}
 		if (provider !== 'CLICK' && provider !== 'PAYME') {
-			return res.status(400).json({ success: false, message: 'provider CLICK yoki PAYME bo‘lishi kerak' })
+			return res
+				.status(400)
+				.json({ success: false, message: "provider CLICK yoki PAYME bo'lishi kerak" })
 		}
 
 		const user = await getCurrentDbUser(authReq.userId)
 		if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' })
 
+		// Get order
 		const order = await prisma.order.findUnique({
 			where: { id: orderId },
 			select: { id: true, userId: true, totalPrice: true, paymentStatus: true, orderNumber: true },
 		})
-		if (!order) return res.status(404).json({ success: false, message: 'Order topilmadi' })
-		if (order.userId !== user.id) return res.status(403).json({ success: false, message: 'Ruxsat yo‘q' })
-		if (order.paymentStatus === 'PAID') {
-			return res.status(400).json({ success: false, message: 'Buyurtma allaqachon to‘langan' })
+
+		if (!order) {
+			return res.status(404).json({ success: false, message: 'Order topilmadi' })
 		}
 
+		if (order.userId !== user.id) {
+			return res.status(403).json({ success: false, message: "Ruxsat yo'q" })
+		}
+
+		if (order.paymentStatus === 'PAID') {
+			return res.status(400).json({ success: false, message: "Buyurtma allaqachon to'langan" })
+		}
+
+		// Check if payment already exists
 		const existingPending = await prisma.payment.findFirst({
 			where: { orderId: order.id, provider, status: 'PENDING' },
 			orderBy: { createdAt: 'desc' },
@@ -111,12 +95,21 @@ export const initiatePayment = async (req: Request, res: Response) => {
 				},
 			}))
 
-		const simulateUrl = `${BACKEND_URL}/api/payments/simulate/${payment.id}/success`
+		// Generate payment URL using service layer
 		const redirectUrl =
 			provider === 'CLICK'
-				? createClickUrl(order.id, order.totalPrice, simulateUrl)
-				: createPaymeUrl(order.id, order.totalPrice, simulateUrl)
+				? createClickPaymentURL({
+						orderId: order.id,
+						amount: order.totalPrice,
+						orderNumber: order.orderNumber,
+					})
+				: createPaymePaymentURL({
+						orderId: order.id,
+						amount: order.totalPrice,
+						orderNumber: order.orderNumber,
+					})
 
+		// Update payment with redirect URL
 		await prisma.payment.update({
 			where: { id: payment.id },
 			data: {
@@ -124,15 +117,18 @@ export const initiatePayment = async (req: Request, res: Response) => {
 				metadata: {
 					...(payment.metadata as object | null),
 					initiatedFrom: 'checkout',
+					initiatedAt: new Date().toISOString(),
 				},
 			},
 		})
 
-		// payment method ni orderda provider bilan bir xil tutamiz
+		// Update order payment method
 		await prisma.order.update({
 			where: { id: order.id },
 			data: { paymentMethod: provider },
 		})
+
+		console.log(`✅ [${provider}] Payment initiated:`, payment.id)
 
 		return res.status(200).json({
 			success: true,
@@ -151,6 +147,10 @@ export const initiatePayment = async (req: Request, res: Response) => {
 	}
 }
 
+// ============================================================================
+// GET PAYMENT STATUS
+// ============================================================================
+
 export const getPaymentStatus = async (req: Request, res: Response) => {
 	try {
 		const authReq = req as AuthRequest
@@ -166,8 +166,10 @@ export const getPaymentStatus = async (req: Request, res: Response) => {
 				payments: { orderBy: { createdAt: 'desc' }, take: 1 },
 			},
 		})
+
 		if (!order) return res.status(404).json({ success: false, message: 'Order topilmadi' })
-		if (order.userId !== user.id) return res.status(403).json({ success: false, message: 'Ruxsat yo‘q' })
+		if (order.userId !== user.id)
+			return res.status(403).json({ success: false, message: "Ruxsat yo'q" })
 
 		return res.status(200).json({
 			success: true,
@@ -185,22 +187,59 @@ export const getPaymentStatus = async (req: Request, res: Response) => {
 	}
 }
 
-// Dev/sandbox flow: provider bo'lmasa ham checkout flow ni yakunlash uchun.
+// ============================================================================
+// SIMULATE PAYMENT SUCCESS (Development only)
+// ============================================================================
+
 export const simulatePaymentSuccess = async (req: Request, res: Response) => {
 	try {
 		if (isProduction) {
 			return res.status(404).json({ success: false, message: 'Not found' })
 		}
+
 		const paymentId = String(req.params.paymentId || '')
 		if (!paymentId) return res.status(400).json({ success: false, message: 'paymentId required' })
 
-		const paid = await markPaymentPaid(paymentId, `SIM-${Date.now()}`, { simulated: true })
-		if (!paid) return res.status(404).json({ success: false, message: 'Payment topilmadi' })
+		const payment = await prisma.payment.findUnique({
+			where: { id: paymentId },
+			include: { order: true },
+		})
+
+		if (!payment) {
+			return res.status(404).json({ success: false, message: 'Payment topilmadi' })
+		}
+
+		if (payment.status === 'PAID') {
+			return res.redirect(
+				`${FRONTEND_URL}/checkout/success?orderId=${encodeURIComponent(payment.orderId)}&orderNumber=${encodeURIComponent(
+					payment.order.orderNumber,
+				)}&paid=1&provider=${payment.provider}&simulated=1`,
+			)
+		}
+
+		// Mark as paid
+		await prisma.$transaction([
+			prisma.payment.update({
+				where: { id: payment.id },
+				data: {
+					status: 'PAID',
+					paidAt: new Date(),
+					externalId: `SIM-${Date.now()}`,
+					metadata: { simulated: true },
+				},
+			}),
+			prisma.order.update({
+				where: { id: payment.orderId },
+				data: { paymentStatus: 'PAID' },
+			}),
+		])
+
+		console.log('✅ [SIMULATION] Payment marked as paid:', paymentId)
 
 		return res.redirect(
-			`${FRONTEND_URL}/checkout/success?orderId=${encodeURIComponent(paid.orderId)}&orderNumber=${encodeURIComponent(
-				paid.order.orderNumber,
-			)}&paid=1&provider=${paid.provider}&simulated=1`,
+			`${FRONTEND_URL}/checkout/success?orderId=${encodeURIComponent(payment.orderId)}&orderNumber=${encodeURIComponent(
+				payment.order.orderNumber,
+			)}&paid=1&provider=${payment.provider}&simulated=1`,
 		)
 	} catch (error) {
 		console.error('simulatePaymentSuccess error:', error)
@@ -208,87 +247,125 @@ export const simulatePaymentSuccess = async (req: Request, res: Response) => {
 	}
 }
 
-// Click callback (minimal). Real tekshiruv: sign string validatsiya qo‘shiladi.
+// ============================================================================
+// CLICK CALLBACK (Production-ready with signature verification)
+// ============================================================================
+
 export const clickCallback = async (req: Request, res: Response) => {
 	try {
-		const body = req.body as Record<string, unknown>
-		const clickTransId = String(body.click_trans_id || body.transaction_id || '')
-		const orderId = String(body.merchant_trans_id || body.transaction_param || body.order_id || '')
-		const status = String(body.status || body.error || '0')
+		const params = req.body as ClickCallbackParams
+		const action = parseInt(String(params.action || '0'))
 
-		const payment = await prisma.payment.findFirst({
-			where: { orderId, provider: 'CLICK' },
-			orderBy: { createdAt: 'desc' },
-		})
-		if (!payment) return res.status(404).json({ error: -6, error_note: 'Transaction not found' })
+		console.log(
+			`🔔 [CLICK] Callback received - Action: ${action}, Order: ${params.merchant_trans_id}`,
+		)
 
-		if (status === '0' || status === 'PAID' || status === 'success') {
-			await markPaymentPaid(payment.id, clickTransId, body as object)
-			return res.status(200).json({ error: 0, error_note: 'Success' })
+		// Handle based on action
+		if (action === 0) {
+			// Prepare phase (validation only)
+			const result = await handleClickPrepare(params)
+			console.log(`✅ [CLICK] Prepare result:`, result)
+			return res.status(200).json(result)
+		} else if (action === 1) {
+			// Complete phase (mark as paid)
+			const result = await handleClickComplete(params)
+			console.log(`✅ [CLICK] Complete result:`, result)
+			return res.status(200).json(result)
+		} else {
+			console.error(`❌ [CLICK] Invalid action: ${action}`)
+			return res.status(200).json({ error: -3, error_note: 'Invalid action' })
 		}
-
-		await prisma.payment.update({
-			where: { id: payment.id },
-			data: { status: 'FAILED', metadata: body as object },
-		})
-		await prisma.order.update({ where: { id: payment.orderId }, data: { paymentStatus: 'FAILED' } })
-		return res.status(200).json({ error: -9, error_note: 'Failed' })
 	} catch (error) {
-		console.error('clickCallback error:', error)
-		return res.status(500).json({ error: -9, error_note: 'Server error' })
+		console.error('❌ [CLICK] Callback error:', error)
+		return res.status(200).json({ error: -9, error_note: 'Server error' })
 	}
 }
 
-// Payme JSON-RPC callback (minimal).
+// ============================================================================
+// PAYME CALLBACK (Production-ready JSON-RPC 2.0)
+// ============================================================================
+
 export const paymeCallback = async (req: Request, res: Response) => {
 	try {
-		const { method, params, id } = req.body as {
-			method?: string
-			params?: Record<string, any>
-			id?: number | string
-		}
-		const ok = (result: unknown) => res.status(200).json({ result, id })
-		const fail = (code: number, message: string) => res.status(200).json({ error: { code, message }, id })
-
-		if (method === 'CheckPerformTransaction') {
-			const orderId = String(params?.account?.order_id || params?.account?.orderId || '')
-			const amount = Number(params?.amount || 0) / 100
-			const order = await prisma.order.findUnique({ where: { id: orderId } })
-			if (!order) return fail(-31050, 'Order not found')
-			if (Math.round(order.totalPrice) !== Math.round(amount)) return fail(-31001, 'Invalid amount')
-			if (order.paymentStatus === 'PAID') return fail(-31050, 'Already paid')
-			return ok({ allow: true })
-		}
-
-		if (method === 'PerformTransaction') {
-			const orderId = String(params?.account?.order_id || params?.account?.orderId || '')
-			const transId = String(params?.id || '')
-			const payment = await prisma.payment.findFirst({
-				where: { orderId, provider: 'PAYME' },
-				orderBy: { createdAt: 'desc' },
+		// Verify Basic Auth
+		const authHeader = req.headers.authorization
+		if (!verifyPaymeAuth(authHeader)) {
+			console.error('❌ [PAYME] Unauthorized request')
+			return res.status(200).json({
+				error: { code: -32504, message: 'Unauthorized' },
+				id: req.body?.id || null,
 			})
-			if (!payment) return fail(-31050, 'Payment not found')
-			await markPaymentPaid(payment.id, transId, params || {})
-			return ok({ transaction: transId, state: 2 })
 		}
 
-		if (method === 'CancelTransaction') {
-			const transId = String(params?.id || '')
-			const payment = await prisma.payment.findFirst({
-				where: { externalId: transId, provider: 'PAYME' },
-				orderBy: { createdAt: 'desc' },
-			})
-			if (payment) {
-				await prisma.payment.update({ where: { id: payment.id }, data: { status: 'FAILED' } })
-				await prisma.order.update({ where: { id: payment.orderId }, data: { paymentStatus: 'FAILED' } })
+		const { method, params, id } = req.body as PaymeRPCRequest
+
+		console.log(`🔔 [PAYME] RPC received - Method: ${method}`)
+
+		const ok = (result: any): PaymeRPCResponse => ({ result, id })
+		const fail = (code: number, message: string): PaymeRPCResponse => ({
+			error: {
+				code,
+				message: {
+					uz: message,
+					ru: message,
+					en: message,
+				},
+			},
+			id,
+		})
+
+		try {
+			// Route to appropriate handler
+			let result: any
+
+			switch (method) {
+				case 'CheckPerformTransaction':
+					result = await handleCheckPerformTransaction(params)
+					console.log(`✅ [PAYME] CheckPerformTransaction:`, result)
+					return res.status(200).json(ok(result))
+
+				case 'CreateTransaction':
+					result = await handleCreateTransaction(params)
+					console.log(`✅ [PAYME] CreateTransaction:`, result)
+					return res.status(200).json(ok(result))
+
+				case 'PerformTransaction':
+					result = await handlePerformTransaction(params)
+					console.log(`✅ [PAYME] PerformTransaction:`, result)
+					return res.status(200).json(ok(result))
+
+				case 'CancelTransaction':
+					result = await handleCancelTransaction(params)
+					console.log(`✅ [PAYME] CancelTransaction:`, result)
+					return res.status(200).json(ok(result))
+
+				case 'CheckTransaction':
+					result = await handleCheckTransaction(params)
+					console.log(`✅ [PAYME] CheckTransaction:`, result)
+					return res.status(200).json(ok(result))
+
+				case 'GetStatement':
+					result = await handleGetStatement(params)
+					console.log(`✅ [PAYME] GetStatement:`, result)
+					return res.status(200).json(ok(result))
+
+				default:
+					console.error(`❌ [PAYME] Unknown method: ${method}`)
+					return res.status(200).json(fail(-32601, 'Method not found'))
 			}
-			return ok({ transaction: transId, state: -1 })
+		} catch (serviceError: any) {
+			// Service layer threw structured error
+			if (serviceError.code && serviceError.message) {
+				console.error(`❌ [PAYME] Service error:`, serviceError)
+				return res.status(200).json(fail(serviceError.code, serviceError.message))
+			}
+			throw serviceError
 		}
-
-		return fail(-32601, 'Method not found')
 	} catch (error) {
-		console.error('paymeCallback error:', error)
-		return res.status(200).json({ error: { code: -32400, message: 'Server error' }, id: req.body?.id || 0 })
+		console.error('❌ [PAYME] Callback error:', error)
+		return res.status(200).json({
+			error: { code: -32400, message: 'Internal error' },
+			id: req.body?.id || null,
+		})
 	}
 }
-

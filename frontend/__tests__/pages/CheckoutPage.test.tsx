@@ -40,6 +40,8 @@ jest.mock('@stripe/stripe-js', () => ({
 
 const mockUser = {
   uid: 'user-123',
+  email: 'test@example.com',
+  displayName: 'Test User',
   getIdToken: jest.fn().mockResolvedValue('fake-token'),
 } as unknown as import('firebase/auth').User
 
@@ -115,6 +117,7 @@ describe('CheckoutPage', () => {
     expect(screen.getByRole('heading', { name: /Buyurtma berish/i })).toBeInTheDocument()
     expect(screen.getByText(/Yetkazib berish ma'lumotlari/i)).toBeInTheDocument()
     expect(screen.getByPlaceholderText(/Toshkent, Chilonzor/)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('sizning@email.com')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('+998901234567')).toBeInTheDocument()
     expect(screen.getByText(/Naqd pul/i)).toBeInTheDocument()
     expect(screen.getByText(/Karta/i)).toBeInTheDocument()
@@ -161,6 +164,9 @@ describe('CheckoutPage', () => {
     fireEvent.change(screen.getByPlaceholderText(/Toshkent, Chilonzor/), {
       target: { value: 'Toshkent, Chilonzor 9' },
     })
+    fireEvent.change(screen.getByPlaceholderText('sizning@email.com'), {
+      target: { value: 'test@example.com' },
+    })
     fireEvent.change(screen.getByPlaceholderText('+998901234567'), {
       target: { value: '+998901234567' },
     })
@@ -186,6 +192,9 @@ describe('CheckoutPage', () => {
     fireEvent.change(screen.getByPlaceholderText(/Toshkent, Chilonzor/), {
       target: { value: 'Toshkent, Chilonzor 9' },
     })
+    fireEvent.change(screen.getByPlaceholderText('sizning@email.com'), {
+      target: { value: 'test@example.com' },
+    })
     fireEvent.change(screen.getByPlaceholderText('+998901234567'), {
       target: { value: '+998901234567' },
     })
@@ -197,6 +206,7 @@ describe('CheckoutPage', () => {
         '/api/orders',
         expect.objectContaining({
           userId: 'user-123',
+          email: 'test@example.com',
           deliveryType: 'delivery',
           deliveryAddress: 'Toshkent, Chilonzor 9',
           deliveryPhone: '+998901234567',
@@ -216,6 +226,9 @@ describe('CheckoutPage', () => {
 
     render(<CheckoutPage />)
 
+    fireEvent.change(screen.getByPlaceholderText('sizning@email.com'), {
+      target: { value: 'test@example.com' },
+    })
     fireEvent.change(screen.getByPlaceholderText('+998901234567'), {
       target: { value: '+998901234567' },
     })
@@ -226,6 +239,7 @@ describe('CheckoutPage', () => {
       expect(api.post).toHaveBeenCalledWith(
         '/api/orders',
         expect.objectContaining({
+          email: 'test@example.com',
           deliveryType: 'pickup',
           branchId: 'branch-1',
           deliveryAddress: 'Toshkent, Chilonzor 9',
@@ -242,6 +256,9 @@ describe('CheckoutPage', () => {
 
     fireEvent.change(screen.getByPlaceholderText(/Toshkent, Chilonzor/), {
       target: { value: 'Toshkent' },
+    })
+    fireEvent.change(screen.getByPlaceholderText('sizning@email.com'), {
+      target: { value: 'test@example.com' },
     })
     fireEvent.change(screen.getByPlaceholderText('+998901234567'), {
       target: { value: '+998901234567' },

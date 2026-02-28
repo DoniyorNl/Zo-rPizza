@@ -8,6 +8,15 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
+// ============================================================================
+// SENTRY INITIALIZATION (must be early!)
+// ============================================================================
+import { initSentry } from '@/lib/sentry'
+
+if (typeof window !== 'undefined') {
+	initSentry()
+}
+
 export const metadata: Metadata = {
 	title: 'Zor Pizza - Eng Mazali Pitsalar',
 	description: 'Tez yetkazib berish bilan eng mazali pitsalar',
@@ -28,6 +37,8 @@ export const viewport: Viewport = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+	const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
+
 	return (
 		<html lang='uz'>
 			<head>
@@ -40,6 +51,25 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 					href='https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
 					rel='stylesheet'
 				/>
+				
+				{/* Google Analytics 4 */}
+				{gaId && (
+					<>
+						<script async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} />
+						<script
+							dangerouslySetInnerHTML={{
+								__html: `
+									window.dataLayer = window.dataLayer || [];
+									function gtag(){dataLayer.push(arguments);}
+									gtag('js', new Date());
+									gtag('config', '${gaId}', {
+										page_path: window.location.pathname,
+									});
+								`,
+							}}
+						/>
+					</>
+				)}
 			</head>
 			<body className='font-sans antialiased flex flex-col min-h-screen'>
 				<ErrorBoundary>

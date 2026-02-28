@@ -53,8 +53,25 @@ export class ErrorBoundary extends Component<Props, State> {
 			errorInfo,
 		})
 
-		// Log to error tracking service
+		// ============================================================================
+		// 🐛 SEND TO SENTRY
+		// ============================================================================
+		this.logErrorToSentry(error, errorInfo)
+
+		// Log to backend (optional - for custom tracking)
 		this.logErrorToService(error, errorInfo)
+	}
+
+	logErrorToSentry = async (error: Error, errorInfo: ErrorInfo) => {
+		try {
+			const { captureException } = await import('@/lib/sentry')
+			captureException(error, {
+				componentStack: errorInfo.componentStack,
+				url: typeof window !== 'undefined' ? window.location.href : 'unknown',
+			})
+		} catch (err) {
+			console.warn('Failed to send error to Sentry:', err)
+		}
 	}
 
 	logErrorToService = async (error: Error, errorInfo: ErrorInfo) => {

@@ -5,6 +5,12 @@ import { Prisma } from '@prisma/client'
 import { Request, Response } from 'express'
 import prisma from '../lib/prisma'
 import type { AuthRequest } from '../middleware/firebase-auth.middleware'
+import {
+	sendOrderConfirmationEmail,
+	sendOrderStatusUpdateEmail,
+	getStatusText,
+	getStatusMessage,
+} from '../services/email.service'
 
 const getQueryString = (value: unknown): string | undefined => {
 	if (typeof value === 'string') return value
@@ -218,8 +224,19 @@ export const createOrder = async (req: Request, res: Response) => {
 
 		if (!user) {
 			// Email bilan ham tekshirish (agar email mavjud bo'lsa, firebaseUid ni update qilish)
-			const email = req.body.email || ''
-			const existingUser = email ? await prisma.user.findUnique({ where: { email } }) : null
+			const email = req.body.email?.trim().toLowerCase() || ''
+			
+			// Email validation: must be valid format
+			const isValidEmail = email && email.includes('@') && email.includes('.')
+			
+			if (!isValidEmail) {
+				return res.status(400).json({
+					success: false,
+					message: 'Valid email address is required for new users',
+				})
+			}
+
+			const existingUser = await prisma.user.findUnique({ where: { email } })
 
 			if (existingUser) {
 				// Mavjud user'ga firebaseUid qo'shish
@@ -243,6 +260,25 @@ export const createOrder = async (req: Request, res: Response) => {
 						role: 'CUSTOMER',
 						isBlocked: false,
 					},
+				})
+			}
+		} else {
+			// User mavjud - faqat name va phone'ni yangilash (email unique bo'lgani uchun yangilanmaydi)
+			const nameFromRequest = req.body.name?.trim()
+			
+			const updateData: any = {}
+			if (nameFromRequest && nameFromRequest !== user.name) {
+				updateData.name = nameFromRequest
+			}
+			if (deliveryPhone && deliveryPhone !== user.phone) {
+				updateData.phone = deliveryPhone
+			}
+			
+			// Agar yangilanish kerak bo'lsa
+			if (Object.keys(updateData).length > 0) {
+				user = await prisma.user.update({
+					where: { id: user.id },
+					data: updateData,
 				})
 			}
 		}
@@ -541,6 +577,39 @@ export const createOrder = async (req: Request, res: Response) => {
 			console.warn('Coupon/Loyalty yozish amalga oshmadi (jadval yo\'q bo\'lishi mumkin), buyurtma saqlandi:', loyaltyErr)
 		}
 
+		// ============================================================================
+		// 📧 SEND ORDER CONFIRMATION EMAIL
+		// ============================================================================
+		try {
+			// Email'ni user object'dan yoki request'dan olish
+			const emailToUse = req.body.email?.trim().toLowerCase() || user.email
+			
+			const emailData = {
+				customerName: user.name || req.body.name || 'Mijoz',
+				customerEmail: emailToUse,
+				orderNumber: order.orderNumber,
+				orderId: order.id,
+				items: order.items.map(item => ({
+					name: item.product?.name || 'Mahsulot',
+					quantity: item.quantity,
+					size: item.size || undefined,
+					price: item.price,
+				})),
+				totalPrice: finalTotal,
+				deliveryAddress,
+				paymentMethod: paymentMethod === 'CASH' ? 'Naqd pul' : paymentMethod === 'CARD' ? 'Karta' : paymentMethod,
+				estimatedDelivery: '30-40 daqiqa',
+			}
+
+			// Async email sending (non-blocking)
+			sendOrderConfirmationEmail(emailData).catch(err => {
+				console.error('Failed to send order confirmation email:', err)
+			})
+		} catch (emailError) {
+			// Email yuborilmasa ham buyurtma yaratilgan, shuning uchun xatolikni log qilamiz
+			console.error('Error preparing order confirmation email:', emailError)
+		}
+
 		return res.status(201).json({
 			success: true,
 			message: 'Order created successfully',
@@ -611,6 +680,9 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 						product: true,
 					},
 				},
+				user: {
+					select: { name: true, email: true },
+				},
 			},
 		})
 
@@ -620,6 +692,32 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 			status: order.status,
 			estimatedTime: order.estimatedTime ?? undefined,
 		})
+
+		// ============================================================================
+		// 📧 SEND ORDER STATUS UPDATE EMAIL
+		// ============================================================================
+		try {
+			// Only send email for important status changes
+			const emailStatuses = ['CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED']
+			if (status && emailStatuses.includes(status) && order.user?.email) {
+				const emailData = {
+					customerName: order.user.name || 'Mijoz',
+					customerEmail: order.user.email,
+					orderNumber: order.orderNumber,
+					orderId: order.id,
+					status: status,
+					statusText: getStatusText(status),
+					message: getStatusMessage(status),
+				}
+
+				// Async email sending (non-blocking)
+				sendOrderStatusUpdateEmail(emailData).catch(err => {
+					console.error('Failed to send order status update email:', err)
+				})
+			}
+		} catch (emailError) {
+			console.error('Error preparing order status update email:', emailError)
+		}
 
 		return res.status(200).json({
 			success: true,
