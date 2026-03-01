@@ -1,0 +1,4 @@
+{
+  "buildCommand": "cd frontend && pnpm run build",
+  "installCommand": "pnpm install --no-frozen-lockfile"
+}
