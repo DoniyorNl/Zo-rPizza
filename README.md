@@ -868,4 +868,3 @@ This project was built with amazing open-source technologies:
 **Version**: 1.0.0  
 **Status**: ✅ Production Ready
 
-for emty oush
