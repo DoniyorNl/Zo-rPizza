@@ -1,1 +1,6 @@
-{\n  "buildCommand": "cd frontend && npm run build",\n  "installCommand": "cd frontend && npm install",\n  "framework": "nextjs",\n  "outputDirectory": "frontend/.next"\n}
+{
+  "buildCommand": "cd frontend && npm run build",
+  "installCommand": "cd frontend && npm install",
+  "framework": "nextjs",
+  "outputDirectory": "frontend/.next"
+}
