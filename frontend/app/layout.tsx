@@ -22,15 +22,6 @@ const inter = Inter({
 	weight: ['400', '500', '600', '700'], // Only weights we use
 })
 
-// ============================================================================
-// SENTRY INITIALIZATION (must be early!)
-// ============================================================================
-import { initSentry } from '@/lib/sentry'
-
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
-	initSentry()
-}
-
 export const metadata: Metadata = {
 	title: 'Zor Pizza - Eng Mazali Pitsalar',
 	description: 'Tez yetkazib berish bilan eng mazali pitsalar. 30 daqiqada eshigingizgacha yetkazamiz!',
