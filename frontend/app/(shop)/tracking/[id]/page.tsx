@@ -2,13 +2,30 @@
 'use client'
 
 import { Header } from '@/components/layout/Header'
-import PizzeriaUserMap from '@/components/tracking/PizzeriaUserMap'
-import TrackingMap from '@/components/tracking/TrackingMap'
+import { MapSkeleton } from '@/components/skeletons'
 import { useAuth } from '@/lib/AuthContext'
 import { buildApiUrl } from '@/lib/apiBaseUrl'
 import { useOrderTrackingSocket } from '@/lib/useOrderTrackingSocket'
 import { useParams, useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import dynamic from 'next/dynamic'
+
+// Lazy load heavy map components
+const PizzeriaUserMap = dynamic(
+	() => import('@/components/tracking/PizzeriaUserMap'),
+	{ 
+		ssr: false,
+		loading: () => <MapSkeleton />
+	}
+)
+
+const TrackingMap = dynamic(
+	() => import('@/components/tracking/TrackingMap'),
+	{ 
+		ssr: false,
+		loading: () => <MapSkeleton />
+	}
+)
 
 interface Location {
 	lat: number

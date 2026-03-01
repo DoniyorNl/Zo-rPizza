@@ -51,6 +51,15 @@ const config = {
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
 			},
+			keyframes: {
+				shimmer: {
+					'0%': { backgroundPosition: '-200% 0' },
+					'100%': { backgroundPosition: '200% 0' },
+				},
+			},
+			animation: {
+				shimmer: 'shimmer 2s infinite linear',
+			},
 		},
 	},
 	plugins: [],

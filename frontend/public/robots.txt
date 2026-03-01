@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+
+# Disallow admin pages
+Disallow: /admin/
+Disallow: /api/
+Disallow: /driver/
+
+# Disallow tracking URLs (private)
+Disallow: /tracking/
+
+# Allow important pages
+Allow: /menu
+Allow: /products/
+Allow: /cart
+Allow: /login
+Allow: /register
+
+# Sitemap
+Sitemap: https://zorpizza.uz/sitemap.xml

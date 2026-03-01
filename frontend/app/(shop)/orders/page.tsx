@@ -11,11 +11,17 @@ import { api } from '@/lib/apiClient'
 import { useAuth } from '@/lib/AuthContext'
 import { generateInvoice, type InvoiceData } from '@/lib/pdfInvoice'
 import type { Order as ReorderOrder } from '@/lib/reorder'
-import TrackingModal from '@/components/tracking/TrackingModal'
 import { CheckSquare, Clock, Download, MapPin, Package, RotateCcw, ShoppingBag, Square, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
+
+// Lazy load heavy modal
+const TrackingModal = dynamic(
+	() => import('@/components/tracking/TrackingModal'),
+	{ ssr: false }
+)
 
 interface OrderItem {
 	id: string

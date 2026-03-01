@@ -17,6 +17,15 @@ jest.mock('@/components/products/ProductCard', () => ({
 		<div data-testid={`product-${product.id}`}>{product.name}</div>
 	),
 }))
+jest.mock('@/components/skeletons', () => ({
+	ProductCardSkeletonGrid: ({ count }: { count?: number }) => (
+		<div data-testid="skeleton-grid" className="animate-pulse">
+			{Array.from({ length: count || 4 }).map((_, i) => (
+				<div key={i} className="animate-pulse">Skeleton {i + 1}</div>
+			))}
+		</div>
+	),
+}))
 
 const mockUsePopularProducts = usePopularProducts as jest.MockedFunction<typeof usePopularProducts>
 
@@ -83,7 +92,13 @@ describe('PopularProducts Component', () => {
 
 		const { container } = render(<PopularProducts />)
 
-		expect(screen.getByText('⭐ Mashhur Mahsulotlar')).toBeInTheDocument()
+		// Check for section title (without emoji in test)
+		expect(screen.getByText('Mashhur Mahsulotlar')).toBeInTheDocument()
+		
+		// Check for skeleton component
+		expect(screen.getByTestId('skeleton-grid')).toBeInTheDocument()
+		
+		// Check for animate-pulse class
 		const skeletons = container.querySelectorAll('.animate-pulse')
 		expect(skeletons.length).toBeGreaterThan(0)
 	})
