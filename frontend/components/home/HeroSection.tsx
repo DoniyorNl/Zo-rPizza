@@ -4,6 +4,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
 
 /**
  * Get greeting based on time of day
@@ -29,10 +30,12 @@ function getGreeting(): string {
  * - Call to action
  *
  * Inspired by New York Pizza style - minimal and friendly
+ * Optimized for mobile performance with reduced motion support
  */
 export function HeroSection() {
 	const [greeting, setGreeting] = useState('')
 	const [mounted, setMounted] = useState(false)
+	const shouldReduceMotion = useReducedMotion()
 
 	useEffect(() => {
 		// eslint-disable-next-line react-hooks/set-state-in-effect
@@ -44,10 +47,24 @@ export function HeroSection() {
 		return null // Prevent hydration mismatch
 	}
 
+	// Simpler animations for mobile/reduced motion
+	const animationVariants = shouldReduceMotion
+		? {
+				initial: { opacity: 1 },
+				animate: { opacity: 1 },
+		  }
+		: {
+				initial: { opacity: 0, y: 20 },
+				animate: { opacity: 1, y: 0 },
+		  }
+
 	return (
-		<section className='relative overflow-hidden bg-gradient-to-br from-orange-50 via-white to-orange-50 py-12'>
-			{/* Background Pattern (Optional) */}
-			<div className='absolute inset-0 opacity-5'>
+		<section 
+			className='relative overflow-hidden bg-gradient-to-br from-orange-50 via-white to-orange-50 py-8 md:py-12'
+			aria-label='Hero section'
+		>
+			{/* Background Pattern (Optional) - Hidden on mobile for performance */}
+			<div className='absolute inset-0 opacity-5 hidden md:block' aria-hidden='true'>
 				<div className='absolute top-10 left-10 w-64 h-64 bg-orange-400 rounded-full blur-3xl'></div>
 				<div className='absolute bottom-10 right-10 w-96 h-96 bg-orange-300 rounded-full blur-3xl'></div>
 			</div>
@@ -56,28 +73,49 @@ export function HeroSection() {
 			<div className='container mx-auto px-4 relative z-10'>
 				<div className='max-w-4xl mx-auto text-center'>
 					{/* Greeting */}
-					<p className='text-orange-600 font-medium text-lg mb-2 animate-fade-in'>
+					<motion.p
+						initial={animationVariants.initial}
+						animate={animationVariants.animate}
+						transition={{ duration: shouldReduceMotion ? 0 : 0.5 }}
+						className='text-orange-600 font-medium text-base md:text-lg mb-2'
+					>
 						{greeting}, pitsa sevuvchi! 👋
-					</p>
+					</motion.p>
 
 					{/* Main Message */}
-					<h1 className='text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 animate-slide-up'>
+					<motion.h1
+						initial={animationVariants.initial}
+						animate={animationVariants.animate}
+						transition={{ duration: shouldReduceMotion ? 0 : 0.6, delay: shouldReduceMotion ? 0 : 0.1 }}
+						className='text-3xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-3 md:mb-4'
+					>
 						Pitsa ishtahasi ochganmi? 🍕
-					</h1>
+					</motion.h1>
 
 					{/* Subtitle */}
-					<p className='text-xl md:text-2xl text-gray-600 mb-8 animate-slide-up animation-delay-100'>
+					<motion.p
+						initial={animationVariants.initial}
+						animate={animationVariants.animate}
+						transition={{ duration: shouldReduceMotion ? 0 : 0.6, delay: shouldReduceMotion ? 0 : 0.2 }}
+						className='text-lg md:text-xl lg:text-2xl text-gray-600 mb-6 md:mb-8'
+					>
 						Eng mazali pitsalar, tez yetkazib berish va ajoyib aksiyalar!
-					</p>
+					</motion.p>
 
-					{/* CTA Buttons (Optional) */}
-					<div className='flex flex-col sm:flex-row gap-4 justify-center animate-slide-up animation-delay-200'>
+					{/* CTA Buttons */}
+					<motion.div
+						initial={animationVariants.initial}
+						animate={animationVariants.animate}
+						transition={{ duration: shouldReduceMotion ? 0 : 0.6, delay: shouldReduceMotion ? 0 : 0.3 }}
+						className='flex flex-col sm:flex-row gap-3 md:gap-4 justify-center'
+					>
 						<button
 							onClick={() => {
 								const element = document.getElementById('products-section')
 								element?.scrollIntoView({ behavior: 'smooth' })
 							}}
-							className='px-8 py-4 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1'
+							className='px-6 md:px-8 py-3 md:py-4 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 active:scale-95 touch-manipulation'
+							aria-label='Buyurtma berish'
 						>
 							Buyurtma berish
 						</button>
@@ -86,94 +124,51 @@ export function HeroSection() {
 								const element = document.getElementById('deals-section')
 								element?.scrollIntoView({ behavior: 'smooth' })
 							}}
-							className='px-8 py-4 bg-white hover:bg-gray-50 text-orange-600 font-semibold rounded-full border-2 border-orange-600 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1'
+							className='px-6 md:px-8 py-3 md:py-4 bg-white hover:bg-gray-50 text-orange-600 font-semibold rounded-full border-2 border-orange-600 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 active:scale-95 touch-manipulation'
+							aria-label="Aksiyalarni ko'rish"
 						>
 							Aksiyalar
 						</button>
-					</div>
+					</motion.div>
 
-					{/* Quick Stats (Optional) */}
-					<div className='mt-12 grid grid-cols-2 md:grid-cols-4 gap-6 text-center'>
-						<div className='animate-fade-in animation-delay-300'>
-							<div className='text-3xl font-bold text-orange-600'>1000+</div>
-							<div className='text-sm text-gray-600 mt-1'>Buyurtmalar</div>
-						</div>
-						<div className='animate-fade-in animation-delay-400'>
-							<div className='text-3xl font-bold text-orange-600'>30 daq</div>
-							<div className='text-sm text-gray-600 mt-1'>Yetkazish</div>
-						</div>
-						<div className='animate-fade-in animation-delay-500'>
-							<div className='text-3xl font-bold text-orange-600'>50+</div>
-							<div className='text-sm text-gray-600 mt-1'>Mahsulotlar</div>
-						</div>
-						<div className='animate-fade-in animation-delay-600'>
-							<div className='text-3xl font-bold text-orange-600'>4.9⭐</div>
-							<div className='text-sm text-gray-600 mt-1'>Reyting</div>
-						</div>
+					{/* Quick Stats - Simplified for mobile */}
+					<div className='mt-8 md:mt-12 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 text-center'>
+						<motion.div
+							initial={animationVariants.initial}
+							animate={animationVariants.animate}
+							transition={{ duration: shouldReduceMotion ? 0 : 0.5, delay: shouldReduceMotion ? 0 : 0.4 }}
+						>
+							<div className='text-2xl md:text-3xl font-bold text-orange-600' aria-label='1000 dan ortiq buyurtmalar'>1000+</div>
+							<div className='text-xs md:text-sm text-gray-600 mt-1'>Buyurtmalar</div>
+						</motion.div>
+						<motion.div
+							initial={animationVariants.initial}
+							animate={animationVariants.animate}
+							transition={{ duration: shouldReduceMotion ? 0 : 0.5, delay: shouldReduceMotion ? 0 : 0.5 }}
+						>
+							<div className='text-2xl md:text-3xl font-bold text-orange-600' aria-label='30 daqiqada yetkazish'>30 daq</div>
+							<div className='text-xs md:text-sm text-gray-600 mt-1'>Yetkazish</div>
+						</motion.div>
+						<motion.div
+							initial={animationVariants.initial}
+							animate={animationVariants.animate}
+							transition={{ duration: shouldReduceMotion ? 0 : 0.5, delay: shouldReduceMotion ? 0 : 0.6 }}
+						>
+							<div className='text-2xl md:text-3xl font-bold text-orange-600' aria-label='50 dan ortiq mahsulotlar'>50+</div>
+							<div className='text-xs md:text-sm text-gray-600 mt-1'>Mahsulotlar</div>
+						</motion.div>
+						<motion.div
+							initial={animationVariants.initial}
+							animate={animationVariants.animate}
+							transition={{ duration: shouldReduceMotion ? 0 : 0.5, delay: shouldReduceMotion ? 0 : 0.7 }}
+						>
+							<div className='text-2xl md:text-3xl font-bold text-orange-600' aria-label='4.9 yulduz reyting'>4.9⭐</div>
+							<div className='text-xs md:text-sm text-gray-600 mt-1'>Reyting</div>
+						</motion.div>
 					</div>
 				</div>
 			</div>
 
-			{/* Custom Animations (Add to globals.css) */}
-			<style>{`
-				@keyframes fade-in {
-					from {
-						opacity: 0;
-					}
-					to {
-						opacity: 1;
-					}
-				}
-
-				@keyframes slide-up {
-					from {
-						opacity: 0;
-						transform: translateY(20px);
-					}
-					to {
-						opacity: 1;
-						transform: translateY(0);
-					}
-				}
-
-				.animate-fade-in {
-					animation: fade-in 0.8s ease-out forwards;
-				}
-
-				.animate-slide-up {
-					animation: slide-up 0.8s ease-out forwards;
-				}
-
-				.animation-delay-100 {
-					animation-delay: 0.1s;
-					opacity: 0;
-				}
-
-				.animation-delay-200 {
-					animation-delay: 0.2s;
-					opacity: 0;
-				}
-
-				.animation-delay-300 {
-					animation-delay: 0.3s;
-					opacity: 0;
-				}
-
-				.animation-delay-400 {
-					animation-delay: 0.4s;
-					opacity: 0;
-				}
-
-				.animation-delay-500 {
-					animation-delay: 0.5s;
-					opacity: 0;
-				}
-
-				.animation-delay-600 {
-					animation-delay: 0.6s;
-					opacity: 0;
-				}
-			`}</style>
 		</section>
 	)
 }

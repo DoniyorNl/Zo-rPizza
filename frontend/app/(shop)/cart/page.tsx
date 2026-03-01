@@ -12,6 +12,7 @@ import { Minus, Plus, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 
 export default function CartPage() {
 	const { items, updateQuantity, removeItem, getTotalPrice, clearCart } = useCartStore()
@@ -61,7 +62,12 @@ export default function CartPage() {
 	}
 
 	return (
-		<main className='min-h-screen bg-gradient-to-b from-orange-50 to-white'>
+		<motion.main
+			initial={{ opacity: 0 }}
+			animate={{ opacity: 1 }}
+			transition={{ duration: 0.3 }}
+			className='min-h-screen bg-gradient-to-b from-orange-50 to-white'
+		>
 			<Header />
 
 			<div className='container mx-auto px-4 py-12'>
@@ -76,8 +82,14 @@ export default function CartPage() {
 				<div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
 					{/* Cart Items */}
 					<div data-testid="cart-items" className='lg:col-span-2 space-y-4'>
-						{items.map(item => (
-							<Card key={item.id}>
+						{items.map((item, index) => (
+							<motion.div
+								key={item.id}
+								initial={{ opacity: 0, x: -20 }}
+								animate={{ opacity: 1, x: 0 }}
+								transition={{ duration: 0.3, delay: index * 0.1 }}
+							>
+								<Card>
 								<CardContent className='p-6 flex items-center gap-6'>
 									{/* Image */}
 									<div className='relative w-24 h-24 flex-shrink-0'>
@@ -128,6 +140,7 @@ export default function CartPage() {
 									</Button>
 								</CardContent>
 							</Card>
+							</motion.div>
 						))}
 					</div>
 
@@ -162,6 +175,6 @@ export default function CartPage() {
 					</div>
 				</div>
 			</div>
-		</main>
+		</motion.main>
 	)
 }

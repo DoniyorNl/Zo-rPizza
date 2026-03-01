@@ -56,5 +56,56 @@
 	body {
 		background-color: hsl(var(--background));
 		color: hsl(var(--foreground));
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+		text-rendering: optimizeLegibility;
+	}
+	
+	/* Performance optimizations */
+	img {
+		content-visibility: auto;
+	}
+	
+	/* Smooth scrolling with reduced motion support */
+	@media (prefers-reduced-motion: no-preference) {
+		html {
+			scroll-behavior: smooth;
+		}
+	}
+	
+	/* Touch-friendly tap targets */
+	button,
+	a,
+	[role="button"] {
+		min-height: 44px;
+		min-width: 44px;
+	}
+}
+
+@layer utilities {
+	/* Performance utilities */
+	.gpu-accelerate {
+		transform: translateZ(0);
+		will-change: transform;
+	}
+	
+	.content-visibility-auto {
+		content-visibility: auto;
+	}
+	
+	/* Touch-friendly utilities */
+	.touch-manipulation {
+		touch-action: manipulation;
+	}
+	
+	/* Reduce motion for accessibility */
+	@media (prefers-reduced-motion: reduce) {
+		*,
+		*::before,
+		*::after {
+			animation-duration: 0.01ms !important;
+			animation-iteration-count: 1 !important;
+			transition-duration: 0.01ms !important;
+		}
 	}
 }

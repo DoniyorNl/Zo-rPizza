@@ -9,6 +9,7 @@
 import { ProductCard } from '@/components/products/ProductCard'
 import { UnifiedHeader } from '@/components/layout/UnifiedHeader'
 import { useCategories } from '@/hooks/useCategories'
+import { ProductCardSkeletonGrid } from '@/components/skeletons'
 import { api } from '@/lib/apiClient'
 import { cn } from '@/lib/utils'
 import { ChevronLeft, ChevronRight, Pizza } from 'lucide-react'
@@ -247,21 +248,10 @@ function MenuPageContent() {
 				{/* Products grid */}
 				<section className='container mx-auto px-4 py-8'>
 					{loading ? (
-						<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
-							{[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-								<div
-									key={i}
-									className='rounded-xl border bg-white overflow-hidden animate-pulse'
-								>
-									<div className='h-48 bg-gray-200' />
-									<div className='p-4 space-y-2'>
-										<div className='h-5 bg-gray-200 rounded w-3/4' />
-										<div className='h-4 bg-gray-200 rounded w-1/2' />
-										<div className='h-8 bg-gray-200 rounded w-1/3 mt-4' />
-									</div>
-								</div>
-							))}
-						</div>
+						<>
+							<div className='h-4 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-shimmer bg-[length:200%_100%] rounded w-32 mb-6' />
+							<ProductCardSkeletonGrid count={8} />
+						</>
 					) : visibleProducts.length === 0 ? (
 						<div className='text-center py-16'>
 							<Pizza className='w-16 h-16 text-gray-300 mx-auto mb-4' />
@@ -295,8 +285,8 @@ function MenuPageContent() {
 												productRefsMap.current[product.id] = el
 											}}
 											className={cn(
-												'transition-all duration-500 rounded-2xl',
-												isHighlight && 'ring-4 ring-orange-400 ring-offset-4 shadow-xl scale-[1.02]',
+												'transition-all duration-500',
+												isHighlight && 'ring-4 ring-orange-400 ring-offset-4 shadow-xl rounded-2xl',
 											)}
 										>
 											<ProductCard

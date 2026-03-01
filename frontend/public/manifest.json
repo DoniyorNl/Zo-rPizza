@@ -1,24 +1,52 @@
 {
 	"name": "Zor Pizza - Eng Mazali Pitsalar",
 	"short_name": "Zor Pizza",
-	"description": "Tez yetkazib berish bilan eng mazali pitsalar",
+	"description": "Tez yetkazib berish bilan eng mazali pitsalar. 30 daqiqada eshigingizgacha yetkazamiz!",
 	"start_url": "/",
+	"scope": "/",
 	"display": "standalone",
 	"background_color": "#ffffff",
 	"theme_color": "#ea580c",
 	"orientation": "portrait-primary",
+	"categories": ["food", "shopping"],
+	"lang": "uz",
+	"dir": "ltr",
 	"icons": [
 		{
 			"src": "/icons/icon-192.png",
 			"sizes": "192x192",
 			"type": "image/png",
-			"purpose": "maskable"
+			"purpose": "maskable any"
 		},
 		{
 			"src": "/icons/icon-512.png",
 			"sizes": "512x512",
 			"type": "image/png",
-			"purpose": "maskable"
+			"purpose": "maskable any"
+		}
+	],
+	"shortcuts": [
+		{
+			"name": "Buyurtma berish",
+			"short_name": "Buyurtma",
+			"description": "Yangi buyurtma yaratish",
+			"url": "/menu",
+			"icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+		},
+		{
+			"name": "Buyurtmalarim",
+			"short_name": "Buyurtmalar",
+			"description": "Mening buyurtmalarim",
+			"url": "/orders",
+			"icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+		}
+	],
+	"screenshots": [
+		{
+			"src": "/screenshots/home.png",
+			"sizes": "540x720",
+			"type": "image/png",
+			"form_factor": "narrow"
 		}
 	]
 }

@@ -218,10 +218,17 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 	// PREPARE DATA
 	// ============================================
 
-	const displayImages =
-		product.images && product.images.length > 0
-			? product.images
-			: [product.imageUrl || '/images/placeholder.png']
+	// Fix: Ensure imageUrl is always available
+	const displayImages = []
+	if (product.images && product.images.length > 0) {
+		displayImages.push(...product.images)
+	}
+	if (product.imageUrl && !displayImages.includes(product.imageUrl)) {
+		displayImages.unshift(product.imageUrl) // Add main image at the start
+	}
+	if (displayImages.length === 0) {
+		displayImages.push('/images/placeholder.png')
+	}
 
 	const selectedHalfProduct = halfProducts.find(item => item.id === halfProductId) || null
 	const defaultToppingIds = product.productToppings

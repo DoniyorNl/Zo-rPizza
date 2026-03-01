@@ -1,6 +1,7 @@
 // frontend/app/page.tsx
 // 🍕 ZOR PIZZA - HOME PAGE
 // Completely redesigned with NYP style - minimal, clean, user-friendly
+// Optimized for mobile performance
 
 'use client'
 
@@ -12,8 +13,10 @@ import { MemberSection } from '@/components/home/MemberSection'
 import { PopularProducts } from '@/components/home/PopularProducts'
 import { Header } from '@/components/layout/Header'
 import { ProductCard } from '@/components/products/ProductCard'
+import { ProductCardSkeletonGrid } from '@/components/skeletons'
 import { api } from '@/lib/apiClient'
 import { useEffect, useState } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
 
 // ============================================
 // TYPES & INTERFACES
@@ -51,6 +54,7 @@ export default function HomePage() {
 	const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
 	const [loading, setLoading] = useState(true)
 	const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
+	const shouldReduceMotion = useReducedMotion()
 
 	// ============================================
 	// DATA FETCHING
@@ -109,22 +113,44 @@ export default function HomePage() {
 		return (
 			<main className='min-h-screen bg-white'>
 				<Header />
-				<div className='container mx-auto px-4 py-12'>
-					<div className='text-center'>
-						<div className='inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600'></div>
-						<p className='mt-4 text-xl text-gray-600'>Yuklanmoqda...</p>
+				<DeliveryToggle />
+				<HeroSection />
+				<DealsSection />
+				<CategoryNav />
+				<PopularProducts />
+				
+				{/* Products Skeleton */}
+				<section className='py-12 md:py-16 bg-gradient-to-b from-white to-orange-50'>
+					<div className='container mx-auto px-4'>
+						<div className='text-center mb-8 md:mb-10'>
+							<h2 className='text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 md:mb-3'>
+								Barcha Mahsulotlar
+							</h2>
+							<p className='text-sm md:text-base text-gray-600'>Yuklanmoqda...</p>
+						</div>
+						<ProductCardSkeletonGrid count={8} />
 					</div>
-				</div>
+				</section>
 			</main>
 		)
 	}
+
+	// Animation variants with reduced motion support
+	const pageVariants = shouldReduceMotion
+		? { initial: { opacity: 1 }, animate: { opacity: 1 } }
+		: { initial: { opacity: 0 }, animate: { opacity: 1 } }
 
 	// ============================================
 	// MAIN RENDER
 	// ============================================
 
 	return (
-		<main className='min-h-screen bg-white'>
+		<motion.main
+			initial={pageVariants.initial}
+			animate={pageVariants.animate}
+			transition={{ duration: shouldReduceMotion ? 0 : 0.3 }}
+			className='min-h-screen bg-white'
+		>
 			{/* Header */}
 			<Header />
 
@@ -144,38 +170,37 @@ export default function HomePage() {
 			<PopularProducts />
 
 			{/* All Products Section */}
-			<section id='products-section' className='py-16 bg-gradient-to-b from-white to-orange-50'>
+			<section id='products-section' className='py-12 md:py-16 bg-gradient-to-b from-white to-orange-50'>
 				<div className='container mx-auto px-4'>
 					{/* Section Header */}
-					<div className='text-center mb-10'>
-						<h2 className='text-3xl md:text-4xl font-bold text-gray-900 mb-3'>
+					<div className='text-center mb-8 md:mb-10'>
+						<h2 className='text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 md:mb-3'>
 							{selectedCategoryId ? 'Tanlangan Kategoriya' : 'Barcha Mahsulotlar'}
 						</h2>
-						<p className='text-gray-600'>
+						<p className='text-sm md:text-base text-gray-600'>
 							{selectedCategoryId
 								? `${filteredProducts.length} ta mahsulot topildi`
 								: 'Bizning eng mazali pitsalar va boshqa mahsulotlar'}
 						</p>
 					</div>
 
-					{/* Products Grid - 4 per row */}
-					<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
+					{/* Products Grid - Responsive */}
+					<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6'>
 						{filteredProducts
 							.filter(product => product.isActive)
-							.map(product => (
-								<div
-									key={product.id}
-									className='transform transition-all duration-300'
-								>
-									<ProductCard product={product} />
-								</div>
+							.map((product, index) => (
+								<ProductCard 
+									key={product.id} 
+									product={product}
+									priority={index < 4}
+								/>
 							))}
 					</div>
 
 					{/* Empty State */}
 					{filteredProducts.length === 0 && !loading && (
 						<div className='text-center py-12'>
-							<p className='text-xl text-gray-600'>
+							<p className='text-lg md:text-xl text-gray-600'>
 								{selectedCategoryId
 									? 'Bu kategoriyada mahsulotlar topilmadi'
 									: 'Hozircha mahsulotlar yo\'q'}
@@ -186,7 +211,8 @@ export default function HomePage() {
 										setSelectedCategoryId(null)
 										setFilteredProducts(products)
 									}}
-									className='mt-4 text-orange-600 hover:underline'
+									className='mt-4 text-orange-600 hover:underline touch-manipulation'
+									aria-label="Barcha mahsulotlarni ko'rish"
 								>
 									Barcha mahsulotlarni ko&apos;rish
 								</button>
@@ -199,14 +225,14 @@ export default function HomePage() {
 			{/* Member Section */}
 			<MemberSection />
 
-			{/* Footer (Optional - can be added later) */}
-			<footer className='bg-gray-900 text-white py-12'>
+			{/* Footer */}
+			<footer className='bg-gray-900 text-white py-8 md:py-12' role='contentinfo'>
 				<div className='container mx-auto px-4 text-center'>
-					<p className='text-gray-400'>
+					<p className='text-sm md:text-base text-gray-400'>
 						© 2026 Zor Pizza. Barcha huquqlar himoyalangan.
 					</p>
 				</div>
 			</footer>
-		</main>
+		</motion.main>
 	)
 }
