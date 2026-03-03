@@ -10,7 +10,6 @@ import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { getFavorites, toggleFavorite } from '@/lib/favorites'
 import { useAuth } from '@/lib/AuthContext'
-import { motion, useReducedMotion } from 'framer-motion'
 
 /**
  * Product variation interface
@@ -66,7 +65,6 @@ export function ProductCard({ product, onAddToCart, priority = false }: ProductC
 	const { user } = useAuth()
 	const [isFavorite, setIsFavorite] = useState(false)
 	const [isLoadingFavorite, setIsLoadingFavorite] = useState(false)
-	const shouldReduceMotion = useReducedMotion()
 
 	// Check if product is in favorites
 	useEffect(() => {
@@ -139,41 +137,24 @@ export function ProductCard({ product, onAddToCart, priority = false }: ProductC
 		setIsLoadingFavorite(false)
 	}
 
-	// Animation variants for reduced motion support
-	const animationVariants = shouldReduceMotion
-		? {
-				initial: { opacity: 1, scale: 1 },
-				whileInView: { opacity: 1, scale: 1 },
-		  }
-		: {
-				initial: { opacity: 0, scale: 0.95 },
-				whileInView: { opacity: 1, scale: 1 },
-		  }
-
 	return (
-		<motion.div
-			initial={animationVariants.initial}
-			whileInView={animationVariants.whileInView}
-			viewport={{ once: true, margin: "-50px" }}
-			transition={{ duration: shouldReduceMotion ? 0 : 0.4 }}
+		<Card
+			data-testid='product-card'
+			className='group cursor-pointer hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 overflow-hidden select-text'
+			onClick={handleClick}
 		>
-			<Card
-				data-testid="product-card"
-				className='group cursor-pointer hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 overflow-hidden select-text'
-				onClick={handleClick}
-			>
-					{/* Image - Optimized for mobile */}
-					<div className='relative h-40 sm:h-48 overflow-hidden bg-gray-100'>
-						<Image
-							src={product.imageUrl}
-							alt={`${product.name} - ${product.description}`}
-							fill
-							className='object-cover group-hover:scale-110 transition-transform duration-300'
-							sizes='(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw'
-							loading={priority ? 'eager' : 'lazy'}
-							quality={priority ? 90 : 75}
-							priority={priority}
-						/>
+			{/* Image - Optimized for mobile */}
+			<div className='relative h-40 sm:h-48 overflow-hidden bg-gray-100'>
+				<Image
+					src={product.imageUrl}
+					alt={`${product.name} - ${product.description}`}
+					fill
+					className='object-cover group-hover:scale-110 transition-transform duration-300'
+					sizes='(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw'
+					loading={priority ? 'eager' : 'lazy'}
+					quality={priority ? 90 : 75}
+					priority={priority}
+				/>
 
 				{/* Badges */}
 				<div className='absolute top-2 sm:top-3 left-2 sm:left-3 flex gap-1.5 sm:gap-2'>
@@ -262,6 +243,5 @@ export function ProductCard({ product, onAddToCart, priority = false }: ProductC
 				</Button>
 			</CardFooter>
 		</Card>
-		</motion.div>
 	)
 }

@@ -1,8 +1,6 @@
 // frontend/lib/pdfInvoice.ts
 // 📄 PDF INVOICE GENERATOR - Download order receipt
 
-import { jsPDF } from 'jspdf'
-
 export interface InvoiceData {
 	orderNumber: string
 	orderDate: string
@@ -27,6 +25,8 @@ export interface InvoiceData {
  * Generate PDF invoice for order
  */
 export const generateInvoice = async (data: InvoiceData): Promise<void> => {
+	// Heavy dependency: keep `jspdf` out of the initial route bundle.
+	const { jsPDF } = await import('jspdf')
 	const doc = new jsPDF()
 
 	// Company Header

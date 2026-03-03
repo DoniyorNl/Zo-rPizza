@@ -28,7 +28,7 @@ import type {
 	OrderStatus,
 } from '@/types/tracking.types'
 import { ORDER_STATUS_LABELS } from '@/types/tracking.types'
-import { motion, AnimatePresence } from 'framer-motion'
+import { LazyMotion, domAnimation, m, AnimatePresence } from 'framer-motion'
 
 interface TrackingModalProps {
 	open: boolean
@@ -131,27 +131,28 @@ export default function TrackingModal({
 	const driver = data?.driver
 
 	return (
-		<AnimatePresence>
-			{open && (
-				<motion.div
-					initial={{ opacity: 0 }}
-					animate={{ opacity: 1 }}
-					exit={{ opacity: 0 }}
-					transition={{ duration: 0.2 }}
-					className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-					onClick={onClose}
-					role="dialog"
-					aria-modal="true"
-					aria-labelledby="tracking-modal-title"
-				>
-					<motion.div
-						initial={{ opacity: 0, scale: 0.9 }}
-						animate={{ opacity: 1, scale: 1 }}
-						exit={{ opacity: 0, scale: 0.9 }}
-						transition={{ type: "spring", duration: 0.3 }}
-						className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-						onClick={e => e.stopPropagation()}
+		<LazyMotion features={domAnimation}>
+			<AnimatePresence>
+				{open && (
+					<m.div
+						initial={{ opacity: 0 }}
+						animate={{ opacity: 1 }}
+						exit={{ opacity: 0 }}
+						transition={{ duration: 0.2 }}
+						className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+						onClick={onClose}
+						role="dialog"
+						aria-modal="true"
+						aria-labelledby="tracking-modal-title"
 					>
+						<m.div
+							initial={{ opacity: 0, scale: 0.9 }}
+							animate={{ opacity: 1, scale: 1 }}
+							exit={{ opacity: 0, scale: 0.9 }}
+							transition={{ type: "spring", duration: 0.3 }}
+							className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+							onClick={e => e.stopPropagation()}
+						>
 				{/* Header */}
 				<div className="sticky top-0 bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-t-2xl">
 					<div className="flex items-center justify-between">
@@ -370,9 +371,10 @@ export default function TrackingModal({
 						</div>
 					)}
 				</div>
-			</motion.div>
-		</motion.div>
-		)}
-		</AnimatePresence>
+						</m.div>
+					</m.div>
+				)}
+			</AnimatePresence>
+		</LazyMotion>
 	)
 }

@@ -16,10 +16,12 @@ export const captureMessage = (
 	_level: 'info' | 'warning' | 'error' = 'info',
 ) => {
 	// No-op
+	void _level
 }
 
 export const setUserContext = (_user: { id: string; email?: string; name?: string }) => {
 	// No-op
+	void _user
 }
 
 export const clearUserContext = () => {

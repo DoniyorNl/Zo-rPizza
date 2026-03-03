@@ -78,7 +78,7 @@ export function UnifiedHeader({ variant = 'user' }: UnifiedHeaderProps) {
 	// Styling - variant bo'yicha
 	const headerStyles = isAdmin
 		? 'sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm'
-		: 'sticky top-0 z-50 bg-orange-600 text-white shadow-md hover:shadow-xl transition-shadow duration-300'
+		: 'sticky top-0 z-50 bg-orange-700 text-white shadow-md hover:shadow-xl transition-shadow duration-300'
 
 	const logoStyles = isAdmin
 		? 'text-xl font-bold text-gray-900'
@@ -124,8 +124,9 @@ export function UnifiedHeader({ variant = 'user' }: UnifiedHeaderProps) {
 						<button
 							data-testid="cart-button"
 							onClick={() => router.push('/cart')}
+							aria-label='Savatcha'
 							className='relative flex items-center justify-center w-10 h-10 rounded-full
-							bg-orange-500 hover:bg-orange-700
+							bg-orange-800 hover:bg-orange-900
 							transition-all duration-200
 							hover:shadow-lg active:scale-95 cursor-pointer'
 						>

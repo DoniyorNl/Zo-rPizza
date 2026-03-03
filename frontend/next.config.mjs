@@ -1,12 +1,13 @@
 import withPWAInit from '@ducanh2912/next-pwa'
 import withBundleAnalyzer from '@next/bundle-analyzer'
+import { fileURLToPath } from 'node:url'
 
 const withPWA = withPWAInit({
 	dest: 'public',
 	cacheOnFrontEndNav: true,
 	aggressiveFrontEndNavCaching: true,
 	reloadOnOnline: true,
-	disable: false,
+	disable: process.env.NODE_ENV === 'development',
 	workboxOptions: {
 		disableDevLogs: true,
 	},
@@ -24,7 +25,7 @@ const nextConfig = {
 		optimizePackageImports: ['lucide-react', 'framer-motion'],
 	},
 	turbopack: {
-		root: '..',
+		root: fileURLToPath(new URL('..', import.meta.url)),
 	},
 	async headers() {
 		return [
@@ -46,7 +47,7 @@ const nextConfig = {
 		imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
 		minimumCacheTTL: 60,
 		dangerouslyAllowSVG: true,
-		contentDispositionType: 'attachment',
+		contentDispositionType: 'inline',
 		contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
 		remotePatterns: [
 			{ protocol: 'https', hostname: 'images.unsplash.com' },
