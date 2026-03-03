@@ -6,7 +6,6 @@
  * Target: Score 40 → 85-95+
  */
 
-import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom'
 
 // Mock Next.js modules
@@ -29,9 +28,9 @@ jest.mock('next/font/google', () => ({
 
 describe('🚀 Lighthouse Mobile Optimizations', () => {
 	describe('1. Image Optimization', () => {
-		it('should use Next.js Image component with proper optimization', () => {
+		it('should use Next.js Image component with proper optimization', async () => {
 			// Mock Next.js Image component
-			const NextImage = require('next/image').default
+			const { default: NextImage } = await import('next/image')
 			
 			expect(NextImage).toBeDefined()
 			// Next.js Image automatically provides:

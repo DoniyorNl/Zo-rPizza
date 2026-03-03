@@ -12,7 +12,6 @@ import { Minus, Plus, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
 
 export default function CartPage() {
 	const { items, updateQuantity, removeItem, getTotalPrice, clearCart } = useCartStore()
@@ -62,12 +61,7 @@ export default function CartPage() {
 	}
 
 	return (
-		<motion.main
-			initial={{ opacity: 0 }}
-			animate={{ opacity: 1 }}
-			transition={{ duration: 0.3 }}
-			className='min-h-screen bg-gradient-to-b from-orange-50 to-white'
-		>
+		<main className='min-h-screen bg-gradient-to-b from-orange-50 to-white'>
 			<Header />
 
 			<div className='container mx-auto px-4 py-12'>
@@ -82,65 +76,60 @@ export default function CartPage() {
 				<div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
 					{/* Cart Items */}
 					<div data-testid="cart-items" className='lg:col-span-2 space-y-4'>
-						{items.map((item, index) => (
-							<motion.div
-								key={item.id}
-								initial={{ opacity: 0, x: -20 }}
-								animate={{ opacity: 1, x: 0 }}
-								transition={{ duration: 0.3, delay: index * 0.1 }}
-							>
+						{items.map(item => (
+							<div key={item.id}>
 								<Card>
-								<CardContent className='p-6 flex items-center gap-6'>
-									{/* Image */}
-									<div className='relative w-24 h-24 flex-shrink-0'>
-										<Image
-											src={item.imageUrl}
-											alt={item.name}
-											fill
-											sizes='96px'
-											className='object-cover rounded-lg'
-										/>
-									</div>
+									<CardContent className='p-6 flex items-center gap-6'>
+										{/* Image */}
+										<div className='relative w-24 h-24 flex-shrink-0'>
+											<Image
+												src={item.imageUrl}
+												alt={item.name}
+												fill
+												sizes='96px'
+												className='object-cover rounded-lg'
+											/>
+										</div>
 
-									{/* Info */}
-									<div className='flex-1'>
-										<h3 className='text-xl font-bold mb-2'>{item.name}</h3>
-										<p className='text-2xl font-bold text-orange-600'>
-											{item.price.toLocaleString()} so&apos;m
-										</p>
-									</div>
+										{/* Info */}
+										<div className='flex-1'>
+											<h3 className='text-xl font-bold mb-2'>{item.name}</h3>
+											<p className='text-2xl font-bold text-orange-600'>
+												{item.price.toLocaleString()} so&apos;m
+											</p>
+										</div>
 
-									{/* Quantity Controls */}
-									<div className='flex items-center gap-3'>
+										{/* Quantity Controls */}
+										<div className='flex items-center gap-3'>
+											<Button
+												size='sm'
+												variant='outline'
+												onClick={() => updateQuantity(item.id, item.quantity - 1)}
+											>
+												<Minus className='w-4 h-4' />
+											</Button>
+											<span className='text-xl font-semibold w-8 text-center'>{item.quantity}</span>
+											<Button
+												size='sm'
+												variant='outline'
+												onClick={() => updateQuantity(item.id, item.quantity + 1)}
+											>
+												<Plus className='w-4 h-4' />
+											</Button>
+										</div>
+
+										{/* Remove */}
 										<Button
 											size='sm'
-											variant='outline'
-											onClick={() => updateQuantity(item.id, item.quantity - 1)}
+											variant='ghost'
+											onClick={() => handleRemoveItem(item)}
+											className='text-red-600'
 										>
-											<Minus className='w-4 h-4' />
+											<Trash2 className='w-5 h-5' />
 										</Button>
-										<span className='text-xl font-semibold w-8 text-center'>{item.quantity}</span>
-										<Button
-											size='sm'
-											variant='outline'
-											onClick={() => updateQuantity(item.id, item.quantity + 1)}
-										>
-											<Plus className='w-4 h-4' />
-										</Button>
-									</div>
-
-									{/* Remove */}
-									<Button
-										size='sm'
-										variant='ghost'
-										onClick={() => handleRemoveItem(item)}
-										className='text-red-600'
-									>
-										<Trash2 className='w-5 h-5' />
-									</Button>
-								</CardContent>
-							</Card>
-							</motion.div>
+									</CardContent>
+								</Card>
+							</div>
 						))}
 					</div>
 
@@ -167,14 +156,14 @@ export default function CartPage() {
 									</div>
 								</div>
 
-							<Button data-testid="cart-checkout" className='w-full' size='lg' onClick={handleCheckout}>
-								Buyurtma berish
-							</Button>
+								<Button data-testid="cart-checkout" className='w-full' size='lg' onClick={handleCheckout}>
+									Buyurtma berish
+								</Button>
 							</CardContent>
 						</Card>
 					</div>
 				</div>
 			</div>
-		</motion.main>
+		</main>
 	)
 }

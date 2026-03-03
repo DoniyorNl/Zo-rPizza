@@ -4,22 +4,22 @@
 import { AuthProvider } from '@/lib/AuthContext'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { Footer } from '@/components/layout/Footer'
-import { AnalyticsTracker } from '@/components/AnalyticsTracker'
-import { PushNotificationPrompt } from '@/components/PushNotificationPrompt'
+import { ClientEnhancements } from '@/components/layout/ClientEnhancements'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { Inter } from 'next/font/google'
 import type { Metadata, Viewport } from 'next'
+import { Suspense } from 'react'
 import './globals.css'
 
 // ============================================================================
 // FONT OPTIMIZATION - Self-hosted Inter font
 // ============================================================================
 const inter = Inter({
-	subsets: ['latin', 'latin-ext'],
-	display: 'swap', // FOUT (Flash of Unstyled Text) instead of FOIT
+	subsets: ['latin'],
+	display: 'optional',
 	preload: true,
 	variable: '--font-inter',
-	weight: ['400', '500', '600', '700'], // Only weights we use
+	weight: ['400', '700'],
 })
 
 export const metadata: Metadata = {
@@ -137,8 +137,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 			<body className='font-sans antialiased flex flex-col min-h-screen'>
 				<ErrorBoundary>
 					<AuthProvider>
-						<AnalyticsTracker />
-						<PushNotificationPrompt />
+						<Suspense fallback={null}>
+							<ClientEnhancements />
+						</Suspense>
 						<main className='flex-1' role='main'>{children}</main>
 						<Footer />
 					</AuthProvider>

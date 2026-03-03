@@ -50,13 +50,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const [user, setUser] = useState<User | null>(null)
 	const [backendUser, setBackendUser] = useState<BackendUser | null>(null)
 	const [loading, setLoading] = useState(true)
+	const isProd = process.env.NODE_ENV === 'production'
 
 	/**
 	 * 🆕 Backend bilan sinxronlashtirish
 	 * Firebase user ni database ga saqlaydi
 	 */
 	const syncWithBackend = async (firebaseUser: User) => {
-		const { getApiBaseUrl } = await import('@/lib/apiBaseUrl')
 		try {
 			// 1. Firebase token olish
 			const token = await firebaseUser.getIdToken()
@@ -74,11 +74,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			)
 
 			if (response.data.success) {
-				console.log('✅ User synced with backend:', response.data.data)
+				if (!isProd) console.log('✅ User synced with backend:', response.data.data)
 				setBackendUser(response.data.data)
 				return response.data.data
 			} else {
-				console.warn('⚠️ Backend sync warning:', response.data.message)
+				if (!isProd) console.warn('⚠️ Backend sync warning:', response.data.message)
 			}
 		} catch (error: unknown) {
 			const isNetworkError =
@@ -87,15 +87,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				'code' in error &&
 				((error as { code?: string }).code === 'ERR_NETWORK' ||
 					(error as { message?: string }).message === 'Network Error')
-			if (isNetworkError && typeof window !== 'undefined') {
-				const baseUrl = getApiBaseUrl()
-				console.warn(
-					'⚠️ Backend unreachable at',
-					baseUrl,
-					'— is the server running? Auth will work with Firebase only until sync succeeds.',
-				)
-			} else {
-				console.error('❌ Backend sync error:', error)
+			// Lighthouse Best Practices penalizes console errors. Keep production console clean.
+			if (!isProd) {
+				if (isNetworkError) console.warn('⚠️ Backend sync network error:', error)
+				else console.error('❌ Backend sync error:', error)
 			}
 		}
 	}
@@ -108,12 +103,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			if (user) {
 				const token = await user.getIdToken(true) // Force refresh
 				localStorage.setItem('firebaseToken', token)
-				console.log('✅ Token refreshed')
+				if (!isProd) console.log('✅ Token refreshed')
 				return token
 			}
 			return null
 		} catch (error) {
-			console.error('❌ Token refresh error:', error)
+			if (!isProd) console.error('❌ Token refresh error:', error)
 			return null
 		}
 	}
@@ -144,7 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			const backendUser = await syncWithBackend(firebaseUser)
 			return backendUser
 		} catch (error) {
-			console.error('❌ Signup error:', error)
+			if (!isProd) console.error('❌ Signup error:', error)
 			throw error
 		}
 	}
@@ -175,7 +170,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			const backendUser = await syncWithBackend(firebaseUser)
 			return backendUser
 		} catch (error) {
-			console.error('❌ Login error:', error)
+			if (!isProd) console.error('❌ Login error:', error)
 			throw error
 		}
 	}
@@ -193,7 +188,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 			console.log('✅ User logged out')
 		} catch (error) {
-			console.error('❌ Logout error:', error)
+			if (!isProd) console.error('❌ Logout error:', error)
 			throw error
 		}
 	}
@@ -236,10 +231,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 					}
 					const { trackLogin } = await import('@/lib/analytics')
 					trackLogin('google')
-					console.log('✅ [REDIRECT AUTH] Logged in:', result.user.email)
+					if (!isProd) console.log('✅ [REDIRECT AUTH] Logged in:', result.user.email)
 				}
 			} catch (err) {
-				if (isSubscribed) console.error('❌ [REDIRECT AUTH] Error:', err)
+				if (isSubscribed && !isProd) console.error('❌ [REDIRECT AUTH] Error:', err)
 			}
 
 			// 2. KEYIN: Auth state listener o'rnatish
@@ -247,6 +242,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				if (!isSubscribed) return
 
 				setUser(currentUser)
+				// Don't block UI on token refresh / backend sync.
+				if (isSubscribed) setLoading(false)
 
 				if (currentUser) {
 					try {
@@ -259,17 +256,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 								email: currentUser.email,
 							}),
 						)
-						await syncWithBackend(currentUser)
+						void syncWithBackend(currentUser)
 					} catch (error) {
-						console.error('❌ Auth state change error:', error)
-					} finally {
-						if (isSubscribed) setLoading(false)
+						if (!isProd) console.error('❌ Auth state change error:', error)
 					}
 				} else {
 					setBackendUser(null)
 					localStorage.removeItem('firebaseUser')
 					localStorage.removeItem('firebaseToken')
-					if (isSubscribed) setLoading(false)
 				}
 			})
 		}
@@ -293,6 +287,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			isSubscribed = false
 			unsubscribe?.()
 		}
+		// Intentionally run once on mount.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
 
 	/**
@@ -322,5 +318,5 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		refreshToken,
 	}
 
-	return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>
+	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

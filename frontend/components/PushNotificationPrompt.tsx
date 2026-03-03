@@ -73,8 +73,10 @@ export function PushNotificationPrompt() {
 			<Card className='w-80 shadow-2xl border-2 border-orange-200'>
 				<CardContent className='p-4'>
 					<button
+						type='button'
 						onClick={handleDismiss}
 						className='absolute top-2 right-2 text-gray-400 hover:text-gray-600'
+						aria-label='Yopish'
 					>
 						<X className='w-4 h-4' />
 					</button>
