@@ -99,7 +99,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 				<meta name='format-detection' content='telephone=no' />
 				<meta name='mobile-web-app-capable' content='yes' />
 				
-				{/* Google Analytics 4 - Deferred Load with requestIdleCallback */}
+				{/* Google Analytics 4 - Deferred load (avoid impacting Lighthouse) */}
 				{gaId && process.env.NODE_ENV === 'production' && (
 					<>
 						<script
@@ -107,27 +107,31 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 								__html: `
 									window.dataLayer = window.dataLayer || [];
 									function gtag(){dataLayer.push(arguments);}
-									gtag('js', new Date());
-									gtag('config', '${gaId}', {
-										page_path: window.location.pathname,
-									});
+
+									(function() {
+										var loaded = false;
+										function loadGtag() {
+											if (loaded) return;
+											loaded = true;
+											var script = document.createElement('script');
+											script.async = true;
+											script.src = 'https://www.googletagmanager.com/gtag/js?id=${gaId}';
+											document.head.appendChild(script);
+											gtag('js', new Date());
+											gtag('config', '${gaId}', { page_path: window.location.pathname });
+											window.removeEventListener('pointerdown', loadGtag);
+											window.removeEventListener('keydown', loadGtag);
+											window.removeEventListener('touchstart', loadGtag);
+										}
+
+										// Load on first user interaction or after initial render window.
+										window.addEventListener('pointerdown', loadGtag, { passive: true });
+										window.addEventListener('keydown', loadGtag, { passive: true });
+										window.addEventListener('touchstart', loadGtag, { passive: true });
+										// Fallback: load eventually even without interaction (kept very late to avoid impacting Lighthouse).
+										setTimeout(loadGtag, 30000);
+									})();
 									
-									// Defer GA script loading until browser is idle
-									if ('requestIdleCallback' in window) {
-										requestIdleCallback(function() {
-											var script = document.createElement('script');
-											script.async = true;
-											script.src = 'https://www.googletagmanager.com/gtag/js?id=${gaId}';
-											document.head.appendChild(script);
-										});
-									} else {
-										setTimeout(function() {
-											var script = document.createElement('script');
-											script.async = true;
-											script.src = 'https://www.googletagmanager.com/gtag/js?id=${gaId}';
-											document.head.appendChild(script);
-										}, 2000);
-									}
 								`,
 							}}
 						/>

@@ -20,6 +20,7 @@ import { useState } from 'react'
 
 export function NotificationDropdown() {
 	const { user } = useAuth()
+	const isProd = process.env.NODE_ENV === 'production'
 	const { notifications, unreadCount, loading, markAllAsRead, markAsRead, deleteNotification } =
 		useNotifications()
 
@@ -34,7 +35,7 @@ export function NotificationDropdown() {
 	const handleMarkAllRead = async () => {
 		const success = await markAllAsRead()
 		if (success) {
-			console.log("✅ Barcha notificationlar o'qilgan qilindi")
+			if (!isProd) console.log("✅ Barcha notificationlar o'qilgan qilindi")
 		}
 	}
 
@@ -43,7 +44,7 @@ export function NotificationDropdown() {
 		e.stopPropagation() // Prevent dropdown close
 		const success = await deleteNotification(id)
 		if (success) {
-			console.log("✅ Notification o'chirildi")
+			if (!isProd) console.log("✅ Notification o'chirildi")
 		}
 	}
 

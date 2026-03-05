@@ -1,7 +1,10 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { AnalyticsTracker } from '@/components/AnalyticsTracker'
+const AnalyticsTracker = dynamic(() => import('@/components/AnalyticsTracker').then(m => m.AnalyticsTracker), {
+	ssr: false,
+	loading: () => null,
+})
 
 const PushNotificationPrompt = dynamic(
 	() => import('@/components/PushNotificationPrompt').then(m => m.PushNotificationPrompt),
