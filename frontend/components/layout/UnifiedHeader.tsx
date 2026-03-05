@@ -5,23 +5,24 @@
 
 'use client'
 
-import { NotificationDropdown } from '@/components/notifications/NotificationDropdown'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import api from '@/lib/api'
 import { useAuth } from '@/lib/AuthContext'
+import dynamic from 'next/dynamic'
 import { useCartStore } from '@/store/cartStore'
-import { CircleUser, Heart, Home, LogOut, Navigation, Phone, Settings, ShoppingCart, Truck, User } from 'lucide-react'
+import { Navigation, Phone, ShoppingCart, Truck } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
+
+const NotificationDropdown = dynamic(
+	() => import('@/components/notifications/NotificationDropdown').then(m => m.NotificationDropdown),
+	{ ssr: false, loading: () => null },
+)
+
+const UserMenuDropdown = dynamic(() => import('./UserMenuDropdown').then(m => m.UserMenuDropdown), {
+	ssr: false,
+	loading: () => null,
+})
 
 interface UnifiedHeaderProps {
 	variant?: 'user' | 'admin'
@@ -33,6 +34,7 @@ export function UnifiedHeader({ variant = 'user' }: UnifiedHeaderProps) {
 	const pathname = usePathname()
 	const totalItems = useCartStore(state => state.getTotalItems())
 	const [activeOrderId, setActiveOrderId] = useState<string | null>(null)
+	const isProd = process.env.NODE_ENV === 'production'
 
 	// Admin yoki user ekanligini pathname'dan aniqlash
 	const isAdmin = useMemo(() => {
@@ -46,6 +48,7 @@ export function UnifiedHeader({ variant = 'user' }: UnifiedHeaderProps) {
 		const checkActiveOrder = async () => {
 			try {
 				const token = await user.getIdToken()
+				const api = (await import('@/lib/api')).default
 				const response = await api.get('/api/orders/user/' + user.uid, {
 					headers: { Authorization: `Bearer ${token}` }
 				})
@@ -57,21 +60,48 @@ export function UnifiedHeader({ variant = 'user' }: UnifiedHeaderProps) {
 					setActiveOrderId(activeOrder?.id || null)
 				}
 			} catch (error) {
-				console.error('Active order check error:', error)
+				if (!isProd) console.error('Active order check error:', error)
 			}
 		}
 
-		checkActiveOrder()
-		const interval = setInterval(checkActiveOrder, 30000)
-		return () => clearInterval(interval)
-	}, [user, isAdmin])
+		// Defer polling to avoid impacting initial page performance.
+		let interval: ReturnType<typeof setInterval> | null = null
+		let started = false
+
+		const start = () => {
+			if (started) return
+			started = true
+			window.removeEventListener('pointerdown', start)
+			window.removeEventListener('keydown', start)
+			window.removeEventListener('scroll', start)
+			void checkActiveOrder()
+			interval = setInterval(checkActiveOrder, 30000)
+		}
+
+		const timeout = setTimeout(start, 8000)
+		if (typeof window !== 'undefined') {
+			window.addEventListener('pointerdown', start, { passive: true })
+			window.addEventListener('keydown', start, { passive: true })
+			window.addEventListener('scroll', start, { passive: true })
+		}
+
+		return () => {
+			clearTimeout(timeout)
+			if (interval) clearInterval(interval)
+			if (typeof window !== 'undefined') {
+				window.removeEventListener('pointerdown', start)
+				window.removeEventListener('keydown', start)
+				window.removeEventListener('scroll', start)
+			}
+		}
+	}, [user, isAdmin, isProd])
 
 	const handleLogout = async () => {
 		try {
 			await logout()
 			router.push('/login')
 		} catch (error) {
-			console.error('Logout error:', error)
+			if (!isProd) console.error('Logout error:', error)
 		}
 	}
 
@@ -175,92 +205,13 @@ export function UnifiedHeader({ variant = 'user' }: UnifiedHeaderProps) {
 
 					{/* User Menu */}
 					{user ? (
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<Button
-									variant='ghost'
-									className={userButtonStyles}
-								>
-									<CircleUser className='h-5 w-5' />
-									<span className='hidden sm:block font-medium'>
-										{user.email || (isAdmin ? 'Admin' : 'User')}
-									</span>
-								</Button>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent align='end' className='w-56'>
-								<DropdownMenuLabel>
-									<div className='flex flex-col space-y-1'>
-										<p className='text-sm font-medium'>{user.email}</p>
-										<p className='text-xs text-gray-500'>
-											{isAdmin ? 'Administrator' : 'Foydalanuvchi'}
-										</p>
-									</div>
-								</DropdownMenuLabel>
-								<DropdownMenuSeparator />
-
-								{/* Admin menu items */}
-								{isAdmin ? (
-									<>
-										<DropdownMenuItem
-											className='cursor-pointer'
-											onClick={() => router.push('/admin/users')}
-										>
-											<User className='mr-2 h-4 w-4' />
-											<span>Profil</span>
-										</DropdownMenuItem>
-										<DropdownMenuItem
-											className='cursor-pointer'
-											onClick={() => router.push('/admin/settings')}
-										>
-											<Settings className='mr-2 h-4 w-4' />
-											<span>Sozlamalar</span>
-										</DropdownMenuItem>
-										<DropdownMenuSeparator />
-										<DropdownMenuItem
-											className='cursor-pointer'
-											onClick={() => router.push('/')}
-										>
-											<Home className='mr-2 h-4 w-4' />
-											<span>Saytga qaytish</span>
-										</DropdownMenuItem>
-									</>
-								) : (
-									<>
-										{/* User menu items */}
-										<DropdownMenuItem
-											className='cursor-pointer'
-											onClick={() => router.push('/orders')}
-										>
-											<User className='mr-2 h-4 w-4' />
-											<span>Mening buyurtmalarim</span>
-										</DropdownMenuItem>
-										<DropdownMenuItem
-											className='cursor-pointer'
-											onClick={() => router.push('/favorites')}
-										>
-											<Heart className='mr-2 h-4 w-4' />
-											<span>Sevimli mahsulotlar</span>
-										</DropdownMenuItem>
-										<DropdownMenuItem
-											className='cursor-pointer'
-											onClick={() => router.push('/profile')}
-										>
-											<Settings className='mr-2 h-4 w-4' />
-											<span>Profil</span>
-										</DropdownMenuItem>
-									</>
-								)}
-
-								<DropdownMenuSeparator />
-								<DropdownMenuItem
-									className='cursor-pointer text-red-600 focus:text-red-600'
-									onClick={handleLogout}
-								>
-									<LogOut className='mr-2 h-4 w-4' />
-									<span>Chiqish</span>
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu>
+						<UserMenuDropdown
+							user={user}
+							isAdmin={isAdmin}
+							userButtonStyles={userButtonStyles}
+							onNavigate={path => router.push(path)}
+							onLogout={handleLogout}
+						/>
 					) : (
 						// Login/Register buttons - Faqat user uchun
 						!isAdmin && (

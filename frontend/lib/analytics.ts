@@ -2,6 +2,7 @@
 // 📊 GOOGLE ANALYTICS 4 - Event Tracking
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
+const IS_PROD = process.env.NODE_ENV === 'production'
 
 // ============================================================================
 // INITIALIZE GA4
@@ -9,12 +10,12 @@ const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
 
 export const initGA = () => {
 	if (!GA_MEASUREMENT_ID) {
-		console.warn('⚠️  NEXT_PUBLIC_GA_MEASUREMENT_ID not found. Analytics disabled.')
+		if (!IS_PROD) console.warn('⚠️  NEXT_PUBLIC_GA_MEASUREMENT_ID not found. Analytics disabled.')
 		return
 	}
 
 	// GA4 script already loaded via Script tag in layout
-	console.log('✅ [GA4] Initialized:', GA_MEASUREMENT_ID)
+	if (!IS_PROD) console.log('✅ [GA4] Initialized:', GA_MEASUREMENT_ID)
 }
 
 // ============================================================================
@@ -36,10 +37,11 @@ export const trackEvent = (
 ) => {
 	if (typeof window !== 'undefined' && window.gtag && GA_MEASUREMENT_ID) {
 		window.gtag('event', eventName, params)
-		console.log(`📊 [GA4] Event tracked: ${eventName}`, params)
-	} else {
-		console.log(`📊 [GA4 SIMULATION] Event: ${eventName}`, params)
+		if (!IS_PROD) console.log(`📊 [GA4] Event tracked: ${eventName}`, params)
+		return
 	}
+	// In production, keep console clean (Best Practices) and no-op when GA isn't available yet.
+	if (!IS_PROD) console.log(`📊 [GA4 SIMULATION] Event: ${eventName}`, params)
 }
 
 // ============================================================================

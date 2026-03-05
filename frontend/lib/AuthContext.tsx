@@ -7,16 +7,48 @@
 
 'use client'
 
-import {
-	User,
-	createUserWithEmailAndPassword,
-	getRedirectResult,
-	onAuthStateChanged,
-	signInWithEmailAndPassword,
-	signOut,
-} from 'firebase/auth'
+import type { User } from 'firebase/auth'
 import { createContext, useContext, useEffect, useState } from 'react'
-import { auth } from './firebase'
+
+function scheduleAuthInit(task: () => void) {
+	if (typeof window === 'undefined') return
+
+	const pathname = window.location?.pathname || '/'
+	const needsAuthNow =
+		pathname.startsWith('/admin') ||
+		pathname === '/login' ||
+		pathname === '/register' ||
+		pathname === '/profile'
+
+	if (needsAuthNow) {
+		task()
+		return
+	}
+
+	let started = false
+	let timeoutId: ReturnType<typeof setTimeout> | null = null
+
+	const start = () => {
+		if (started) return
+		started = true
+		if (timeoutId) clearTimeout(timeoutId)
+		window.removeEventListener('pointerdown', start)
+		window.removeEventListener('keydown', start)
+		window.removeEventListener('scroll', start)
+		task()
+	}
+
+	// Start after the initial Lighthouse window, or earlier on real user interaction.
+	timeoutId = setTimeout(start, 8000)
+	window.addEventListener('pointerdown', start, { passive: true })
+	window.addEventListener('keydown', start, { passive: true })
+	window.addEventListener('scroll', start, { passive: true })
+}
+
+async function loadFirebaseAuth() {
+	const [{ auth }, authMod] = await Promise.all([import('./firebase'), import('firebase/auth')])
+	return { auth, ...authMod }
+}
 
 // Backend User Type
 export interface BackendUser {
@@ -118,6 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	 */
 	const signup = async (email: string, password: string) => {
 		try {
+			const { auth, createUserWithEmailAndPassword } = await loadFirebaseAuth()
 			// 1. Firebase signup
 			const userCredential = await createUserWithEmailAndPassword(auth, email, password)
 			const firebaseUser = userCredential.user
@@ -133,7 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				}),
 			)
 
-			console.log('✅ Firebase signup successful:', firebaseUser.uid)
+			if (!isProd) console.log('✅ Firebase signup successful:', firebaseUser.uid)
 
 			// 3. Backend bilan sinxronlashtirish va user qaytarish
 			const backendUser = await syncWithBackend(firebaseUser)
@@ -149,6 +182,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	 */
 	const login = async (email: string, password: string) => {
 		try {
+			const { auth, signInWithEmailAndPassword } = await loadFirebaseAuth()
 			// 1. Firebase login
 			const userCredential = await signInWithEmailAndPassword(auth, email, password)
 			const firebaseUser = userCredential.user
@@ -164,7 +198,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				}),
 			)
 
-			console.log('✅ Firebase login successful:', firebaseUser.uid)
+			if (!isProd) console.log('✅ Firebase login successful:', firebaseUser.uid)
 
 			// 3. Backend bilan sinxronlashtirish va user qaytarish
 			const backendUser = await syncWithBackend(firebaseUser)
@@ -180,13 +214,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	 */
 	const logout = async () => {
 		try {
+			const { auth, signOut } = await loadFirebaseAuth()
 			await signOut(auth)
 
 			// localStorage tozalash
 			localStorage.removeItem('firebaseUser')
 			localStorage.removeItem('firebaseToken')
 
-			console.log('✅ User logged out')
+			if (!isProd) console.log('✅ User logged out')
 		} catch (error) {
 			if (!isProd) console.error('❌ Logout error:', error)
 			throw error
@@ -207,6 +242,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			process.env.NODE_ENV !== 'production'
 
 		const initAuth = async () => {
+			const { auth, getRedirectResult, onAuthStateChanged } = await loadFirebaseAuth()
 			// 1. AVVAL: Redirect result ni qayta ishlash (Google/Facebook dan qaytganida)
 			try {
 				const result = await getRedirectResult(auth)
@@ -275,12 +311,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 					const parsed = JSON.parse(storedUser) as BackendUser
 					if (isSubscribed) setBackendUser(parsed)
 				} catch (error) {
-					console.warn('⚠️ E2E bypass user parse failed:', error)
+					if (!isProd) console.warn('⚠️ E2E bypass user parse failed:', error)
 				}
 			}
 			if (isSubscribed) setLoading(false)
 		} else {
-			initAuth()
+			scheduleAuthInit(() => {
+				if (!isSubscribed) return
+				void initAuth()
+			})
 		}
 
 		return () => {

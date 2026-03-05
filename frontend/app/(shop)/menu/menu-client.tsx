@@ -1,7 +1,7 @@
 'use client'
 
 import { ProductCard } from '@/components/products/ProductCard'
-import { UnifiedHeader } from '@/components/layout/UnifiedHeader'
+import { Header } from '@/components/layout/Header'
 import { ProductCardSkeletonGrid } from '@/components/skeletons'
 import { useCategories } from '@/hooks/useCategories'
 import { api } from '@/lib/apiClient'
@@ -113,7 +113,7 @@ export default function MenuClient({ highlightProductId }: { highlightProductId:
 	if (error) {
 		return (
 			<>
-				<UnifiedHeader variant='user' />
+				<Header />
 				<main className='min-h-screen bg-gradient-to-b from-orange-50 to-white'>
 					<div className='container mx-auto px-4 py-12'>
 						<div className='text-center max-w-md mx-auto'>
@@ -135,7 +135,7 @@ export default function MenuClient({ highlightProductId }: { highlightProductId:
 
 	return (
 		<>
-			<UnifiedHeader variant='user' />
+			<Header />
 			<main className='min-h-screen bg-gradient-to-b from-orange-50 to-white'>
 				<section className='bg-gradient-to-r from-orange-500 to-orange-600 text-white py-10 px-4'>
 					<div className='container mx-auto text-center'>
