@@ -24,14 +24,21 @@ const CheckoutForm = dynamic(() => import('./checkout-form'), {
 
 export default function CheckoutPage() {
 	const itemCount = useCartStore(state => state.items.length)
-	const [hydrated, setHydrated] = useState(() => useCartStore.persist.hasHydrated?.() ?? true)
+	const [hydrated, setHydrated] = useState(() => {
+		// During prerender (server), there is no persisted storage to hydrate from.
+		// Render a stable skeleton first and let the client flip to hydrated.
+		if (typeof window === 'undefined') return false
+		return useCartStore.persist?.hasHydrated?.() ?? true
+	})
 
 	useEffect(() => {
 		// Zustand persist hydration signal (avoids setState directly in effect body).
-		const unsub = useCartStore.persist.onFinishHydration?.(() => setHydrated(true))
+		const persist = useCartStore.persist
+		const unsub = persist?.onFinishHydration?.(() => setHydrated(true))
 		// In case hydration already happened before effect ran.
 		Promise.resolve().then(() => {
-			if (useCartStore.persist.hasHydrated?.()) setHydrated(true)
+			// If persist middleware isn't present (or hydration already finished), allow render to proceed.
+			if (!persist?.hasHydrated || persist.hasHydrated()) setHydrated(true)
 		})
 		return () => {
 			if (typeof unsub === 'function') unsub()
