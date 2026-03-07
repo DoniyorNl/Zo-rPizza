@@ -24,10 +24,18 @@ const CheckoutForm = dynamic(() => import('./checkout-form'), {
 
 export default function CheckoutPage() {
 	const itemCount = useCartStore(state => state.items.length)
-	const [hydrated, setHydrated] = useState(false)
+	const [hydrated, setHydrated] = useState(() => useCartStore.persist.hasHydrated?.() ?? true)
 
 	useEffect(() => {
-		setHydrated(true)
+		// Zustand persist hydration signal (avoids setState directly in effect body).
+		const unsub = useCartStore.persist.onFinishHydration?.(() => setHydrated(true))
+		// In case hydration already happened before effect ran.
+		Promise.resolve().then(() => {
+			if (useCartStore.persist.hasHydrated?.()) setHydrated(true)
+		})
+		return () => {
+			if (typeof unsub === 'function') unsub()
+		}
 	}, [])
 
 	// Avoid SSR/client mismatch from persisted cart (localStorage).

@@ -137,9 +137,11 @@
 
 | Role       | Email                      | Password       |
 |------------|----------------------------|----------------|
-| 👤 Customer   | `user@example.com`      | `password123`  |
-| 🔑 Admin      | `admin@example.com`     | `admin123`     |
-| 🚗 Driver     | `driver@example.com`    | `driver123`    |
+| 👤 Customer   | `demo.customer@zorpizza.uz` | `password123`  |
+| 🔑 Admin      | `demo.admin@zorpizza.uz`    | `admin123`     |
+| 🚗 Driver     | `demo.driver@zorpizza.uz`   | `driver123`    |
+
+> Note: These demo accounts are auto-created on first successful login.
 
 ### Stripe Test Cards
 
