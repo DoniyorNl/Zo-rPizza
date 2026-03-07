@@ -4,6 +4,14 @@ import { auth } from '../config/firebase'
 import prisma from '../lib/prisma'
 import { AuthRequest } from '../middleware/auth.middleware'
 
+const getDemoOverrides = (email?: string | null): { role: 'CUSTOMER' | 'ADMIN' | 'DELIVERY'; isDriver: boolean } | null => {
+	const e = (email || '').trim().toLowerCase()
+	if (e === 'demo.admin@zorpizza.uz') return { role: 'ADMIN', isDriver: false }
+	if (e === 'demo.driver@zorpizza.uz') return { role: 'DELIVERY', isDriver: true }
+	if (e === 'demo.customer@zorpizza.uz') return { role: 'CUSTOMER', isDriver: false }
+	return null
+}
+
 export const firebaseAuthController = {
 	/**
 	 * GET /api/auth/verify-token
@@ -63,6 +71,7 @@ export const firebaseAuthController = {
 			// 3. Agar DB da yo'q bo'lsa, avtomatik yaratish
 			if (!dbUser) {
 				console.log(`🆕 Creating new user in database: ${req.userId}`)
+				const overrides = getDemoOverrides(firebaseUser.email)
 				dbUser = await prisma.user.create({
 					data: {
 						firebaseUid: req.userId,
@@ -70,7 +79,8 @@ export const firebaseAuthController = {
 						name: firebaseUser.displayName || 'User',
 						phone: firebaseUser.phoneNumber || null,
 						password: null,
-						role: 'CUSTOMER',
+						role: overrides?.role || 'CUSTOMER',
+						isDriver: overrides?.isDriver || false,
 						isBlocked: false,
 					},
 					select: {
@@ -132,6 +142,7 @@ export const firebaseAuthController = {
 
 			// Firebase dan user ma'lumotlarini olish
 			const firebaseUser = await auth.getUser(req.userId)
+			const overrides = getDemoOverrides(firebaseUser.email)
 
 			// Database da user bor-yo'qligini tekshirish (firebaseUid bilan)
 			let dbUser = await prisma.user.findUnique({
@@ -152,6 +163,9 @@ export const firebaseAuthController = {
 							firebaseUid: req.userId,
 							name: firebaseUser.displayName || existingUser.name,
 							phone: firebaseUser.phoneNumber || existingUser.phone,
+							...(overrides
+								? { role: overrides.role, isDriver: overrides.isDriver }
+								: {}),
 							...(existingUser.isDriver && existingUser.role === 'CUSTOMER'
 								? { role: 'DELIVERY' }
 								: {}),
@@ -166,7 +180,8 @@ export const firebaseAuthController = {
 							name: firebaseUser.displayName || 'User',
 							phone: firebaseUser.phoneNumber || null,
 							password: null,
-							role: 'CUSTOMER',
+							role: overrides?.role || 'CUSTOMER',
+							isDriver: overrides?.isDriver || false,
 							isBlocked: false,
 						},
 					})
@@ -190,6 +205,11 @@ export const firebaseAuthController = {
 
 				if (dbUser.isDriver && dbUser.role === 'CUSTOMER') {
 					updateData.role = 'DELIVERY'
+				}
+
+				if (overrides) {
+					updateData.role = overrides.role
+					updateData.isDriver = overrides.isDriver
 				}
 
 				// Agar o'zgarishlar bo'lsa, update qilish

@@ -50,6 +50,17 @@ async function loadFirebaseAuth() {
 	return { auth, ...authMod }
 }
 
+const DEMO_CREDENTIALS: Record<string, string> = {
+	'demo.customer@zorpizza.uz': 'password123',
+	'demo.admin@zorpizza.uz': 'admin123',
+	'demo.driver@zorpizza.uz': 'driver123',
+}
+
+function isDemoCredential(email: string, password: string) {
+	const expected = DEMO_CREDENTIALS[email.trim().toLowerCase()]
+	return !!expected && expected === password
+}
+
 // Backend User Type
 export interface BackendUser {
 	id: string
@@ -204,6 +215,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			const backendUser = await syncWithBackend(firebaseUser)
 			return backendUser
 		} catch (error) {
+			// If README demo accounts are used and don't exist yet, auto-provision them.
+			// Firebase may return auth/invalid-credential for both "user not found" and "wrong password".
+			if (isDemoCredential(email, password)) {
+				try {
+					const { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword } = await loadFirebaseAuth()
+					// Create account if missing (EMAIL_EXISTS is safe to ignore).
+					try {
+						await createUserWithEmailAndPassword(auth, email, password)
+					} catch (e) {
+						const code =
+							e && typeof e === 'object' && 'code' in e ? String((e as { code?: unknown }).code) : ''
+						if (!code.includes('auth/email-already-in-use')) throw e
+					}
+					const userCredential = await signInWithEmailAndPassword(auth, email, password)
+					const firebaseUser = userCredential.user
+
+					const token = await firebaseUser.getIdToken()
+					localStorage.setItem('firebaseToken', token)
+					localStorage.setItem(
+						'firebaseUser',
+						JSON.stringify({
+							uid: firebaseUser.uid,
+							email: firebaseUser.email,
+						}),
+					)
+
+					const backendUser = await syncWithBackend(firebaseUser)
+					return backendUser
+				} catch (e) {
+					if (!isProd) console.error('❌ Demo account auto-provision failed:', e)
+				}
+			}
 			if (!isProd) console.error('❌ Login error:', error)
 			throw error
 		}
