@@ -9,7 +9,8 @@
 	},
 	"scripts": {
 		"dev": "next dev -p 3000 -H 127.0.0.1",
-		"build": "next build",
+		"build": "npx prisma generate --schema=../backend/prisma/schema.prisma && next build",
+		"prisma:generate": "npx prisma generate --schema=../backend/prisma/schema.prisma",
 		"build:analyze": "ANALYZE=true next build",
 		"start": "next start",
 		"lint": "eslint",
@@ -46,9 +47,11 @@
 		"socket.io-client": "^4.7.0",
 		"tailwind-merge": "^3.4.0",
 		"zod": "^4.3.5",
-		"zustand": "^5.0.9"
+		"zustand": "^5.0.9",
+		"@prisma/client": "^6.2.0"
 	},
 	"devDependencies": {
+		"prisma": "^6.2.0",
 		"@next/bundle-analyzer": "^16.1.6",
 		"@playwright/test": "^1.49.1",
 		"@swc/jest": "^0.2.37",
