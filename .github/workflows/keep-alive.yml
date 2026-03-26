@@ -11,5 +11,5 @@ jobs:
     steps:
       - name: Ping health endpoint
         run: |
-          curl -f https://zorpizza.vercel.app/api/health
+          curl -f https://zo-r-pizza.vercel.app/api/health
           echo "✅ Supabase pinged successfully"
