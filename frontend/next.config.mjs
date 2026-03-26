@@ -21,11 +21,9 @@ const withAnalyzer = withBundleAnalyzer({
 const nextConfig = {
 	poweredByHeader: false,
 	compress: true,
+	outputFileTracingRoot: fileURLToPath(new URL('..', import.meta.url)),
 	experimental: {
 		optimizePackageImports: ['lucide-react', 'framer-motion'],
-	},
-	turbopack: {
-		root: fileURLToPath(new URL('..', import.meta.url)),
 	},
 	async headers() {
 		return [
