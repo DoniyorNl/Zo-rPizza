@@ -8,7 +8,7 @@
 	},
 	"scripts": {
 		"dev": "next dev -p 3000 -H 127.0.0.1",
-		"build": "PRISMA_GENERATE_SKIP_AUTOINSTALL=true node_modules/.bin/prisma generate --schema=../backend/prisma/schema.prisma && next build",
+		"build": "next build",
 		"prisma:generate": "PRISMA_GENERATE_SKIP_AUTOINSTALL=true node_modules/.bin/prisma generate --schema=../backend/prisma/schema.prisma",
 		"build:analyze": "ANALYZE=true next build",
 		"start": "next start",
