@@ -22,6 +22,7 @@ const nextConfig = {
 	poweredByHeader: false,
 	compress: true,
 	outputFileTracingRoot: fileURLToPath(new URL('..', import.meta.url)),
+	turbopack: {},
 	experimental: {
 		optimizePackageImports: ['lucide-react', 'framer-motion'],
 	},
