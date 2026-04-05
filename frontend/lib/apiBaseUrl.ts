@@ -3,7 +3,7 @@
  * Barcha API chaqiruqlari shu modul orqali base URL olishi kerak.
  */
 
-const PRODUCTION_FALLBACK = 'https://zo-rpizza-production.up.railway.app'
+const PRODUCTION_FALLBACK = 'https://zo-rpizza-backend.onrender.com'
 const LOCAL_API = 'http://localhost:5001'
 
 const isLocalHost = (host: string) =>
