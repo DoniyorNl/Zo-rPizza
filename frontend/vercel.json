@@ -2,5 +2,5 @@
 	"$schema": "https://openapi.vercel.sh/vercel.json",
 	"framework": "nextjs",
 	"installCommand": "npm install --legacy-peer-deps",
-	"buildCommand": "npm run prisma:generate && npm run build"
+	"buildCommand": "mkdir -p prisma && cp ../backend/prisma/schema.prisma prisma/schema.prisma && PRISMA_GENERATE_SKIP_AUTOINSTALL=true npx prisma generate && npm run build"
 }
