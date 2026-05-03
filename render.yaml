@@ -1,6 +1,14 @@
 # =============================================================================
 # Zo-rPizza - Render Blueprint
 # =============================================================================
+#
+# Render Dashboard → Build Command uchun MUHIM:
+#   Faqat:  pnpm install
+#   Qo‘ymang: prisma migrate deploy  (build paytida P1001 — Supabase :5432 ga yetib bo‘lmaydi)
+# Migratsiyalarni mahalliy mashinadan yoki Supabase SQL editor orqali bajaring:
+#   cd backend && npx prisma migrate deploy
+#
+# =============================================================================
 
 services:
   # ---------------------------------------------------------------------------
