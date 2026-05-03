@@ -96,7 +96,7 @@ export default function AdminOrdersPage() {
 	}
 
 	useEffect(() => {
-		if (!user?.uid) {
+		if (!user?.id) {
 			setLoading(false)
 			return
 		}

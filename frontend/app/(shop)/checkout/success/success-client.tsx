@@ -25,7 +25,7 @@ const statusLabels: Record<string, string> = {
 export default function CheckoutSuccessClient() {
 	const router = useRouter()
 	const searchParams = useSearchParams()
-	const { user } = useAuth()
+	const { user, dbUser } = useAuth()
 	const clearCart = useCartStore(state => state.clearCart)
 	const orderId = searchParams.get('orderId')
 	const orderNumber = searchParams.get('orderNumber')
@@ -79,7 +79,9 @@ export default function CheckoutSuccessClient() {
 				orderNumber: order.orderNumber,
 				orderDate: order.createdAt,
 				customerName:
-					user?.displayName ??
+					dbUser?.name ??
+					user?.user_metadata?.name ??
+					user?.user_metadata?.full_name ??
 					(order as { customerName?: string }).customerName ??
 					order.deliveryPhone ??
 					'Mijoz',

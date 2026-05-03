@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { api } from '@/lib/apiClient'
+import { buildApiUrl } from '@/lib/apiBaseUrl'
 import { normalizeDecimal, parseLocationInput } from '@/lib/parseLocation'
 import { MapPin } from 'lucide-react'
 import { useState } from 'react'
