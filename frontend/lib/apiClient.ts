@@ -1,6 +1,13 @@
 import axios, { AxiosHeaders } from 'axios'
 import { getApiBaseUrl } from '@/lib/apiBaseUrl'
 
+declare module 'axios' {
+	interface InternalAxiosRequestConfig {
+		_skipAuthRedirect?: boolean
+		_retry?: boolean
+	}
+}
+
 export const api = axios.create({
 	withCredentials: true,
 	timeout: 20000,
@@ -33,7 +40,8 @@ api.interceptors.request.use(async config => {
 	return config
 })
 
-// Auto-refresh on 401
+// Auto-refresh on 401 — but never forcibly redirect to login.
+// Individual pages/components handle auth-gating.
 api.interceptors.response.use(
 	response => response,
 	async error => {
@@ -55,11 +63,10 @@ api.interceptors.response.use(
 					}
 				}
 			} catch (refreshErr) {
-				console.error('❌ Token refresh failed:', refreshErr)
-				if (typeof window !== 'undefined') {
-					window.location.href = '/login'
-				}
-				return Promise.reject(refreshErr)
+				console.warn('Token refresh failed:', refreshErr)
+				// Do NOT redirect to /login here — let the caller handle the failure.
+				// Forcible redirect breaks auth-sync on fresh logins if the backend
+				// is temporarily unavailable.
 			}
 		}
 

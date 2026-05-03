@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react'
+import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 import { api } from './apiClient'
@@ -49,27 +49,45 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 	const [user, setUser] = useState<User | null>(null)
 	const [dbUser, setDbUser] = useState<DbUser | null>(null)
 	const [loading, setLoading] = useState(true)
-	const syncInProgress = useRef(false)
+
+	// Prevent concurrent syncs — use a promise so concurrent callers share the same result
+	const syncPromise = useRef<Promise<void> | null>(null)
+	// Track last synced user to avoid re-syncing the same user
+	const lastSyncedUserId = useRef<string | null>(null)
 
 	const syncWithBackend = useCallback(async (currentSession: Session) => {
-		if (syncInProgress.current) return
-		syncInProgress.current = true
-		try {
-			const token = currentSession.access_token
-			const response = await api.post(
-				'/api/auth/sync',
-				{},
-				{ headers: { Authorization: `Bearer ${token}` } },
-			)
-			if (response.data?.data) {
-				setDbUser(response.data.data)
+		const userId = currentSession.user.id
+
+		// Already syncing or already synced this user
+		if (syncPromise.current) return syncPromise.current
+		if (lastSyncedUserId.current === userId && dbUser) return
+
+		syncPromise.current = (async () => {
+			try {
+				const response = await api.post(
+					'/api/auth/sync',
+					{},
+					{
+						headers: { Authorization: `Bearer ${currentSession.access_token}` },
+						// Prevent the global 401 interceptor from redirecting during sync
+						_skipAuthRedirect: true,
+					} as never,
+				)
+				if (response.data?.data) {
+					setDbUser(response.data.data)
+					lastSyncedUserId.current = userId
+				}
+			} catch (error) {
+				// Sync failure is non-fatal — user is still authenticated via Supabase.
+				// Don't reset dbUser or redirect; just log and continue.
+				console.warn('[AuthContext] Backend sync failed (non-fatal):', error)
+			} finally {
+				syncPromise.current = null
 			}
-		} catch (error) {
-			console.error('[AuthContext] Backend sync error:', error)
-		} finally {
-			syncInProgress.current = false
-		}
-	}, [])
+		})()
+
+		return syncPromise.current
+	}, [dbUser])
 
 	const getAccessToken = useCallback(async (): Promise<string | null> => {
 		const { data } = await supabase.auth.getSession()
@@ -81,37 +99,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 		setSession(null)
 		setUser(null)
 		setDbUser(null)
+		lastSyncedUserId.current = null
 	}, [])
 
 	const refreshUser = useCallback(async () => {
 		const { data } = await supabase.auth.getSession()
 		if (data.session) {
+			lastSyncedUserId.current = null // Force re-sync
 			await syncWithBackend(data.session)
 		}
 	}, [syncWithBackend])
 
 	useEffect(() => {
-		supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
-			setSession(initialSession)
-			setUser(initialSession?.user ?? null)
-			if (initialSession) {
-				syncWithBackend(initialSession).finally(() => setLoading(false))
-			} else {
-				setLoading(false)
-			}
-		})
-
+		// Use onAuthStateChange as the single source of truth.
+		// INITIAL_SESSION fires immediately with the persisted session (or null).
+		// No need for a separate getSession() call — that creates race conditions.
 		const {
 			data: { subscription },
 		} = supabase.auth.onAuthStateChange(async (event, newSession) => {
 			setSession(newSession)
 			setUser(newSession?.user ?? null)
 
-			if (event === 'SIGNED_IN' && newSession) {
+			if (newSession && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED')) {
+				// Sync with backend — failure is non-fatal
 				await syncWithBackend(newSession)
 			} else if (event === 'SIGNED_OUT') {
 				setDbUser(null)
+				lastSyncedUserId.current = null
 			}
+
+			// Mark loading done after the first event (INITIAL_SESSION)
 			setLoading(false)
 		})
 
