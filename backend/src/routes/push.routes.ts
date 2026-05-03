@@ -9,7 +9,7 @@ import {
 	getVapidPublicKey,
 	sendTestNotification,
 } from '../controllers/push.controller'
-import { firebaseAuth } from '../middleware/firebase-auth.middleware'
+import { authenticateFirebaseToken } from '../middleware/firebase-auth.middleware'
 
 const router = Router()
 
@@ -17,9 +17,9 @@ const router = Router()
 router.get('/vapid-public-key', getVapidPublicKey)
 
 // Protected routes - Require authentication
-router.post('/subscribe', firebaseAuth, subscribeToPush)
-router.post('/unsubscribe', firebaseAuth, unsubscribeFromPush)
-router.get('/subscriptions', firebaseAuth, getUserSubscriptions)
-router.post('/test', firebaseAuth, sendTestNotification)
+router.post('/subscribe', authenticateFirebaseToken, subscribeToPush)
+router.post('/unsubscribe', authenticateFirebaseToken, unsubscribeFromPush)
+router.get('/subscriptions', authenticateFirebaseToken, getUserSubscriptions)
+router.post('/test', authenticateFirebaseToken, sendTestNotification)
 
 export default router

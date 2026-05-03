@@ -61,7 +61,7 @@ export async function updateDriverLocation(req: Request, res: Response) {
       })
 
       const isNear = isNearDestination({ lat, lng }, deliveryLoc)
-      if (isNear && activeOrder.status !== 'DELIVERED') {
+      if (isNear && activeOrder.status !== 'DELIVERED' && activeOrder.userId) {
         await prisma.notification.create({
           data: {
             userId: activeOrder.userId,
@@ -249,15 +249,17 @@ export async function startDeliveryTracking(req: Request, res: Response) {
       },
     })
 
-    await prisma.notification.create({
-      data: {
-        userId: order.userId,
-        title: 'Delivery Started!',
-        message: `Your order is on the way. Estimated arrival: ${eta} minutes`,
-        type: 'ORDER_UPDATE',
-        orderId: order.id,
-      },
-    })
+    if (order.userId) {
+      await prisma.notification.create({
+        data: {
+          userId: order.userId,
+          title: 'Delivery Started!',
+          message: `Your order is on the way. Estimated arrival: ${eta} minutes`,
+          type: 'ORDER_UPDATE',
+          orderId: order.id,
+        },
+      })
+    }
 
     res.json({
       success: true,
@@ -299,15 +301,17 @@ export async function completeDelivery(req: Request, res: Response) {
       },
     })
 
-    await prisma.notification.create({
-      data: {
-        userId: order.userId,
-        title: 'Delivery Completed!',
-        message: 'Your order has been delivered. Enjoy your meal!',
-        type: 'ORDER_UPDATE',
-        orderId: order.id,
-      },
-    })
+    if (order.userId) {
+      await prisma.notification.create({
+        data: {
+          userId: order.userId,
+          title: 'Delivery Completed!',
+          message: 'Your order has been delivered. Enjoy your meal!',
+          type: 'ORDER_UPDATE',
+          orderId: order.id,
+        },
+      })
+    }
 
     res.json({
       success: true,
