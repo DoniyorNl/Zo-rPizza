@@ -335,15 +335,18 @@ async function connectDatabase(): Promise<void> {
 
 const startServer = async () => {
 	try {
+		console.log('🚀 [BUILD] Supabase Auth v2 — No Firebase')
+		console.log('🚀 [BUILD] Deployed:', new Date().toISOString())
+
 		// 1. Database ulanish (circuit breaker bo‘lsa bir marta 30s kutib qayta urinish)
 		await connectDatabase()
 		console.log('✅ Database connected')
 
 		// 2. Supabase connection check
-		if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY || !process.env.SUPABASE_JWT_SECRET) {
-			console.warn('⚠️  SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, or SUPABASE_JWT_SECRET not set')
+		if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+			console.error('❌ SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY missing — all auth will fail with 401')
 		} else {
-			console.log('✅ Supabase Auth configured')
+			console.log('✅ Supabase Auth configured:', process.env.SUPABASE_URL)
 		}
 
 		// 3. Server ishga tushirish
