@@ -26,7 +26,7 @@ services:
       paths:
         - backend/**
 
-    buildCommand: pnpm install && pnpm prisma:migrate
+    buildCommand: pnpm install --filter zor-pizza-backend && pnpm --filter zor-pizza-backend run prisma:migrate
     startCommand: pnpm start
 
     envVars:
