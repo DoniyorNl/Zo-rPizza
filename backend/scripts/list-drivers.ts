@@ -19,7 +19,7 @@ async function main() {
 				role: true,
 				isDriver: true,
 				driverStatus: true,
-				firebaseUid: true,
+				supabaseId: true,
 			},
 		})
 
@@ -34,7 +34,7 @@ async function main() {
 				console.log(`   👤 Ism: ${driver.name || 'N/A'}`)
 				console.log(`   🎭 Role: ${driver.role}`)
 				console.log(`   🚦 Status: ${driver.driverStatus || 'N/A'}`)
-				console.log(`   🆔 Firebase UID: ${driver.firebaseUid || 'N/A'}`)
+				console.log(`   🆔 Supabase UID: ${driver.supabaseId || 'N/A'}`)
 			})
 
 			console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')

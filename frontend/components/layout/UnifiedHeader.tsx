@@ -29,7 +29,7 @@ interface UnifiedHeaderProps {
 }
 
 export function UnifiedHeader({ variant = 'user' }: UnifiedHeaderProps) {
-	const { user, logout } = useAuth()
+	const { user, signOut } = useAuth()
 	const router = useRouter()
 	const pathname = usePathname()
 	const totalItems = useCartStore(state => state.getTotalItems())
@@ -47,11 +47,8 @@ export function UnifiedHeader({ variant = 'user' }: UnifiedHeaderProps) {
 
 		const checkActiveOrder = async () => {
 			try {
-				const token = await user.getIdToken()
-				const api = (await import('@/lib/api')).default
-				const response = await api.get('/api/orders/user/' + user.uid, {
-					headers: { Authorization: `Bearer ${token}` }
-				})
+			const { api: apiClient } = await import('@/lib/apiClient')
+			const response = await apiClient.get('/api/orders/user/' + user.id)
 
 				if (response.data.success) {
 					const activeOrder = response.data.data.find((order: { status: string; id?: string }) =>
@@ -98,7 +95,7 @@ export function UnifiedHeader({ variant = 'user' }: UnifiedHeaderProps) {
 
 	const handleLogout = async () => {
 		try {
-			await logout()
+			await signOut()
 			router.push('/login')
 		} catch (error) {
 			if (!isProd) console.error('Logout error:', error)

@@ -20,24 +20,18 @@ export interface DealItem {
 }
 
 /**
- * Deal - Aksiya/Kupon
+ * Deal - Aksiya/Kupon (matches backend Prisma schema)
  */
 export interface Deal {
 	id: string
-	name: string
-	description: string
-	imageUrl?: string
-	discountType: 'PERCENTAGE' | 'FIXED_AMOUNT' | 'BUY_X_GET_Y'
+	title: string
+	description?: string | null
+	imageUrl?: string | null
+	discountType: 'PERCENT' | 'FIXED'
 	discountValue: number
-	minOrderAmount?: number | null
-	maxDiscountAmount?: number | null
-	startDate: string | Date
-	endDate: string | Date
 	isActive: boolean
-	usageLimit?: number | null
-	usageCount?: number | null
-	terms?: string | null
-	priority?: number | null // Display order (lower = higher priority)
+	startsAt?: string | Date | null
+	endsAt?: string | Date | null
 	items?: DealItem[]
 	createdAt?: string | Date
 	updatedAt?: string | Date
@@ -48,8 +42,8 @@ export interface Deal {
  */
 export interface DealFilterOptions {
 	isActive?: boolean
-	availableNow?: boolean // Current date between start and end
-	hasStock?: boolean // usageCount < usageLimit
+	availableNow?: boolean // Current date between startsAt and endsAt
+	hasStock?: boolean // kept for API compatibility
 	minDiscount?: number
 	sortBy?: 'priority' | 'discount' | 'endDate' | 'createdAt'
 	sortOrder?: 'asc' | 'desc'

@@ -95,15 +95,17 @@ export default function OrderTrackingPage() {
 
 	const fetchTracking = async () => {
 		try {
-			const token = await user?.getIdToken()
-			const response = await fetch(
-				buildApiUrl(`/api/tracking/order/${orderId}`),
-				{
-					headers: {
-						Authorization: `Bearer ${token}`,
-					},
+		const { supabase } = await import('@/lib/supabase')
+		const { data: sessionData } = await supabase.auth.getSession()
+		const token = sessionData.session?.access_token
+		const response = await fetch(
+			buildApiUrl(`/api/tracking/order/${orderId}`),
+			{
+				headers: {
+					...(token ? { Authorization: `Bearer ${token}` } : {}),
 				},
-			)
+			},
+		)
 
 			if (!response.ok) {
 				throw new Error('Failed to fetch tracking data')

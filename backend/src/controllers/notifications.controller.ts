@@ -21,9 +21,9 @@ export const notificationController = {
 				})
 			}
 
-			// Database dan user topish - firebaseUid bilan
+			// Database dan user topish - supabaseId bilan
 			const dbUser = await prisma.user.findUnique({
-				where: { firebaseUid: req.userId },
+				where: { supabaseId: req.userId },
 			})
 
 			if (!dbUser) {
@@ -86,9 +86,9 @@ export const notificationController = {
 				})
 			}
 
-			// Database dan user topish - firebaseUid bilan
+			// Database dan user topish - supabaseId bilan
 			const dbUser = await prisma.user.findUnique({
-				where: { firebaseUid: req.userId },
+				where: { supabaseId: req.userId },
 			})
 
 			if (!dbUser) {
@@ -142,9 +142,9 @@ export const notificationController = {
 				})
 			}
 
-			// Database dan user topish - firebaseUid bilan
+			// Database dan user topish - supabaseId bilan
 			const dbUser = await prisma.user.findUnique({
-				where: { firebaseUid: req.userId },
+				where: { supabaseId: req.userId },
 			})
 
 			if (!dbUser) {
@@ -208,9 +208,9 @@ export const notificationController = {
 				})
 			}
 
-			// Database dan user topish - firebaseUid bilan
+			// Database dan user topish - supabaseId bilan
 			const dbUser = await prisma.user.findUnique({
-				where: { firebaseUid: req.userId },
+				where: { supabaseId: req.userId },
 			})
 
 			if (!dbUser) {
@@ -266,9 +266,9 @@ export const notificationController = {
 				})
 			}
 
-			// Database dan user topish - firebaseUid bilan
+			// Database dan user topish - supabaseId bilan
 			const dbUser = await prisma.user.findUnique({
-				where: { firebaseUid: req.userId },
+				where: { supabaseId: req.userId },
 			})
 
 			if (!dbUser) {

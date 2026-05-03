@@ -103,9 +103,7 @@ export default function AdminOrdersPage() {
 
 		const fetchOrders = async () => {
 			try {
-				const response = await api.get('/api/orders/admin/all', {
-					headers: { 'x-user-id': user.uid },
-				})
+				const response = await api.get('/api/orders/admin/all')
 				setOrders(response.data.data)
 			} catch (err: unknown) {
 				const msg = axios.isAxiosError(err) ? err.response?.data?.message : null
@@ -127,12 +125,11 @@ export default function AdminOrdersPage() {
 
 	// Haydovchilar ro'yxati (driver assignment uchun)
 	useEffect(() => {
-		if (!user?.uid) return
+		if (!user) return
 		const fetchDrivers = async () => {
 			try {
 				const res = await api.get('/api/users', {
 					params: { isDriver: 'true', limit: 50 },
-					headers: { 'x-user-id': user.uid },
 				})
 				if (res.data.success && res.data.data?.users) {
 					setDrivers(res.data.data.users)
@@ -157,9 +154,7 @@ export default function AdminOrdersPage() {
 			if (deliveryLat != null) payload.deliveryLat = deliveryLat
 			if (deliveryLng != null) payload.deliveryLng = deliveryLng
 
-			await api.patch(`/api/orders/admin/${orderId}/status`, payload, {
-				headers: { 'x-user-id': user?.uid },
-			})
+		await api.patch(`/api/orders/admin/${orderId}/status`, payload)
 
 			setOrders(orders.map(o => (o.id === orderId ? { ...o, status: newStatus, driverId } : o)))
 		} catch (err: unknown) {
@@ -178,21 +173,9 @@ export default function AdminOrdersPage() {
 				alert("Lat va Lng raqam bo'lishi kerak")
 				return
 			}
-			setSimulatingOrderId(orderId)
-			const token = await user?.getIdToken()
-			await api.post(
-				'/api/tracking/admin/simulate-location',
-				{ orderId, lat, lng },
-				{
-					headers: {
-						Authorization: `Bearer ${token}`,
-						'x-user-id': user?.uid,
-					},
-				},
-			)
-			const res = await api.get('/api/orders/admin/all', {
-				headers: { 'x-user-id': user?.uid },
-			})
+		setSimulatingOrderId(orderId)
+		await api.post('/api/tracking/admin/simulate-location', { orderId, lat, lng })
+		const res = await api.get('/api/orders/admin/all')
 			if (res.data.success) setOrders(res.data.data)
 		} catch (err: unknown) {
 			const msg = axios.isAxiosError(err) ? err.response?.data?.message : 'Xatolik'

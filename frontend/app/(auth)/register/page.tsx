@@ -1,21 +1,12 @@
-// =====================================
-// 📁 FILE PATH: frontend/app/(auth)/register/page.tsx
-// 🔐 REGISTER PAGE - FINAL VERSION
-// 🎯 PURPOSE: Complete signup with Firebase + Backend sync
-// 📝 UPDATED: 2025-01-18
-// ✨ FEATURES: Error handling, Loading states, Validation, Professional UI
-// =====================================
-
 'use client'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useAuth } from '@/lib/AuthContext'
-import { getFirebaseErrorMessage } from '@/lib/errorMessages'
 import { trackSignup } from '@/lib/analytics'
 import { signInWithGoogle, getSocialAuthErrorMessage } from '@/lib/socialAuth'
+import { supabase } from '@/lib/supabase'
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -30,7 +21,6 @@ export default function RegisterPage() {
 	const [success, setSuccess] = useState(false)
 	const [socialLoading, setSocialLoading] = useState(false)
 
-	const { signup } = useAuth()
 	const router = useRouter()
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -38,26 +28,18 @@ export default function RegisterPage() {
 		setError('')
 		setSuccess(false)
 
-		// ============================================
-		// VALIDATION
-		// ============================================
-
 		if (!email || !password || !confirmPassword) {
 			setError("Barcha maydonlarni to'ldiring")
 			return
 		}
-
 		if (password !== confirmPassword) {
 			setError('Parollar mos kelmadi')
 			return
 		}
-
 		if (password.length < 6) {
 			setError("Parol kamida 6 ta belgidan iborat bo'lishi kerak")
 			return
 		}
-
-		// Email format tekshirish
 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 		if (!emailRegex.test(email)) {
 			setError("Email manzil noto'g'ri formatda")
@@ -67,62 +49,55 @@ export default function RegisterPage() {
 		setLoading(true)
 
 		try {
-			// ============================================
-			// FIREBASE SIGNUP + BACKEND SYNC
-			// ============================================
-			const backendUser = await signup(email, password)
+			const { data, error: signUpError } = await supabase.auth.signUp({ email, password })
+			if (signUpError) throw signUpError
 
-			// 📊 Track signup
 			trackSignup('email')
-
-			console.log('✅ Signup successful')
 			setSuccess(true)
 
-			// Success message ko'rsatish va role bo'yicha redirect
-			setTimeout(() => {
-				if (backendUser?.role === 'ADMIN') {
-					router.push('/admin')
-				} else if (backendUser?.role === 'DELIVERY') {
-					router.push('/driver/dashboard')
-				} else {
-					router.push('/')
+			if (data.session) {
+				// Auto-confirmed (email confirmation disabled)
+				const { api } = await import('@/lib/apiClient')
+				try {
+					const syncRes = await api.post('/api/auth/sync', {}, {
+						headers: { Authorization: `Bearer ${data.session.access_token}` },
+					})
+					const synced = syncRes.data?.data
+					setTimeout(() => {
+						if (synced?.role === 'ADMIN') router.replace('/admin')
+						else router.replace('/')
+					}, 1500)
+				} catch {
+					setTimeout(() => router.replace('/'), 1500)
 				}
-				router.refresh()
-			}, 1500)
+			} else {
+				// Email confirmation required
+				setTimeout(() => router.replace('/login'), 3000)
+			}
 		} catch (err: unknown) {
-			console.error('❌ Signup error:', err)
-			const errorMessage =
-				getFirebaseErrorMessage(err) || "Ro'yxatdan o'tishda xatolik. Qaytadan urinib ko'ring."
-			setError(errorMessage)
+			const msg = err && typeof err === 'object' && 'message' in err
+				? String((err as { message?: unknown }).message)
+				: ''
+			if (msg.includes('already registered') || msg.includes('already been registered')) {
+				setError("Bu email allaqachon ro'yxatdan o'tgan. Kiring yoki parolni tiklang.")
+			} else if (msg.includes('Password should be')) {
+				setError("Parol kamida 6 ta belgidan iborat bo'lishi kerak")
+			} else {
+				setError(msg || "Ro'yxatdan o'tishda xatolik. Qaytadan urinib ko'ring.")
+			}
 		} finally {
 			setLoading(false)
 		}
 	}
 
-	// ============================================
-	// GOOGLE SIGN IN HANDLER
-	// ============================================
 	const handleGoogleSignIn = async () => {
 		setError('')
 		setSocialLoading(true)
-
 		try {
-			const result = await signInWithGoogle()
-			if (result?.user) {
-				// Popup muvaffaqiyatli
-				console.log('✅ Google signup successful')
-				setSuccess(true)
-				setTimeout(() => {
-					router.push('/')
-					router.refresh()
-				}, 1500)
-			}
-			// Redirect bo'lsa: sahifa o'zgaradi
+			await signInWithGoogle()
+			// Supabase OAuth triggers a page redirect
 		} catch (err: unknown) {
-			console.error('❌ Google signup error:', err)
-			const errorMessage = getSocialAuthErrorMessage(err)
-			setError(errorMessage)
-		} finally {
+			setError(getSocialAuthErrorMessage(err))
 			setSocialLoading(false)
 		}
 	}

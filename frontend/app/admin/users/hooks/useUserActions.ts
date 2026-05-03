@@ -3,7 +3,7 @@
 // 🎯 PURPOSE: Custom hook for user actions (role change, block/unblock)
 // =====================================
 
-import { apiFetch } from '@/lib/apiFetch'
+import { api } from '@/lib/apiClient'
 import { useState } from 'react'
 import { toApiRole } from '../utils/userConstants'
 
@@ -28,26 +28,9 @@ export const useUserActions = ({ onSuccess }: UseUserActionsParams = {}): UseUse
 			setUpdating(true)
 			setError(null)
 
-			const firebaseUser = localStorage.getItem('firebaseUser')
-			const currentUserId = firebaseUser ? JSON.parse(firebaseUser).uid : null
-			if (!currentUserId) throw new Error('Authentication required')
+		const role = toApiRole(newRole)
 
-			const role = toApiRole(newRole)
-
-			const response = await apiFetch(`/api/users/${userId}/role`, {
-				method: 'PUT',
-				headers: {
-					'Content-Type': 'application/json',
-					'x-user-id': currentUserId,
-				},
-				body: JSON.stringify({ role }),
-			})
-
-			const data = (await response.json().catch(() => ({}))) as { success?: boolean; message?: string }
-
-			if (!response.ok) {
-				throw new Error(data?.message || `Server error (${response.status})`)
-			}
+		await api.put(`/api/users/${userId}/role`, { role })
 
 			alert("Rol muvaffaqiyatli o'zgartirildi!")
 			onSuccess?.()
@@ -68,28 +51,7 @@ export const useUserActions = ({ onSuccess }: UseUserActionsParams = {}): UseUse
 			setUpdating(true)
 			setError(null)
 
-			// Get Firebase user ID from localStorage
-			const firebaseUser = localStorage.getItem('firebaseUser')
-			const currentUserId = firebaseUser ? JSON.parse(firebaseUser).uid : null
-
-			if (!currentUserId) {
-				throw new Error('Authentication required')
-			}
-
-			const response = await apiFetch(`/api/users/${userId}/status`, {
-				method: 'PUT',
-				headers: {
-					'Content-Type': 'application/json',
-					'x-user-id': currentUserId,
-				},
-				body: JSON.stringify({ isBlocked: !currentStatus }),
-			})
-
-			const data = await response.json()
-
-			if (!response.ok) {
-				throw new Error(data.message || 'Failed to update status')
-			}
+		await api.put(`/api/users/${userId}/status`, { isBlocked: !currentStatus })
 
 			// Success
 			const message = currentStatus
@@ -115,22 +77,7 @@ export const useUserActions = ({ onSuccess }: UseUserActionsParams = {}): UseUse
 			setUpdating(true)
 			setError(null)
 
-			const firebaseUser = localStorage.getItem('firebaseUser')
-			const currentUserId = firebaseUser ? JSON.parse(firebaseUser).uid : null
-
-			if (!currentUserId) throw new Error('Authentication required')
-
-			const response = await apiFetch(`/api/users/${userId}/driver`, {
-				method: 'PUT',
-				headers: {
-					'Content-Type': 'application/json',
-					'x-user-id': currentUserId,
-				},
-				body: JSON.stringify({ isDriver: !currentStatus }),
-			})
-
-			const data = await response.json()
-			if (!response.ok) throw new Error(data.message || 'Failed to update driver status')
+		await api.put(`/api/users/${userId}/driver`, { isDriver: !currentStatus })
 
 			alert(currentStatus ? "Haydovchi ro'yxatdan chiqarildi" : 'Haydovchi sifatida qo\'shildi')
 			onSuccess?.()

@@ -17,18 +17,18 @@ export const getProfile = async (req: Request, res: Response) => {
 	const startTime = Date.now()
 
 	try {
-		const firebaseUid = (req as any).userId
+		const supabaseId = (req as any).userId
 
-		if (!firebaseUid) {
+		if (!supabaseId) {
 			return res.status(401).json({
 				success: false,
 				message: 'Authentication required',
 			})
 		}
 
-		// Find user by firebaseUid
+		// Find user by supabaseId
 		const user = await prisma.user.findUnique({
-			where: { firebaseUid },
+			where: { supabaseId },
 			select: {
 				id: true,
 				email: true,
@@ -81,18 +81,18 @@ export const getProfileStats = async (req: Request, res: Response) => {
 	const startTime = Date.now()
 
 	try {
-		const firebaseUid = (req as any).userId
+		const supabaseId = (req as any).userId
 
-		if (!firebaseUid) {
+		if (!supabaseId) {
 			return res.status(401).json({
 				success: false,
 				message: 'Authentication required',
 			})
 		}
 
-		// Find user by firebaseUid
+		// Find user by supabaseId
 		const user = await prisma.user.findUnique({
-			where: { firebaseUid },
+			where: { supabaseId },
 			select: {
 				id: true,
 				email: true,
@@ -257,10 +257,10 @@ export const patchProfile = async (req: Request, res: Response) => {
 	const startTime = Date.now()
 
 	try {
-		const firebaseUid = (req as any).userId
+		const supabaseId = (req as any).userId
 		const { name, phone, avatar, dateOfBirth, gender, dietaryPrefs, allergyInfo, favoriteProducts, emailNotificationsEnabled } = req.body
 
-		if (!firebaseUid) {
+		if (!supabaseId) {
 			return res.status(401).json({
 				success: false,
 				message: 'Authentication required',
@@ -277,7 +277,7 @@ export const patchProfile = async (req: Request, res: Response) => {
 
 		// Update user profile
 		const user = await prisma.user.update({
-			where: { firebaseUid },
+			where: { supabaseId },
 			data: {
 				...(name !== undefined && { name: name.trim() }),
 				...(phone !== undefined && { phone: phone.replace(/\s/g, '') }),
@@ -335,10 +335,10 @@ export const updateProfile = async (req: Request, res: Response) => {
 	const startTime = Date.now()
 
 	try {
-		const firebaseUid = (req as any).userId
+		const supabaseId = (req as any).userId
 		const { name, phone, avatar, dateOfBirth, gender, dietaryPrefs, allergyInfo, emailNotificationsEnabled } = req.body
 
-		if (!firebaseUid) {
+		if (!supabaseId) {
 			return res.status(401).json({
 				success: false,
 				message: 'Authentication required',
@@ -355,7 +355,7 @@ export const updateProfile = async (req: Request, res: Response) => {
 
 		// Update user profile
 		const user = await prisma.user.update({
-			where: { firebaseUid },
+			where: { supabaseId },
 			data: {
 				...(name !== undefined && { name: name.trim() }),
 				...(phone !== undefined && { phone: phone.replace(/\s/g, '') }),
@@ -415,18 +415,18 @@ export const getAddresses = async (req: Request, res: Response) => {
 	const startTime = Date.now()
 
 	try {
-		const firebaseUid = (req as any).userId
+		const supabaseId = (req as any).userId
 
-		if (!firebaseUid) {
+		if (!supabaseId) {
 			return res.status(401).json({
 				success: false,
 				message: 'Authentication required',
 			})
 		}
 
-		// Find user by firebaseUid
+		// Find user by supabaseId
 		const user = await prisma.user.findUnique({
-			where: { firebaseUid },
+			where: { supabaseId },
 			select: { id: true },
 		})
 
@@ -470,20 +470,20 @@ export const createAddress = async (req: Request, res: Response) => {
 	const startTime = Date.now()
 
 	try {
-		const firebaseUid = (req as any).userId
+		const supabaseId = (req as any).userId
 		const { label, street, building, apartment, floor, entrance, landmark, lat, lng, isDefault } =
 			req.body
 
-		if (!firebaseUid) {
+		if (!supabaseId) {
 			return res.status(401).json({
 				success: false,
 				message: 'Authentication required',
 			})
 		}
 
-		// Find user by firebaseUid
+		// Find user by supabaseId
 		const user = await prisma.user.findUnique({
-			where: { firebaseUid },
+			where: { supabaseId },
 			select: { id: true },
 		})
 
@@ -555,21 +555,21 @@ export const updateAddress = async (req: Request, res: Response) => {
 	const startTime = Date.now()
 
 	try {
-		const firebaseUid = (req as any).userId
+		const supabaseId = (req as any).userId
 		const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id
 		const { label, street, building, apartment, floor, entrance, landmark, lat, lng, isDefault } =
 			req.body
 
-		if (!firebaseUid) {
+		if (!supabaseId) {
 			return res.status(401).json({
 				success: false,
 				message: 'Authentication required',
 			})
 		}
 
-		// Find user by firebaseUid
+		// Find user by supabaseId
 		const user = await prisma.user.findUnique({
-			where: { firebaseUid },
+			where: { supabaseId },
 			select: { id: true },
 		})
 
@@ -645,19 +645,19 @@ export const deleteAddress = async (req: Request, res: Response) => {
 	const startTime = Date.now()
 
 	try {
-		const firebaseUid = (req as any).userId
+		const supabaseId = (req as any).userId
 		const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id
 
-		if (!firebaseUid) {
+		if (!supabaseId) {
 			return res.status(401).json({
 				success: false,
 				message: 'Authentication required',
 			})
 		}
 
-		// Find user by firebaseUid
+		// Find user by supabaseId
 		const user = await prisma.user.findUnique({
-			where: { firebaseUid },
+			where: { supabaseId },
 			select: { id: true },
 		})
 

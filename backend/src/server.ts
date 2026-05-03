@@ -42,7 +42,7 @@ import toppingsRoutes from './routes/toppings.routes'
 import trackingRoutes from './routes/tracking.routes'
 import usersRoutes from './routes/users.routes'
 
-// 🆕 FIREBASE AUTH ROUTES
+// 🆕 AUTH ROUTES (Supabase)
 import firebaseAuthRoutes from './routes/firebase-auth.routes'
 
 export const app: Express = express()
@@ -235,7 +235,7 @@ app.get('/favicon.ico', (_req: Request, res: Response) => {
 // API ROUTES
 // ============================================
 
-// 🆕 Firebase Authentication Routes (Auth limiter bilan)
+// 🆕 Supabase Authentication Routes (Auth limiter bilan)
 app.use('/api/auth', authLimiter, firebaseAuthRoutes)
 
 // Dashboard & Analytics
@@ -339,14 +339,11 @@ const startServer = async () => {
 		await connectDatabase()
 		console.log('✅ Database connected')
 
-		// 2. Firebase Admin SDK tekshirish
-		try {
-			const { auth } = await import('./config/firebase')
-			await auth.listUsers(1) // Test call
-			console.log('✅ Firebase Admin SDK initialized')
-		} catch (firebaseError) {
-			console.error('⚠️  Firebase Admin SDK initialization warning:', firebaseError)
-			console.log('⚠️  Server will continue without Firebase Auth')
+		// 2. Supabase connection check
+		if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY || !process.env.SUPABASE_JWT_SECRET) {
+			console.warn('⚠️  SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, or SUPABASE_JWT_SECRET not set')
+		} else {
+			console.log('✅ Supabase Auth configured')
 		}
 
 		// 3. Server ishga tushirish

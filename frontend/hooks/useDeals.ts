@@ -84,59 +84,56 @@ export function useDeals(options?: DealFilterOptions) {
 					fetchedDeals = fetchedDeals.filter(deal => deal.isActive)
 				}
 
-				// 2. Filter by date (available now)
-				if (stableOptions?.availableNow === true) {
-					const now = new Date()
-					fetchedDeals = fetchedDeals.filter(deal => {
-						const startDate = new Date(deal.startDate)
-						const endDate = new Date(deal.endDate)
-						return now >= startDate && now <= endDate
-					})
-				}
-
-				// 3. Filter by usage limit
-				if (stableOptions?.hasStock === true) {
-					fetchedDeals = fetchedDeals.filter(deal => {
-						if (!deal.usageLimit) return true
-						return (deal.usageCount || 0) < deal.usageLimit
-					})
-				}
-
-				// 4. Filter by minimum discount
-				if (stableOptions?.minDiscount) {
-					fetchedDeals = fetchedDeals.filter(
-						deal => deal.discountValue >= stableOptions.minDiscount!,
-					)
-				}
-
-				// ============================================
-				// SORTING
-				// ============================================
-
-				const sortBy = stableOptions?.sortBy || 'priority'
-				const sortOrder = stableOptions?.sortOrder || 'asc'
-
-				fetchedDeals.sort((a, b) => {
-					let comparison = 0
-
-					switch (sortBy) {
-						case 'priority':
-							comparison = (a.priority || 999) - (b.priority || 999)
-							break
-						case 'discount':
-							comparison = b.discountValue - a.discountValue
-							break
-						case 'endDate':
-							comparison = new Date(a.endDate).getTime() - new Date(b.endDate).getTime()
-							break
-						case 'createdAt':
-							comparison =
-								new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
-							break
-					}
-
-					return sortOrder === 'asc' ? comparison : -comparison
+			// 2. Filter by date (available now)
+			if (stableOptions?.availableNow === true) {
+				const now = new Date()
+				fetchedDeals = fetchedDeals.filter(deal => {
+					if (!deal.startsAt && !deal.endsAt) return true
+					const start = deal.startsAt ? new Date(deal.startsAt) : new Date(0)
+					const end = deal.endsAt ? new Date(deal.endsAt) : new Date('2099-12-31')
+					return now >= start && now <= end
 				})
+			}
+
+			// 3. hasStock filter not applicable to schema (no usageLimit), always pass
+			// kept for API compatibility
+
+			// 4. Filter by minimum discount
+			if (stableOptions?.minDiscount) {
+				fetchedDeals = fetchedDeals.filter(
+					deal => deal.discountValue >= stableOptions.minDiscount!,
+				)
+			}
+
+			// ============================================
+			// SORTING
+			// ============================================
+
+			const sortBy = stableOptions?.sortBy || 'createdAt'
+			const sortOrder = stableOptions?.sortOrder || 'desc'
+
+			fetchedDeals.sort((a, b) => {
+				let comparison = 0
+
+				switch (sortBy) {
+					case 'priority':
+					case 'discount':
+						comparison = b.discountValue - a.discountValue
+						break
+					case 'endDate':
+						comparison =
+							new Date(a.endsAt || '2099-12-31').getTime() -
+							new Date(b.endsAt || '2099-12-31').getTime()
+						break
+					case 'createdAt':
+					default:
+						comparison =
+							new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
+						break
+				}
+
+				return sortOrder === 'asc' ? comparison : -comparison
+			})
 
 				setDeals(fetchedDeals)
 

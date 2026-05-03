@@ -1,10 +1,3 @@
-// =====================================
-// 📁 FILE PATH: frontend/app/(auth)/login/page.tsx
-// 🔐 LOGIN PAGE - COMPLETE VERSION
-// 🎯 PURPOSE: Login with Firebase + Backend sync
-// 📝 UPDATED: 2025-01-18
-// =====================================
-
 'use client'
 
 import { Button } from '@/components/ui/button'
@@ -12,9 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/lib/AuthContext'
-import { getFirebaseErrorMessage } from '@/lib/errorMessages'
 import { trackLogin } from '@/lib/analytics'
 import { signInWithGoogle, getSocialAuthErrorMessage } from '@/lib/socialAuth'
+import { supabase } from '@/lib/supabase'
 import { AlertCircle, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -27,17 +20,17 @@ export default function LoginPage() {
 	const [loading, setLoading] = useState(false)
 	const [socialLoading, setSocialLoading] = useState(false)
 
-	const { login, user, backendUser, loading: authLoading } = useAuth()
+	const { user, dbUser, loading: authLoading } = useAuth()
 	const router = useRouter()
 
-	// Google redirect dan qaytganda user allaqachon kirgan bo'lsa, bosh sahifaga yo'naltirish
+	// Already authenticated → redirect
 	useEffect(() => {
 		if (!authLoading && user) {
-			if (backendUser?.role === 'ADMIN') router.replace('/admin')
-			else if (backendUser?.role === 'DELIVERY') router.replace('/driver/dashboard')
+			if (dbUser?.role === 'ADMIN') router.replace('/admin')
+			else if (dbUser?.role === 'DELIVERY') router.replace('/driver/dashboard')
 			else router.replace('/')
 		}
-	}, [user, backendUser, authLoading, router])
+	}, [user, dbUser, authLoading, router])
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
@@ -45,53 +38,50 @@ export default function LoginPage() {
 		setLoading(true)
 
 		try {
-			// Firebase login + backend sync
-			const backendUser = await login(email, password)
+			const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+			if (signInError) throw signInError
 
-			// 📊 Track login
-			trackLogin('email')
-
-			console.log('✅ Login successful, redirecting...', backendUser)
-
-			// Role bo'yicha redirect
-			if (backendUser?.role === 'ADMIN') {
-				router.push('/admin')
-			} else if (backendUser?.role === 'DELIVERY') {
-				router.push('/driver/dashboard')
-			} else {
-				router.push('/')
+			if (data.session) {
+				trackLogin('email')
+				const { api } = await import('@/lib/apiClient')
+				try {
+					const syncRes = await api.post('/api/auth/sync', {}, {
+						headers: { Authorization: `Bearer ${data.session.access_token}` },
+					})
+					const synced = syncRes.data?.data
+					if (synced?.role === 'ADMIN') router.replace('/admin')
+					else if (synced?.role === 'DELIVERY') router.replace('/driver/dashboard')
+					else router.replace('/')
+				} catch {
+					router.replace('/')
+				}
 			}
-			router.refresh() // Force refresh
 		} catch (err: unknown) {
-			console.error('❌ Login error:', err)
-			const errorMessage = getFirebaseErrorMessage(err) || "Kirish xatosi. Qaytadan urinib ko'ring."
-			setError(errorMessage)
+			const msg = err && typeof err === 'object' && 'message' in err
+				? String((err as { message?: unknown }).message)
+				: ''
+			if (msg.includes('Invalid login credentials')) {
+				setError("Email yoki parol noto'g'ri")
+			} else if (msg.includes('Email not confirmed')) {
+				setError("Emailingizni tasdiqlang. Pochtangizni tekshiring.")
+			} else if (msg.includes('Too many requests')) {
+				setError("Juda ko'p urinish. Biroz kutib qayta urining.")
+			} else {
+				setError(msg || "Kirishda xatolik yuz berdi. Qayta urinib ko'ring.")
+			}
 		} finally {
 			setLoading(false)
 		}
 	}
 
-	// ============================================
-	// GOOGLE LOGIN HANDLER
-	// ============================================
 	const handleGoogleLogin = async () => {
 		setError('')
 		setSocialLoading(true)
-
 		try {
-			const result = await signInWithGoogle()
-			if (result?.user) {
-				// Popup muvaffaqiyatli - redirect
-				console.log('✅ Google login successful')
-				router.push('/')
-				router.refresh()
-			}
-			// Redirect bo'lsa: sahifa o'zgaradi, hech narsa qilmaymiz
+			await signInWithGoogle()
+			// Supabase OAuth triggers a page redirect — no further action needed here
 		} catch (err: unknown) {
-			console.error('❌ Google login error:', err)
-			const errorMessage = getSocialAuthErrorMessage(err)
-			setError(errorMessage)
-		} finally {
+			setError(getSocialAuthErrorMessage(err))
 			setSocialLoading(false)
 		}
 	}

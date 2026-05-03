@@ -61,13 +61,15 @@ export default function TrackingModal({
 		setError(null)
 
 		try {
-			const token = await user.getIdToken()
-			const res = await fetch(buildApiUrl(`/api/tracking/order/${orderId}`), {
-				headers: {
-					Authorization: `Bearer ${token}`,
-					'Content-Type': 'application/json',
-				},
-			})
+		const { supabase } = await import('@/lib/supabase')
+		const { data: sessionData } = await supabase.auth.getSession()
+		const token = sessionData.session?.access_token
+		const res = await fetch(buildApiUrl(`/api/tracking/order/${orderId}`), {
+			headers: {
+				...(token ? { Authorization: `Bearer ${token}` } : {}),
+				'Content-Type': 'application/json',
+			},
+		})
 
 			if (!res.ok) {
 				throw new Error(`Server responded with status ${res.status}`)

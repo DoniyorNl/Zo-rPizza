@@ -2,11 +2,11 @@
 import { Request, Response } from 'express'
 import Stripe from 'stripe'
 import prisma from '../lib/prisma'
-import type { AuthRequest } from '../middleware/firebase-auth.middleware'
+import type { AuthRequest } from '../middleware/auth.middleware'
 
-async function getCurrentDbUser(firebaseUid?: string) {
-	if (!firebaseUid) return null
-	return prisma.user.findFirst({ where: { firebaseUid }, select: { id: true } })
+async function getCurrentDbUser(supabaseId?: string) {
+	if (!supabaseId) return null
+	return prisma.user.findFirst({ where: { supabaseId }, select: { id: true } })
 }
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY
@@ -32,12 +32,12 @@ export const createPaymentIntent = async (req: Request, res: Response) => {
 
 	try {
 		const authReq = req as AuthRequest
-		const firebaseUid = authReq.userId
-		if (!firebaseUid) {
+		const supabaseId = authReq.userId
+		if (!supabaseId) {
 			return res.status(401).json({ success: false, message: 'Avtorizatsiya kerak' })
 		}
 
-		const dbUser = await getCurrentDbUser(firebaseUid)
+		const dbUser = await getCurrentDbUser(supabaseId)
 		if (!dbUser) {
 			return res.status(401).json({ success: false, message: 'Foydalanuvchi topilmadi' })
 		}

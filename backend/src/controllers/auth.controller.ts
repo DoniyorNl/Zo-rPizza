@@ -1,10 +1,9 @@
 // backend/src/controllers/auth.controller.ts
 import { Response } from 'express'
-import { auth } from '../config/firebase'
+import { supabaseAdmin } from '../config/supabase'
 import { AuthRequest } from '../middleware/auth.middleware'
 
 export const authController = {
-	// Hozirgi foydalanuvchi ma'lumotlarini olish
 	getCurrentUser: async (req: AuthRequest, res: Response) => {
 		try {
 			if (!req.userId) {
@@ -14,20 +13,22 @@ export const authController = {
 				})
 			}
 
-			// Firebase dan user ma'lumotlarini olish
-			const firebaseUser = await auth.getUser(req.userId)
+			const { data: supabaseUser, error } = await supabaseAdmin.auth.admin.getUserById(req.userId)
+			if (error || !supabaseUser?.user) {
+				return res.status(404).json({ success: false, message: 'Foydalanuvchi topilmadi.' })
+			}
 
+			const u = supabaseUser.user
 			return res.status(200).json({
 				success: true,
 				data: {
-					uid: firebaseUser.uid,
-					email: firebaseUser.email,
-					displayName: firebaseUser.displayName,
-					photoURL: firebaseUser.photoURL,
-					emailVerified: firebaseUser.emailVerified,
+					uid: u.id,
+					email: u.email,
+					displayName: u.user_metadata?.name || u.user_metadata?.full_name || '',
+					emailVerified: u.email_confirmed_at != null,
 					metadata: {
-						creationTime: firebaseUser.metadata.creationTime,
-						lastSignInTime: firebaseUser.metadata.lastSignInTime
+						creationTime: u.created_at,
+						lastSignInTime: u.last_sign_in_at,
 					}
 				}
 			})
@@ -35,12 +36,11 @@ export const authController = {
 			console.error('getCurrentUser xatosi:', error.message)
 			return res.status(500).json({
 				success: false,
-				message: 'Foydalanuvchi ma\'lumotlarini olishda xatolik.'
+				message: "Foydalanuvchi ma'lumotlarini olishda xatolik."
 			})
 		}
 	},
 
-	// Admin rolini berish (faqat super admin tomonidan)
 	setAdminRole: async (req: AuthRequest, res: Response) => {
 		try {
 			const { uid } = req.body
@@ -52,8 +52,9 @@ export const authController = {
 				})
 			}
 
-			// Custom claims orqali admin rolini belgilash
-			await auth.setCustomUserClaims(uid, { admin: true })
+			await supabaseAdmin.auth.admin.updateUserById(uid, {
+				app_metadata: { role: 'admin' },
+			})
 
 			return res.status(200).json({
 				success: true,

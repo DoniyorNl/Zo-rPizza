@@ -28,16 +28,16 @@ export async function logError(error: Error | string, context?: Record<string, u
 			level: 'error',
 		}
 
-		// Get user ID from localStorage
+		// Get user ID from Supabase session
 		if (typeof window !== 'undefined') {
-			const firebaseUser = localStorage.getItem('firebaseUser')
-			if (firebaseUser) {
-				try {
-					const user = JSON.parse(firebaseUser)
-					errorData.userId = user.uid
-				} catch {
-					// Ignore parse errors
+			try {
+				const { supabase } = await import('./supabase')
+				const { data } = await supabase.auth.getSession()
+				if (data.session?.user?.id) {
+					errorData.userId = data.session.user.id
 				}
+			} catch {
+				// Ignore errors
 			}
 		}
 

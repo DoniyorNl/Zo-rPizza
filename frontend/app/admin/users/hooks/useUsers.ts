@@ -4,7 +4,7 @@
 // 📝 UPDATED: 2025-01-11 - FIXED
 // =====================================
 
-import { apiFetch } from '@/lib/apiFetch'
+import { api } from '@/lib/apiClient'
 import { useEffect, useState } from 'react'
 import { UserData, UserStatistics } from '../types/user.types'
 import { ITEMS_PER_PAGE } from '../utils/userConstants'
@@ -44,45 +44,17 @@ export const useUsers = ({
 			setLoading(true)
 			setError(null)
 
-			// Get Firebase user ID from localStorage
-			const firebaseUser = localStorage.getItem('firebaseUser')
-			const userId = firebaseUser ? JSON.parse(firebaseUser).uid : null
+		const queryParams = new URLSearchParams({
+			page: currentPage.toString(),
+			limit: ITEMS_PER_PAGE.toString(),
+			...(roleFilter !== 'ALL' && { role: roleFilter }),
+			...(searchTerm && { search: searchTerm }),
+		})
 
-			if (!userId) {
-				setError('Authentication required')
-				setLoading(false)
-				return
-			}
+		const response = await api.get(`/api/users?${queryParams}`)
+		const data = response.data
 
-			// Build query params
-			const queryParams = new URLSearchParams({
-				page: currentPage.toString(),
-				limit: ITEMS_PER_PAGE.toString(),
-				...(roleFilter !== 'ALL' && { role: roleFilter }),
-				...(searchTerm && { search: searchTerm }),
-			})
-
-			const path = `/api/users?${queryParams}`
-			console.log('🔍 Fetching users:', { url: path, userId: userId })
-
-			const response = await apiFetch(path, {
-				headers: {
-					'x-user-id': userId,
-				},
-			})
-
-			console.log('📡 Response status:', response.status)
-
-			// ✅ YAXSHILANDI: Response body'ni o'qish
-			const data = await response.json()
-			console.log('📦 Response data:', data)
-
-			if (!response.ok) {
-				// ✅ Backend error message'ni ko'rsatish
-				throw new Error(data.message || `HTTP ${response.status}: Failed to fetch users`)
-			}
-
-			if (data.success) {
+		if (data.success) {
 				setUsers(data.data.users || [])
 				setTotalPages(data.data.pagination?.totalPages || 1)
 

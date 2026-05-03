@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { useDeals } from '@/hooks/useDeals'
 import { Deal } from '@/types/deal.types'
-import { Calendar, Gift, Percent, Tag } from 'lucide-react'
+import { Calendar, Percent, Tag } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useMemo } from 'react'
@@ -40,23 +40,13 @@ function getDaysRemaining(endDate: string | Date): number {
  */
 function DealCard({ deal }: { deal: Deal }) {
 	const router = useRouter()
-	const daysRemaining = getDaysRemaining(deal.endDate)
-	const isExpiringSoon = daysRemaining <= 3
+	const daysRemaining = deal.endsAt ? getDaysRemaining(deal.endsAt) : null
+	const isExpiringSoon = daysRemaining !== null && daysRemaining <= 3 && daysRemaining >= 0
 
-	/**
-	 * Get discount text
-	 */
 	const getDiscountText = () => {
-		switch (deal.discountType) {
-			case 'PERCENTAGE':
-				return `${deal.discountValue}% chegirma`
-			case 'FIXED_AMOUNT':
-				return `${deal.discountValue.toLocaleString()} so'm chegirma`
-			case 'BUY_X_GET_Y':
-				return 'Bitta oling, boshqasini bepul oling!'
-			default:
-				return 'Maxsus taklif'
-		}
+		if (deal.discountType === 'PERCENT') return `${deal.discountValue}% chegirma`
+		if (deal.discountType === 'FIXED') return `${deal.discountValue.toLocaleString()} so'm chegirma`
+		return 'Maxsus taklif'
 	}
 
 	return (
@@ -67,34 +57,27 @@ function DealCard({ deal }: { deal: Deal }) {
 					<div className='relative h-48 overflow-hidden bg-gradient-to-br from-orange-400 to-orange-600'>
 						<Image
 							src={deal.imageUrl}
-							alt={deal.name}
+							alt={deal.title}
 							fill
 							className='object-cover group-hover:scale-110 transition-transform duration-500'
 							sizes='(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw'
 						/>
-						{/* Overlay gradient */}
 						<div className='absolute inset-0 bg-gradient-to-t from-black/40 to-transparent'></div>
 					</div>
 				)}
 
-				{/* Discount Badge (Floating) */}
+				{/* Discount Badge */}
 				<div className='absolute top-4 left-4 bg-red-600 text-white px-4 py-2 rounded-full font-bold text-lg shadow-xl transform rotate-[-5deg] group-hover:rotate-0 transition-transform'>
-					{deal.discountType === 'PERCENTAGE' && (
+					{deal.discountType === 'PERCENT' && (
 						<span className='flex items-center gap-1'>
 							<Percent className='w-5 h-5' />
 							{deal.discountValue}%
 						</span>
 					)}
-					{deal.discountType === 'FIXED_AMOUNT' && (
+					{deal.discountType === 'FIXED' && (
 						<span className='flex items-center gap-1'>
 							<Tag className='w-5 h-5' />
 							-{(deal.discountValue / 1000).toFixed(0)}k
-						</span>
-					)}
-					{deal.discountType === 'BUY_X_GET_Y' && (
-						<span className='flex items-center gap-1'>
-							<Gift className='w-5 h-5' />
-							1+1
 						</span>
 					)}
 				</div>
@@ -109,50 +92,38 @@ function DealCard({ deal }: { deal: Deal }) {
 
 			{/* Content */}
 			<div className='p-6'>
-				{/* Title */}
 				<h3 className='font-bold text-xl text-gray-900 mb-2 line-clamp-2 group-hover:text-orange-600 transition-colors'>
-					{deal.name}
+					{deal.title}
 				</h3>
 
-				{/* Discount Text */}
 				<p className='text-orange-600 font-semibold text-lg mb-3'>
 					{getDiscountText()}
 				</p>
 
-				{/* Description */}
-				<p className='text-gray-600 text-sm mb-4 line-clamp-2'>
-					{deal.description}
-				</p>
-
-				{/* Date Range */}
-				<div className='flex items-center gap-2 text-sm text-gray-500 mb-4'>
-					<Calendar className='w-4 h-4' />
-					<span>
-						{formatDate(deal.startDate)} - {formatDate(deal.endDate)}
-					</span>
-				</div>
-
-				{/* Min Order Amount */}
-				{deal.minOrderAmount && (
-					<p className='text-xs text-gray-500 mb-4'>
-						Minimal buyurtma: {deal.minOrderAmount.toLocaleString()} so&apos;m
+				{deal.description && (
+					<p className='text-gray-600 text-sm mb-4 line-clamp-2'>
+						{deal.description}
 					</p>
 				)}
 
-				{/* CTA Button */}
+				{/* Date Range */}
+				{(deal.startsAt || deal.endsAt) && (
+					<div className='flex items-center gap-2 text-sm text-gray-500 mb-4'>
+						<Calendar className='w-4 h-4' />
+						<span>
+							{deal.startsAt && formatDate(deal.startsAt)}
+							{deal.startsAt && deal.endsAt && ' - '}
+							{deal.endsAt && formatDate(deal.endsAt)}
+						</span>
+					</div>
+				)}
+
 				<Button
 					onClick={() => router.push('#products-section')}
 					className='w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold shadow-lg group-hover:shadow-xl transition-all'
 				>
 					Foydalanish
 				</Button>
-
-				{/* Terms Link */}
-				{deal.terms && (
-					<p className='text-xs text-gray-400 mt-2 text-center'>
-						Shartlar va qoidalar amal qiladi
-					</p>
-				)}
 			</div>
 		</Card>
 	)

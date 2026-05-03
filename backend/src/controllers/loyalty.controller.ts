@@ -4,18 +4,18 @@
 import { Request, Response } from 'express'
 import { POINTS_PER_CURRENCY, REDEEM_POINTS_PER_CURRENCY } from '../constants/loyalty'
 import prisma from '../lib/prisma'
-import type { AuthRequest } from '../middleware/firebase-auth.middleware'
+import type { AuthRequest } from '../middleware/auth.middleware'
 
 /** GET /api/loyalty/balance - Foydalanuvchi ballari */
 export const getBalance = async (req: Request, res: Response) => {
 	try {
 		const authReq = req as AuthRequest
-		const firebaseUid = authReq.userId
-		if (!firebaseUid) {
+		const supabaseId = authReq.userId
+		if (!supabaseId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' })
 		}
 		const user = await prisma.user.findFirst({
-			where: { firebaseUid },
+			where: { supabaseId },
 			select: { id: true, loyaltyPoints: true, totalSpent: true },
 		})
 		if (!user) {
@@ -39,12 +39,12 @@ export const getBalance = async (req: Request, res: Response) => {
 export const getRedeemOptions = async (req: Request, res: Response) => {
 	try {
 		const authReq = req as AuthRequest
-		const firebaseUid = authReq.userId
-		if (!firebaseUid) {
+		const supabaseId = authReq.userId
+		if (!supabaseId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' })
 		}
 		const user = await prisma.user.findFirst({
-			where: { firebaseUid },
+			where: { supabaseId },
 			select: { loyaltyPoints: true },
 		})
 		const points = user?.loyaltyPoints ?? 0
@@ -67,12 +67,12 @@ export const getRedeemOptions = async (req: Request, res: Response) => {
 export const getTransactions = async (req: Request, res: Response) => {
 	try {
 		const authReq = req as AuthRequest
-		const firebaseUid = authReq.userId
-		if (!firebaseUid) {
+		const supabaseId = authReq.userId
+		if (!supabaseId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' })
 		}
 		const user = await prisma.user.findFirst({
-			where: { firebaseUid },
+			where: { supabaseId },
 			select: { id: true },
 		})
 		if (!user) {

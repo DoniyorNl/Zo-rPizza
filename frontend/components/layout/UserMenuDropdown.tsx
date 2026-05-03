@@ -9,7 +9,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import type { User } from 'firebase/auth'
+import type { User } from '@supabase/supabase-js'
 import { CircleUser, Heart, Home, LogOut, Settings, User as UserIcon } from 'lucide-react'
 
 export function UserMenuDropdown({

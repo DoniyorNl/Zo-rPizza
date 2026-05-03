@@ -3,7 +3,7 @@
 
 import { Request, Response } from 'express'
 import prisma from '../lib/prisma'
-import type { AuthRequest } from '../middleware/firebase-auth.middleware'
+import type { AuthRequest } from '../middleware/auth.middleware'
 import {
 	createClickPaymentURL,
 	handleClickPrepare,
@@ -33,9 +33,9 @@ const BACKEND_URL = process.env.BACKEND_URL || `http://localhost:${process.env.P
 
 const isProduction = process.env.NODE_ENV === 'production'
 
-async function getCurrentDbUser(firebaseUid?: string) {
-	if (!firebaseUid) return null
-	return prisma.user.findFirst({ where: { firebaseUid }, select: { id: true } })
+async function getCurrentDbUser(supabaseId?: string) {
+	if (!supabaseId) return null
+	return prisma.user.findFirst({ where: { supabaseId }, select: { id: true } })
 }
 
 // ============================================================================

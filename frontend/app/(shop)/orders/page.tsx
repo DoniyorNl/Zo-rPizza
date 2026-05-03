@@ -92,7 +92,7 @@ export default function OrdersPage() {
 	const fetchOrders = async () => {
 		if (!user) return
 		try {
-			const response = await api.get(`/api/orders/user/${user.uid}`)
+			const response = await api.get(`/api/orders/user/${user.id}`)
 			setOrders(response.data.data || [])
 		} catch (error) {
 			console.error('Error fetching orders:', error)
@@ -184,10 +184,7 @@ export default function OrdersPage() {
 	const handleDownloadInvoice = async (e: React.MouseEvent, orderId: string) => {
 		e.stopPropagation()
 		try {
-			const token = user ? await user.getIdToken() : null
-			const response = await api.get(`/api/orders/${orderId}`, {
-				headers: token ? { Authorization: `Bearer ${token}` } : {},
-			})
+		const response = await api.get(`/api/orders/${orderId}`)
 			const order = response.data.data
 			if (!order || !user) return
 

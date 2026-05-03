@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { buildApiUrl } from '@/lib/apiBaseUrl'
+import { api } from '@/lib/apiClient'
 import { Plus, MapPin, Pencil, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { BranchModal, type Branch } from './components/BranchModal'
@@ -16,13 +16,8 @@ export default function AdminBranchesPage() {
 
 	const fetchBranches = useCallback(async () => {
 		try {
-			const token = typeof window !== 'undefined' ? localStorage.getItem('firebaseToken') : null
-			if (!token) return
-			const res = await fetch(buildApiUrl('/api/branches/admin/all'), {
-				headers: { Authorization: `Bearer ${token}` },
-			})
-			const data = await res.json()
-			if (data?.success && Array.isArray(data.data)) setBranches(data.data)
+			const res = await api.get('/api/branches/admin/all')
+			if (res.data?.success && Array.isArray(res.data.data)) setBranches(res.data.data)
 			else setBranches([])
 		} catch {
 			setBranches([])
@@ -38,12 +33,7 @@ export default function AdminBranchesPage() {
 	const handleDelete = async (id: string, name: string) => {
 		if (!confirm(`"${name}" filialini o'chirish (faolsizlantirish)?`)) return
 		try {
-			const token = localStorage.getItem('firebaseToken')
-			const res = await fetch(buildApiUrl(`/api/branches/${id}`), {
-				method: 'DELETE',
-				headers: { Authorization: `Bearer ${token}` },
-			})
-			if (!res.ok) throw new Error()
+			await api.delete(`/api/branches/${id}`)
 			setToast({ message: 'Filial faolsizlantirildi', type: 'success' })
 			fetchBranches()
 		} catch {

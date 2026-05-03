@@ -39,11 +39,10 @@ jest.mock('@stripe/stripe-js', () => ({
 }))
 
 const mockUser = {
-  uid: 'user-123',
+  id: 'user-123',
   email: 'test@example.com',
-  displayName: 'Test User',
-  getIdToken: jest.fn().mockResolvedValue('fake-token'),
-} as unknown as import('firebase/auth').User
+  user_metadata: { name: 'Test User' },
+} as unknown as import('@supabase/supabase-js').User
 
 const mockCartItem = {
   id: 'item-1',

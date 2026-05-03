@@ -114,23 +114,16 @@ export function getAxiosErrorMessage(error: unknown): string {
 }
 
 /**
- * Firebase error messages
+ * Supabase auth error messages (mapped from error message strings)
  */
-export const FIREBASE_ERROR_MESSAGES: Record<string, string> = {
-	'auth/user-not-found': 'Bu email bilan foydalanuvchi topilmadi',
-	'auth/wrong-password': 'Parol noto\'g\'ri',
-	'auth/invalid-email': 'Email manzil noto\'g\'ri formatda',
-	'auth/user-disabled': 'Bu hisob bloklangan',
-	'auth/too-many-requests': 'Juda ko\'p urinish. Keyinroq qaytadan urinib ko\'ring',
-	'auth/email-already-in-use': 'Bu email allaqachon ro\'yxatdan o\'tgan',
-	'auth/weak-password': 'Parol juda oddiy. Kamida 6 ta belgidan iborat bo\'lishi kerak',
-	'auth/operation-not-allowed': 'Bu amal ta\'qiqlangan',
-	'auth/invalid-credential': 'Email yoki parol noto\'g\'ri',
-	'auth/network-request-failed': 'Internet ulanishini tekshiring.',
-}
-
-export function getFirebaseErrorMessage(error: unknown): string {
-	const err = error as { code?: string; message?: string }
-	const code = err?.code || err?.message
-	return (code ? FIREBASE_ERROR_MESSAGES[code] : undefined) || 'Autentifikatsiya xatosi'
+export function getAuthErrorMessage(error: unknown): string {
+	const msg = (error as { message?: string })?.message ?? ''
+	if (msg.includes('Invalid login credentials')) return "Email yoki parol noto'g'ri"
+	if (msg.includes('Email not confirmed')) return 'Emailingizni tasdiqlang. Pochtangizni tekshiring.'
+	if (msg.includes('Too many requests')) return "Juda ko'p urinish. Keyinroq qaytadan urinib ko'ring"
+	if (msg.includes('User already registered')) return "Bu email allaqachon ro'yxatdan o'tgan"
+	if (msg.includes('Password should be at least')) return "Parol kamida 6 ta belgidan iborat bo'lishi kerak"
+	if (msg.includes('Unable to validate email')) return "Email manzil noto'g'ri formatda"
+	if (msg.includes('network')) return 'Internet ulanishini tekshiring'
+	return msg || "Kirish xatosi. Qaytadan urinib ko'ring"
 }

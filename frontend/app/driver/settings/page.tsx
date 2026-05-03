@@ -26,7 +26,7 @@ import {
 import { useEffect, useState } from 'react'
 
 export default function DriverSettingsPage() {
-	const { backendUser } = useAuth()
+	const { dbUser } = useAuth()
 	const [loading, setLoading] = useState(false)
 	const [success, setSuccess] = useState(false)
 	const [error, setError] = useState<string | null>(null)
@@ -39,17 +39,17 @@ export default function DriverSettingsPage() {
 
 	// Initialize form with user data
 	useEffect(() => {
-		if (backendUser) {
-			setName(backendUser.name || '')
-			setPhone(backendUser.phone || '')
-			const vt = backendUser.vehicleType
+		if (dbUser) {
+			setName(dbUser.name || '')
+			setPhone(dbUser.phone || '')
+			const vt = dbUser.vehicleType
 			setVehicleType(
 				vt === 'car' || vt === 'bike' || vt === 'scooter' ? vt : 'bike'
 			)
-			// Assuming driverStatus is available in backendUser
-			// setDriverStatus(backendUser.driverStatus || 'available')
+			// Assuming driverStatus is available in dbUser
+			// setDriverStatus(dbUser.driverStatus || 'available')
 		}
-	}, [backendUser])
+	}, [dbUser])
 
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault()
@@ -58,28 +58,18 @@ export default function DriverSettingsPage() {
 		setSuccess(false)
 
 		try {
-			const token = localStorage.getItem('firebaseToken')
-			if (!token) throw new Error('Token topilmadi')
+		const { api } = await import('@/lib/apiClient')
+		const res = await api.put(`/api/users/${dbUser?.id}`, {
+			name,
+			phone,
+			vehicleType,
+		})
 
-			const response = await fetch(buildApiUrl(`/api/users/${backendUser?.id}`), {
-				method: 'PUT',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`,
-				},
-				body: JSON.stringify({
-					name,
-					phone,
-					vehicleType,
-					// driverStatus,
-				}),
-			})
+		const data = res.data
 
-			const data = await response.json()
-
-			if (!response.ok) {
-				throw new Error(data.message || 'Xatolik yuz berdi')
-			}
+		if (!res.data.success) {
+			throw new Error(data.message || 'Xatolik yuz berdi')
+		}
 
 			setSuccess(true)
 			setTimeout(() => setSuccess(false), 3000)
@@ -168,7 +158,7 @@ export default function DriverSettingsPage() {
 							</label>
 							<input
 								type='email'
-								value={backendUser?.email || ''}
+								value={dbUser?.email || ''}
 								disabled
 								className='w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500'
 							/>
@@ -282,7 +272,7 @@ export default function DriverSettingsPage() {
 							<div className='flex items-center justify-between py-2'>
 								<span className='text-gray-600'>ID:</span>
 								<span className='text-gray-900 font-mono text-xs'>
-									{backendUser?.id.slice(0, 8)}...
+									{dbUser?.id.slice(0, 8)}...
 								</span>
 							</div>
 						</div>

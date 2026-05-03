@@ -45,15 +45,15 @@ export const createUser = async (req: Request, res: Response) => {
 	const startTime = Date.now()
 
 	try {
-		const { firebaseUid, email, name, phone } = req.body
+		const { supabaseId, email, name, phone } = req.body
 
 		// 1. Validation - Required fields
-		if (!firebaseUid || !email) {
+		if (!supabaseId || !email) {
 			return res.status(400).json({
 				success: false,
 				message: 'Firebase UID and email are required',
 				errors: {
-					firebaseUid: !firebaseUid ? 'Firebase UID is required' : undefined,
+					supabaseId: !supabaseId ? 'Firebase UID is required' : undefined,
 					email: !email ? 'Email is required' : undefined,
 				},
 			})
@@ -77,7 +77,7 @@ export const createUser = async (req: Request, res: Response) => {
 
 		// 4. Check if user already exists (Firebase UID bo'yicha)
 		const existingUser = await prisma.user.findUnique({
-			where: { id: firebaseUid },
+			where: { id: supabaseId },
 		})
 
 		if (existingUser) {
@@ -106,7 +106,7 @@ export const createUser = async (req: Request, res: Response) => {
 		// 6. Create new user
 		const user = await prisma.user.create({
 			data: {
-				id: firebaseUid,
+				id: supabaseId,
 				email: email.toLowerCase().trim(), // Lowercase email
 				name: name?.trim() || email.split('@')[0],
 				phone: phone?.replace(/\s/g, '') || null, // Remove spaces

@@ -83,18 +83,10 @@ export default function DeliveryTrackerPage() {
 
 	async function fetchOrderDetails() {
 		try {
-			const token = localStorage.getItem('firebaseToken')
-			if (!token) throw new Error('Token topilmadi')
+			const { api } = await import('@/lib/apiClient')
+			const response = await api.get(`/api/orders/${orderId}`)
 
-			const response = await fetch(buildApiUrl(`/api/orders/${orderId}`), {
-				headers: {
-					Authorization: `Bearer ${token}`,
-				},
-			})
-
-			if (!response.ok) throw new Error('Buyurtma topilmadi')
-
-			const data = await response.json()
+			const data = response.data
 			if (data.success) {
 				setOrder(data.data)
 
@@ -117,25 +109,9 @@ export default function DeliveryTrackerPage() {
 			if (isUpdatingLocation) return // Prevent multiple simultaneous requests
 
 			try {
-				setIsUpdatingLocation(true)
-				const token = localStorage.getItem('firebaseToken')
-				if (!token) throw new Error('Token topilmadi')
-
-				const response = await fetch(buildApiUrl('/api/tracking/update-location'), {
-					method: 'POST',
-					headers: {
-						Authorization: `Bearer ${token}`,
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify({ lat, lng }),
-				})
-
-				if (!response.ok) {
-					throw new Error("Lokatsiyani yangilab bo'lmadi")
-				}
-
-				const data = await response.json()
-				console.log('Location updated:', data)
+			setIsUpdatingLocation(true)
+			const { api } = await import('@/lib/apiClient')
+			await api.post('/api/tracking/update-location', { lat, lng })
 			} catch (err) {
 				console.error('Update location error:', err)
 			} finally {
@@ -162,34 +138,22 @@ export default function DeliveryTrackerPage() {
 				return
 			}
 
-			// 2. Start delivery on backend
-			const token = localStorage.getItem('firebaseToken')
-			if (!token) throw new Error('Token topilmadi')
-
-			// Get current location first
-			const currentPos = await new Promise<GeolocationPosition>((resolve, reject) => {
-				navigator.geolocation.getCurrentPosition(resolve, reject, {
-					enableHighAccuracy: true,
-					timeout: 10000,
-					maximumAge: 0,
-				})
+		// 2. Start delivery on backend
+		const currentPos = await new Promise<GeolocationPosition>((resolve, reject) => {
+			navigator.geolocation.getCurrentPosition(resolve, reject, {
+				enableHighAccuracy: true,
+				timeout: 10000,
+				maximumAge: 0,
 			})
+		})
 
-			const deliveryLocation = {
-				lat: currentPos.coords.latitude,
-				lng: currentPos.coords.longitude,
-			}
+		const deliveryLocation = {
+			lat: currentPos.coords.latitude,
+			lng: currentPos.coords.longitude,
+		}
 
-			const response = await fetch(buildApiUrl(`/api/tracking/order/${orderId}/start`), {
-				method: 'POST',
-				headers: {
-					Authorization: `Bearer ${token}`,
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ deliveryLocation }),
-			})
-
-			if (!response.ok) throw new Error("Deliveryni boshlab bo'lmadi")
+		const { api } = await import('@/lib/apiClient')
+		await api.post(`/api/tracking/order/${orderId}/start`, { deliveryLocation })
 
 			// 3. Start GPS tracking
 			startTracking()
@@ -210,17 +174,8 @@ export default function DeliveryTrackerPage() {
 		if (!confirm('Deliveryni yakunlaysizmi?')) return
 
 		try {
-			const token = localStorage.getItem('firebaseToken')
-			if (!token) throw new Error('Token topilmadi')
-
-			const response = await fetch(buildApiUrl(`/api/tracking/order/${orderId}/complete`), {
-				method: 'POST',
-				headers: {
-					Authorization: `Bearer ${token}`,
-				},
-			})
-
-			if (!response.ok) throw new Error("Deliveryni yakunlab bo'lmadi")
+		const { api } = await import('@/lib/apiClient')
+		await api.post(`/api/tracking/order/${orderId}/complete`)
 
 			// Stop GPS tracking
 			stopTracking()

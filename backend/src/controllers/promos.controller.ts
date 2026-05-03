@@ -3,7 +3,7 @@
 
 import { Request, Response } from 'express'
 import prisma from '../lib/prisma'
-import type { AuthRequest } from '../middleware/firebase-auth.middleware'
+import type { AuthRequest } from '../middleware/auth.middleware'
 
 /** POST /api/promos/validate - Kodni tekshirish (cart total bilan) */
 export const validatePromoCode = async (req: Request, res: Response) => {
@@ -12,7 +12,7 @@ export const validatePromoCode = async (req: Request, res: Response) => {
 		const authReq = req as AuthRequest
 		const userId = authReq.userId
 		const dbUser = userId
-			? await prisma.user.findFirst({ where: { firebaseUid: userId } })
+			? await prisma.user.findFirst({ where: { supabaseId: userId } })
 			: null
 		const orderTotalNum = Number(orderTotal)
 		if (!code || typeof code !== 'string') {

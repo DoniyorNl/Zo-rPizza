@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { buildApiUrl } from '@/lib/apiBaseUrl'
+import { api } from '@/lib/apiClient'
 import { normalizeDecimal, parseLocationInput } from '@/lib/parseLocation'
 import { MapPin } from 'lucide-react'
 import { useState } from 'react'
@@ -89,49 +89,27 @@ export function BranchModal({ branch, onClose, onSuccess }: BranchModalProps) {
 		setLoading(true)
 		setError(null)
 		try {
-			const token = typeof window !== 'undefined' ? localStorage.getItem('firebaseToken') : null
-			if (!token) {
-				setError('Kirish talab qilinadi')
-				setLoading(false)
-				return
-			}
-			if (branch) {
-				const res = await fetch(buildApiUrl(`/api/branches/${branch.id}`), {
-					method: 'PATCH',
-					headers: {
-						'Content-Type': 'application/json',
-						Authorization: `Bearer ${token}`,
-					},
-					body: JSON.stringify({
-						name: formData.name.trim(),
-						address: formData.address.trim(),
-						lat: normalizeDecimal(String(formData.lat)),
-						lng: normalizeDecimal(String(formData.lng)),
-						phone: formData.phone.trim() || null,
-						isActive: formData.isActive,
-					}),
-				})
-				if (!res.ok) throw new Error((await res.json()).message || 'Xatolik')
-				onSuccess('Filial yangilandi')
-				onClose()
-			} else {
-				const res = await fetch(buildApiUrl('/api/branches'), {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						Authorization: `Bearer ${token}`,
-					},
-					body: JSON.stringify({
-						name: formData.name.trim(),
-						address: formData.address.trim(),
-						lat: normalizeDecimal(String(formData.lat)),
-						lng: normalizeDecimal(String(formData.lng)),
-						phone: formData.phone.trim() || null,
-					}),
-				})
-				if (!res.ok) throw new Error((await res.json()).message || 'Xatolik')
-				onSuccess("Filial qo'shildi")
-				onClose()
+		if (branch) {
+			await api.patch(`/api/branches/${branch.id}`, {
+				name: formData.name.trim(),
+				address: formData.address.trim(),
+				lat: normalizeDecimal(String(formData.lat)),
+				lng: normalizeDecimal(String(formData.lng)),
+				phone: formData.phone.trim() || null,
+				isActive: formData.isActive,
+			})
+			onSuccess('Filial yangilandi')
+			onClose()
+		} else {
+			await api.post('/api/branches', {
+				name: formData.name.trim(),
+				address: formData.address.trim(),
+				lat: normalizeDecimal(String(formData.lat)),
+				lng: normalizeDecimal(String(formData.lng)),
+				phone: formData.phone.trim() || null,
+			})
+			onSuccess("Filial qo'shildi")
+			onClose()
 			}
 		} catch (err) {
 			setError(err instanceof Error ? err.message : 'Xatolik yuz berdi')

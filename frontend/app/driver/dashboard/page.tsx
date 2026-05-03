@@ -48,7 +48,7 @@ interface DashboardStats {
 }
 
 export default function DriverDashboard() {
-	const { backendUser } = useAuth()
+	const { dbUser } = useAuth()
 	const [orders, setOrders] = useState<Order[]>([])
 	const [stats, setStats] = useState<DashboardStats>({
 		todayOrders: 0,
@@ -70,18 +70,10 @@ export default function DriverDashboard() {
 
 	async function fetchOrders() {
 		try {
-			const token = localStorage.getItem('firebaseToken')
-			if (!token) throw new Error('Token topilmadi')
+			const { api } = await import('@/lib/apiClient')
+			const response = await api.get('/api/orders/driver')
 
-			const response = await fetch(buildApiUrl('/api/orders/driver'), {
-				headers: {
-					Authorization: `Bearer ${token}`,
-				},
-			})
-
-			if (!response.ok) throw new Error("Buyurtmalarni yuklab bo'lmadi")
-
-			const data = await response.json()
+			const data = response.data
 
 			if (data.success) {
 				const driverOrders = data.data || []
@@ -152,7 +144,7 @@ export default function DriverDashboard() {
 			{/* Welcome Section */}
 			<div className='bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-8 text-white shadow-xl'>
 				<h1 className='text-3xl font-bold mb-2'>
-					Assalomu alaykum, {backendUser?.name || 'Driver'}! 👋
+					Assalomu alaykum, {dbUser?.name || 'Driver'}! 👋
 				</h1>
 				<p className='text-blue-100'>Bugun {stats.todayOrders} ta buyurtma mavjud</p>
 			</div>

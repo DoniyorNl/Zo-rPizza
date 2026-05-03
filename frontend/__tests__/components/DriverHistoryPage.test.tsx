@@ -45,7 +45,7 @@ describe('DriverHistoryPage', () => {
 		jest.setSystemTime(new Date('2026-02-08T12:00:00Z'))
 		jest.clearAllMocks()
 		global.fetch = jest.fn()
-		const storage: Record<string, string> = { firebaseToken: 'token' }
+		const storage: Record<string, string> = { 'sb-access-token': 'token' }
 		const localStorageMock = {
 			getItem: jest.fn((key: string) => storage[key] ?? null),
 			setItem: jest.fn((key: string, value: string) => {

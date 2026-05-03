@@ -97,18 +97,10 @@ export default function DriverOrdersPage() {
 
 	async function fetchOrders() {
 		try {
-			const token = localStorage.getItem('firebaseToken')
-			if (!token) throw new Error('Token topilmadi')
+			const { api } = await import('@/lib/apiClient')
+			const response = await api.get('/api/orders/driver')
 
-			const response = await fetch(buildApiUrl('/api/orders/driver'), {
-				headers: {
-					Authorization: `Bearer ${token}`,
-				},
-			})
-
-			if (!response.ok) throw new Error("Buyurtmalarni yuklab bo'lmadi")
-
-			const data = await response.json()
+			const data = response.data
 
 			if (data.success) {
 				const driverOrders = data.data || []

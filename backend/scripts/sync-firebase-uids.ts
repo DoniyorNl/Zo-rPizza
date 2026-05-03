@@ -1,37 +1,33 @@
 /**
- * Database userlarni Firebase UID bilan yangilash
+ * Database userlarni Supabase UID bilan yangilash
  * Usage: npx ts-node scripts/sync-firebase-uids.ts
  */
 
 import { PrismaClient } from '@prisma/client'
-import { cert, initializeApp } from 'firebase-admin/app'
-import { getAuth } from 'firebase-admin/auth'
+import { createClient } from '@supabase/supabase-js'
+import * as dotenv from 'dotenv'
 import * as path from 'path'
+
+dotenv.config({ path: path.join(__dirname, '../.env') })
 
 const prisma = new PrismaClient()
 
-// Firebase Admin SDK init
-const serviceAccount = require(
-	path.join(__dirname, '../zo-rpizza-firebase-adminsdk-fbsvc-df7daa6e53.json'),
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
 )
 
-const app = initializeApp({
-	credential: cert(serviceAccount),
-})
-
-const auth = getAuth(app)
-
-async function syncFirebaseUids() {
-	console.log('🔄 Database userlarni Firebase UID bilan sinxronlash...\n')
+async function syncSupabaseIds() {
+	console.log('🔄 Database userlarni Supabase UID bilan sinxronlash...\n')
 
 	try {
-		// Get all users from database
 		const dbUsers = await prisma.user.findMany({
 			select: {
 				id: true,
 				email: true,
 				name: true,
-				firebaseUid: true,
+				supabaseId: true,
 			},
 		})
 
@@ -42,30 +38,31 @@ async function syncFirebaseUids() {
 
 		for (const dbUser of dbUsers) {
 			try {
-				// Check if already has firebaseUid
-				if (dbUser.firebaseUid) {
-					console.log(`⏭️  ${dbUser.email} - Allaqachon UID bor: ${dbUser.firebaseUid}`)
+				if (dbUser.supabaseId) {
+					console.log(`⏭️  ${dbUser.email} - Allaqachon UID bor: ${dbUser.supabaseId}`)
 					skipped++
 					continue
 				}
 
-				// Get Firebase user by email
-				const firebaseUser = await auth.getUserByEmail(dbUser.email)
+				// Get Supabase user by email
+				const { data, error } = await supabaseAdmin.auth.admin.listUsers()
+				if (error) throw error
 
-				// Update database with Firebase UID
+				const supabaseUser = data?.users?.find(u => u.email === dbUser.email)
+				if (!supabaseUser) {
+					console.log(`⚠️  ${dbUser.email} - Supabase da topilmadi`)
+					continue
+				}
+
 				await prisma.user.update({
 					where: { id: dbUser.id },
-					data: { firebaseUid: firebaseUser.uid },
+					data: { supabaseId: supabaseUser.id },
 				})
 
-				console.log(`✅ ${dbUser.email} - UID yangilandi: ${firebaseUser.uid}`)
+				console.log(`✅ ${dbUser.email} - UID yangilandi: ${supabaseUser.id}`)
 				updated++
 			} catch (error: any) {
-				if (error.code === 'auth/user-not-found') {
-					console.log(`⚠️  ${dbUser.email} - Firebase da topilmadi`)
-				} else {
-					console.error(`❌ ${dbUser.email} - Xatolik:`, error.message)
-				}
+				console.error(`❌ ${dbUser.email} - Xatolik:`, error.message)
 			}
 		}
 
@@ -83,7 +80,7 @@ async function syncFirebaseUids() {
 	}
 }
 
-syncFirebaseUids().catch(error => {
+syncSupabaseIds().catch(error => {
 	console.error('❌ Fatal error:', error)
 	process.exit(1)
 })

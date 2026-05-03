@@ -114,7 +114,7 @@ function getStatusTone(status: string) {
 }
 
 export default function DriverHistoryPage() {
-	const { backendUser } = useAuth()
+	const { dbUser } = useAuth()
 	const [orders, setOrders] = useState<Order[]>([])
 	const [filteredOrders, setFilteredOrders] = useState<Order[]>([])
 	const [loading, setLoading] = useState(true)
@@ -195,19 +195,12 @@ export default function DriverHistoryPage() {
 			const controller = new AbortController()
 			abortRef.current = controller
 
-			const token = localStorage.getItem('firebaseToken')
-			if (!token) throw new Error('Token topilmadi')
+		const { api } = await import('@/lib/apiClient')
+		const response = await api.get('/api/orders/driver', {
+			signal: controller.signal,
+		})
 
-			const response = await fetch(buildApiUrl('/api/orders/driver'), {
-				headers: {
-					Authorization: `Bearer ${token}`,
-				},
-				signal: controller.signal,
-			})
-
-			if (!response.ok) throw new Error("Tarixni yuklab bo'lmadi")
-
-			const data = await response.json()
+		const data = response.data
 
 			if (data.success) {
 				const driverOrders = data.data || []
@@ -391,7 +384,7 @@ export default function DriverHistoryPage() {
 			<body>
 				<h1>Buyurtmalar tarixi</h1>
 				<div class="meta">
-					<div>Haydovchi: ${escapeHtml(backendUser?.name ?? 'Noma’lum')}</div>
+					<div>Haydovchi: ${escapeHtml(dbUser?.name ?? 'Noma’lum')}</div>
 					<div>Holat: ${escapeHtml(statusLabel)}</div>
 					<div>Davr: ${escapeHtml(rangeLabel)}</div>
 					<div>Eksport vaqti: ${escapeHtml(now.toLocaleString('uz-UZ'))}</div>
@@ -504,8 +497,8 @@ export default function DriverHistoryPage() {
 						<div>
 							<h1 className='text-3xl font-bold mb-2'>Buyurtmalar Tarixi</h1>
 							<p className='text-green-100'>Yetkazib berilgan buyurtmalar va daromad</p>
-							{backendUser?.name && (
-								<p className='text-green-200 text-sm mt-2'>Salom, {backendUser.name}</p>
+							{dbUser?.name && (
+								<p className='text-green-200 text-sm mt-2'>Salom, {dbUser.name}</p>
 							)}
 						</div>
 						<CheckCircle className='w-16 h-16 opacity-50' />

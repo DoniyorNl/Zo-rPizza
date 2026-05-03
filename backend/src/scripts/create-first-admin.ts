@@ -5,11 +5,11 @@
 // 📝 USAGE: npx tsx src/scripts/create-first-admin.ts your@email.com
 // =====================================
 
-import { auth } from '../config/firebase'
+import 'dotenv/config'
+import { supabaseAdmin } from '../config/supabase'
 import prisma from '../lib/prisma'
 
 async function createFirstAdmin() {
-	// Email ni command line dan olish
 	const adminEmail = process.argv[2]
 
 	if (!adminEmail) {
@@ -24,21 +24,24 @@ async function createFirstAdmin() {
 
 	try {
 		// ============================================
-		// 1. FIREBASE DAN USER TOPISH
+		// 1. SUPABASE DAN USER TOPISH
 		// ============================================
-		console.log('1️⃣ Firebase dan user qidirilmoqda...')
-		const firebaseUser = await auth.getUserByEmail(adminEmail)
-		console.log(`✅ Topildi: ${firebaseUser.uid}`)
+		console.log('1️⃣ Supabase dan user qidirilmoqda...')
+		const { data: listData } = await supabaseAdmin.auth.admin.listUsers()
+		const supabaseUser = listData?.users?.find(u => u.email === adminEmail)
+		if (!supabaseUser) {
+			throw Object.assign(new Error(`User not found: ${adminEmail}`), { code: 'auth/user-not-found' })
+		}
+		console.log(`✅ Topildi: ${supabaseUser.id}`)
 
 		// ============================================
-		// 2. FIREBASE CUSTOM CLAIMS
+		// 2. SUPABASE APP METADATA
 		// ============================================
-		console.log('\n2️⃣ Firebase custom claims sozlanmoqda...')
-		await auth.setCustomUserClaims(firebaseUser.uid, {
-			admin: true,
-			role: 'admin',
+		console.log('\n2️⃣ Supabase app_metadata sozlanmoqda...')
+		await supabaseAdmin.auth.admin.updateUserById(supabaseUser.id, {
+			app_metadata: { role: 'admin' },
 		})
-		console.log('✅ Custom claims sozlandi')
+		console.log('✅ app_metadata sozlandi')
 
 		// ============================================
 		// 3. DATABASE UPSERT
@@ -46,16 +49,16 @@ async function createFirstAdmin() {
 		console.log('\n3️⃣ Database yangilanmoqda...')
 
 		const dbUser = await prisma.user.upsert({
-			where: { id: firebaseUser.uid },
+			where: { supabaseId: supabaseUser.id },
 			update: {
 				role: 'ADMIN',
 				isBlocked: false,
 			},
 			create: {
-				id: firebaseUser.uid,
-				email: firebaseUser.email!,
-				name: firebaseUser.displayName || 'Admin',
-				password: null, // Firebase auth, password yo'q
+				supabaseId: supabaseUser.id,
+				email: supabaseUser.email!,
+				name: supabaseUser.user_metadata?.name || supabaseUser.user_metadata?.full_name || 'Admin',
+				password: null,
 				role: 'ADMIN',
 				isBlocked: false,
 			},
@@ -69,8 +72,9 @@ async function createFirstAdmin() {
 		console.log('\n' + '='.repeat(60))
 		console.log('🎉 MUVAFFAQIYATLI!')
 		console.log('='.repeat(60))
-		console.log('\n📊 User Ma\'lumotlari:')
-		console.log('   ID (Firebase UID):', dbUser.id)
+		console.log("\n📊 User Ma'lumotlari:")
+		console.log('   ID:', dbUser.id)
+		console.log('   Supabase UID:', dbUser.supabaseId)
 		console.log('   Email:', dbUser.email)
 		console.log('   Name:', dbUser.name)
 		console.log('   Role:', dbUser.role)
@@ -81,8 +85,8 @@ async function createFirstAdmin() {
 		console.error('\n❌ XATOLIK:', error.message)
 
 		if (error.code === 'auth/user-not-found') {
-			console.log('\n💡 Bu email bilan user topilmadi.')
-			console.log('   Avval saytda ro\'yxatdan o\'ting: http://localhost:3000/register')
+			console.log("\n💡 Bu email bilan user topilmadi.")
+			console.log("   Avval saytda ro'yxatdan o'ting: http://localhost:3000/register")
 		}
 
 		process.exit(1)
@@ -91,5 +95,4 @@ async function createFirstAdmin() {
 	}
 }
 
-// Script ni ishga tushirish
 createFirstAdmin()

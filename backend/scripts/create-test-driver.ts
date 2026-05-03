@@ -1,8 +1,17 @@
 import { PrismaClient } from '@prisma/client'
-import * as admin from 'firebase-admin'
-import '../src/config/firebase' // Firebase Admin SDK initialized
+import { createClient } from '@supabase/supabase-js'
+import * as dotenv from 'dotenv'
+import * as path from 'path'
+
+dotenv.config({ path: path.join(__dirname, '../.env') })
 
 const prisma = new PrismaClient()
+
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+)
 
 async function main() {
 	try {
@@ -10,26 +19,27 @@ async function main() {
 		const password = '123456789'
 		const displayName = 'Test Driver'
 
-		console.log('🔧 Creating Firebase user...')
+		console.log('🔧 Creating Supabase user...')
 
-		// Firebase user yaratish
-		let firebaseUser
-		try {
-			firebaseUser = await admin.auth().createUser({
+		let supabaseUserId: string
+
+		// Check if user already exists in Supabase
+		const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers()
+		const existingUser = existingUsers?.users?.find(u => u.email === email)
+
+		if (existingUser) {
+			console.log('⚠️ Supabase user already exists:', existingUser.id)
+			supabaseUserId = existingUser.id
+		} else {
+			const { data, error } = await supabaseAdmin.auth.admin.createUser({
 				email,
 				password,
-				displayName,
-				emailVerified: true,
+				user_metadata: { name: displayName },
+				email_confirm: true,
 			})
-			console.log('✅ Firebase user created:', firebaseUser.uid)
-		} catch (error: any) {
-			if (error.code === 'auth/email-already-exists') {
-				console.log('⚠️ Firebase user already exists, fetching...')
-				firebaseUser = await admin.auth().getUserByEmail(email)
-				console.log('✅ Firebase user found:', firebaseUser.uid)
-			} else {
-				throw error
-			}
+			if (error) throw error
+			supabaseUserId = data.user.id
+			console.log('✅ Supabase user created:', supabaseUserId)
 		}
 
 		// Database ga yozish
@@ -37,7 +47,7 @@ async function main() {
 		const dbUser = await prisma.user.upsert({
 			where: { email },
 			update: {
-				firebaseUid: firebaseUser.uid,
+				supabaseId: supabaseUserId,
 				role: 'DELIVERY',
 				name: displayName,
 				isDriver: true,
@@ -45,7 +55,7 @@ async function main() {
 				vehicleType: 'car',
 			},
 			create: {
-				firebaseUid: firebaseUser.uid,
+				supabaseId: supabaseUserId,
 				email,
 				name: displayName,
 				role: 'DELIVERY',
@@ -61,7 +71,7 @@ async function main() {
 		console.log('🔑 Parol:', password)
 		console.log('👤 Ism:', displayName)
 		console.log('🚗 Role:', dbUser.role)
-		console.log('🆔 Firebase UID:', firebaseUser.uid)
+		console.log('🆔 Supabase UID:', supabaseUserId)
 		console.log('💾 Database ID:', dbUser.id)
 		console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 		console.log('\n🎯 LOGIN QILING:')

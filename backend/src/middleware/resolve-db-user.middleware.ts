@@ -1,20 +1,18 @@
 /**
- * Firebase UID dan Database user ni resolve qilish
- * authenticateFirebaseToken dan keyin ishlatiladi
- * req.userId (firebase uid) → req.user (db user: id, role)
+ * Supabase ID dan Database user ni resolve qilish
+ * authenticateFirebaseToken / authenticateToken dan keyin ishlatiladi
+ * req.userId (supabase uid) → req.user (db user: id, role)
  */
 import { NextFunction, Request, Response } from 'express'
 import prisma from '../lib/prisma'
 
 export const resolveDbUser = async (req: Request, res: Response, next: NextFunction) => {
 	try {
-		const firebaseUid = (req as any).userId
-		if (!firebaseUid) {
-			return next()
-		}
+		const supabaseId = (req as any).userId
+		if (!supabaseId) return next()
 
 		const dbUser = await prisma.user.findFirst({
-			where: { firebaseUid },
+			where: { supabaseId },
 			select: { id: true, role: true, email: true, name: true },
 		})
 

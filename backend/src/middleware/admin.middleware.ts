@@ -101,10 +101,10 @@ export const adminOnly = async (req: Request, res: Response, next: NextFunction)
 			})
 		}
 
-		// 3. User'ni database'dan olish (id yoki firebaseUid bo'yicha)
+		// 3. User'ni database'dan olish (id yoki supabaseId bo'yicha)
 		const user = await prisma.user.findFirst({
 			where: {
-				OR: [{ id: userId }, { firebaseUid: userId }],
+				OR: [{ id: userId }, { supabaseId: userId }],
 			},
 			select: {
 				id: true,

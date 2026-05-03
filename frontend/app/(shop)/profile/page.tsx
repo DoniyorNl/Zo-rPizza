@@ -137,10 +137,7 @@ export default function ProfilePage() {
 
 	const fetchProfileData = async () => {
 		try {
-			const token = await user?.getIdToken()
-			const response = await api.get('/api/profile/stats', {
-				headers: { Authorization: `Bearer ${token}` },
-			})
+			const response = await api.get('/api/profile/stats')
 			setProfileData(response.data.data)
 			setEmailNotifications(response.data.data?.user?.emailNotificationsEnabled !== false)
 			setEditedProfile({
@@ -160,10 +157,7 @@ export default function ProfilePage() {
 
 	const fetchAddresses = async () => {
 		try {
-			const token = await user?.getIdToken()
-			const response = await api.get('/api/profile/addresses', {
-				headers: { Authorization: `Bearer ${token}` },
-			})
+			const response = await api.get('/api/profile/addresses')
 			setAddresses(response.data.data)
 		} catch (error) {
 			console.error('Error fetching addresses:', error)
@@ -172,10 +166,7 @@ export default function ProfilePage() {
 
 	const handleUpdateProfile = async () => {
 		try {
-			const token = await user?.getIdToken()
-			await api.put('/api/profile', editedProfile, {
-				headers: { Authorization: `Bearer ${token}` },
-			})
+			await api.put('/api/profile', editedProfile)
 			await fetchProfileData()
 			setEditMode(false)
 		} catch (error) {
@@ -186,10 +177,7 @@ export default function ProfilePage() {
 
 	const handleAddAddress = async () => {
 		try {
-			const token = await user?.getIdToken()
-			await api.post('/api/profile/addresses', newAddress, {
-				headers: { Authorization: `Bearer ${token}` },
-			})
+			await api.post('/api/profile/addresses', newAddress)
 			await fetchAddresses()
 			setShowAddressForm(false)
 			setNewAddress({
@@ -211,10 +199,7 @@ export default function ProfilePage() {
 	const handleToggleEmailNotifications = async (enabled: boolean) => {
 		setNotificationUpdating(true)
 		try {
-			const token = await user?.getIdToken()
-			await api.patch('/api/profile', { emailNotificationsEnabled: enabled }, {
-				headers: { Authorization: `Bearer ${token}` },
-			})
+			await api.patch('/api/profile', { emailNotificationsEnabled: enabled })
 			setEmailNotifications(enabled)
 			setProfileData(prev => prev ? {
 				...prev,
@@ -232,10 +217,7 @@ export default function ProfilePage() {
 		if (!confirm('Manzilni o\'chirmoqchimisiz?')) return
 
 		try {
-			const token = await user?.getIdToken()
-			await api.delete(`/api/profile/addresses/${id}`, {
-				headers: { Authorization: `Bearer ${token}` },
-			})
+			await api.delete(`/api/profile/addresses/${id}`)
 			await fetchAddresses()
 		} catch (error) {
 			console.error('Error deleting address:', error)

@@ -3,7 +3,7 @@
 
 import { Request, Response } from 'express'
 import prisma from '../lib/prisma'
-import type { AuthRequest } from '../middleware/firebase-auth.middleware'
+import type { AuthRequest } from '../middleware/auth.middleware'
 
 // ============================================================================
 // SUBSCRIBE TO PUSH NOTIFICATIONS

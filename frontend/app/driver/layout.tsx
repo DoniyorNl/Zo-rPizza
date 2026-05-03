@@ -25,7 +25,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 
 export default function DriverLayout({ children }: { children: React.ReactNode }) {
-	const { user, backendUser, logout, loading } = useAuth()
+	const { user, dbUser, signOut, loading } = useAuth()
 	const router = useRouter()
 	const [showUserMenu, setShowUserMenu] = useState(false)
 	const dropdownRef = useRef<HTMLDivElement>(null)
@@ -33,7 +33,7 @@ export default function DriverLayout({ children }: { children: React.ReactNode }
 		typeof window !== 'undefined' &&
 		process.env.NEXT_PUBLIC_E2E_BYPASS_AUTH === 'true' &&
 		process.env.NODE_ENV !== 'production'
-	const isAuthorized = backendUser?.role === 'DELIVERY' && (user || shouldBypassAuth)
+	const isAuthorized = dbUser?.role === 'DELIVERY' && (user || shouldBypassAuth)
 
 	// Auth Guard: faqat DELIVERY role kirishi mumkin
 	useEffect(() => {
@@ -73,7 +73,7 @@ export default function DriverLayout({ children }: { children: React.ReactNode }
 
 	const handleLogout = async () => {
 		try {
-			await logout()
+			await signOut()
 			router.push('/login')
 		} catch (error) {
 			console.error('Logout error:', error)
@@ -111,11 +111,11 @@ export default function DriverLayout({ children }: { children: React.ReactNode }
 								</div>
 								<div className='hidden sm:block text-left'>
 									<p className='text-sm font-semibold text-gray-900'>
-										{backendUser?.name || 'Driver'}
+										{dbUser?.name || 'Driver'}
 									</p>
 									<p className='text-xs text-gray-600 flex items-center'>
 										<MapPin className='w-3 h-3 mr-1' />
-										{backendUser?.vehicleType || 'Mototsikl'}
+										{dbUser?.vehicleType || 'Mototsikl'}
 									</p>
 								</div>
 								<ChevronDown
@@ -129,12 +129,12 @@ export default function DriverLayout({ children }: { children: React.ReactNode }
 									{/* User Info */}
 									<div className='px-4 py-3 border-b border-gray-100'>
 										<p className='text-sm font-semibold text-gray-900'>
-											{backendUser?.name || 'Driver'}
-										</p>
-										<p className='text-xs text-gray-500'>{backendUser?.email}</p>
-										<p className='text-xs text-gray-500 mt-1 flex items-center'>
-											<MapPin className='w-3 h-3 mr-1' />
-											Vehicle: {backendUser?.vehicleType || 'Mototsikl'}
+										{dbUser?.name || 'Driver'}
+									</p>
+									<p className='text-xs text-gray-500'>{dbUser?.email}</p>
+									<p className='text-xs text-gray-500 mt-1 flex items-center'>
+										<MapPin className='w-3 h-3 mr-1' />
+										Vehicle: {dbUser?.vehicleType || 'Mototsikl'}
 										</p>
 									</div>
 

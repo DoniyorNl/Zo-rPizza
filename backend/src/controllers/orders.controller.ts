@@ -4,7 +4,7 @@
 import { Prisma } from '@prisma/client'
 import { Request, Response } from 'express'
 import prisma from '../lib/prisma'
-import type { AuthRequest } from '../middleware/firebase-auth.middleware'
+import type { AuthRequest } from '../middleware/auth.middleware'
 import {
 	sendOrderConfirmationEmail,
 	sendOrderStatusUpdateEmail,
@@ -66,17 +66,17 @@ export const getAllOrders = async (req: Request, res: Response) => {
 // GET /api/orders/user/:userId - User buyurtmalari (Firebase UID orqali; faqat o‘zi yaratgan buyurtmalar)
 export const getUserOrders = async (req: Request, res: Response) => {
 	const authReq = req as AuthRequest
-	const firebaseUid = authReq.userId ?? getParamString((req.params as any).userId)
-	if (!firebaseUid) {
+	const supabaseId = authReq.userId ?? getParamString((req.params as any).userId)
+	if (!supabaseId) {
 		return res.status(400).json({ success: false, message: 'Invalid userId' })
 	}
-	if (authReq.userId && authReq.userId !== firebaseUid) {
+	if (authReq.userId && authReq.userId !== supabaseId) {
 		return res.status(403).json({ success: false, message: 'Forbidden' })
 	}
 
 	try {
 		const dbUser = await prisma.user.findFirst({
-			where: { firebaseUid },
+			where: { supabaseId },
 		})
 		if (!dbUser) {
 			return res.status(200).json({ success: true, count: 0, data: [] })
@@ -225,11 +225,11 @@ export const createOrder = async (req: Request, res: Response) => {
 	if (userId) {
 		// Registered user - find or create user
 		user = await prisma.user.findUnique({
-			where: { firebaseUid: userId },
+			where: { supabaseId: userId },
 		})
 
 		if (!user) {
-			// Email bilan ham tekshirish (agar email mavjud bo'lsa, firebaseUid ni update qilish)
+			// Email bilan ham tekshirish (agar email mavjud bo'lsa, supabaseId ni update qilish)
 			const email = req.body.email?.trim().toLowerCase() || ''
 			
 			// Email validation: must be valid format
@@ -245,11 +245,11 @@ export const createOrder = async (req: Request, res: Response) => {
 			const existingUser = await prisma.user.findUnique({ where: { email } })
 
 			if (existingUser) {
-				// Mavjud user'ga firebaseUid qo'shish
+				// Mavjud user'ga supabaseId qo'shish
 				user = await prisma.user.update({
 					where: { id: existingUser.id },
 					data: {
-						firebaseUid: userId,
+						supabaseId: userId,
 						name: req.body.name || existingUser.name,
 						phone: deliveryPhone || existingUser.phone,
 					},
@@ -258,7 +258,7 @@ export const createOrder = async (req: Request, res: Response) => {
 				// Agar user database'da yo'q bo'lsa, avtomatik yaratish
 				user = await prisma.user.create({
 					data: {
-						firebaseUid: userId,
+						supabaseId: userId,
 						email,
 						name: req.body.name || 'User',
 						phone: deliveryPhone,
@@ -841,13 +841,13 @@ export const deleteOrder = async (req: Request, res: Response) => {
 		}
 
 		const authReq = req as AuthRequest
-		const firebaseUid = authReq.userId
-		if (!firebaseUid) {
+		const supabaseId = authReq.userId
+		if (!supabaseId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' })
 		}
 
 		const dbUser = await prisma.user.findFirst({
-			where: { firebaseUid },
+			where: { supabaseId },
 		})
 		if (!dbUser) {
 			return res.status(403).json({ success: false, message: 'Forbidden' })
@@ -902,11 +902,11 @@ export const reorder = async (req: Request, res: Response) => {
 	try {
 		const id = getParamString((req.params as any).id)
 		const authReq = req as AuthRequest
-		const firebaseUid = authReq.userId
-		if (!id || !firebaseUid) {
+		const supabaseId = authReq.userId
+		if (!id || !supabaseId) {
 			return res.status(400).json({ success: false, message: 'Order id and auth required' })
 		}
-		const dbUser = await prisma.user.findFirst({ where: { firebaseUid } })
+		const dbUser = await prisma.user.findFirst({ where: { supabaseId } })
 		if (!dbUser) {
 			return res.status(403).json({ success: false, message: 'Forbidden' })
 		}
@@ -1026,16 +1026,16 @@ export const reorder = async (req: Request, res: Response) => {
 export const getDriverOrders = async (req: Request, res: Response) => {
 	try {
 		const authReq = req as AuthRequest
-		const firebaseUid = authReq.userId
+		const supabaseId = authReq.userId
 
-		if (!firebaseUid) {
+		if (!supabaseId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' })
 		}
 
 		// Find driver in database
 		const driver = await prisma.user.findFirst({
 			where: {
-				firebaseUid,
+				supabaseId,
 				role: 'DELIVERY',
 			},
 		})

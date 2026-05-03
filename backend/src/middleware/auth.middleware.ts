@@ -1,11 +1,22 @@
 // backend/src/middleware/auth.middleware.ts
-import { Request, Response, NextFunction } from 'express';
-import { auth } from '../config/firebase';
+import { Request, Response, NextFunction } from 'express'
+import jwt from 'jsonwebtoken'
 
-// Custom Request tipi (userId qo'shish uchun)
 export interface AuthRequest extends Request {
-  userId?: string;
-  userEmail?: string;
+  userId?: string
+  userEmail?: string
+  userRole?: string
+}
+
+const verifySupabaseToken = (token: string): { sub: string; email?: string } | null => {
+  try {
+    const secret = process.env.SUPABASE_JWT_SECRET
+    if (!secret) throw new Error('SUPABASE_JWT_SECRET not set')
+    const decoded = jwt.verify(token, secret) as { sub: string; email?: string; role?: string }
+    return decoded
+  } catch {
+    return null
+  }
 }
 
 export const authenticateToken = async (
@@ -13,67 +24,27 @@ export const authenticateToken = async (
   res: Response,
   next: NextFunction
 ) => {
-  try {
-    // Header dan token olish
-    const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.split('Bearer ')[1];
+  const authHeader = req.headers.authorization
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.split('Bearer ')[1] : null
 
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: 'Token topilmadi. Tizimga kiring.'
-      });
-    }
-
-    // Firebase Admin SDK orqali tokenni tekshirish
-    const decodedToken = await auth.verifyIdToken(token);
-    
-    // User ma'lumotlarini requestga qo'shish
-    req.userId = decodedToken.uid;
-    req.userEmail = decodedToken.email;
-
-    next();
-  } catch (error: any) {
-    console.error('Auth middleware xatosi:', error.message);
-    
-    return res.status(403).json({
-      success: false,
-      message: 'Token yaroqsiz yoki muddati tugagan.'
-    });
+  if (!token) {
+    return res.status(401).json({ success: false, message: "Token topilmadi. Tizimga kiring." })
   }
-};
 
-// Admin rolini tekshirish (kelajakda kerak bo'ladi)
-export const requireAdmin = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    if (!req.userId) {
-      return res.status(401).json({
-        success: false,
-        message: 'Autentifikatsiya talab qilinadi.'
-      });
-    }
-
-    // Firebase dan user ma'lumotlarini olish
-    const user = await auth.getUser(req.userId);
-    
-    // Custom claims orqali admin ekanligini tekshirish
-    if (!user.customClaims?.admin) {
-      return res.status(403).json({
-        success: false,
-        message: 'Sizda admin huquqlari yo\'q.'
-      });
-    }
-
-    next();
-  } catch (error: any) {
-    console.error('Admin middleware xatosi:', error.message);
-    return res.status(403).json({
-      success: false,
-      message: 'Admin huquqlarini tekshirishda xatolik.'
-    });
+  const decoded = verifySupabaseToken(token)
+  if (!decoded) {
+    return res.status(401).json({ success: false, message: "Token yaroqsiz yoki muddati tugagan." })
   }
-};
+
+  req.userId = decoded.sub
+  req.userEmail = decoded.email
+  next()
+}
+
+export const requireAdmin = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  if (!req.userId) {
+    return res.status(401).json({ success: false, message: "Autentifikatsiya talab qilinadi." })
+  }
+  // Role check handled by admin.middleware.ts
+  next()
+}

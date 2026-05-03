@@ -91,30 +91,27 @@ export default function CheckoutForm() {
 				deliveryLng = selectedBranch.lng
 			}
 
-			let token: string | undefined
-			if (user) token = await user.getIdToken()
+		const orderData: Record<string, unknown> = {
+			items: items.map(item => ({
+				productId: item.productId,
+				variationId: item.variationId,
+				size: item.size,
+				quantity: item.quantity,
+				addedToppingIds: item.addedToppingIds,
+				removedToppingIds: item.removedToppingIds,
+				halfProductId: item.halfProductId,
+			})),
+			paymentMethod,
+			deliveryType: method,
+			deliveryAddress: effectiveAddress,
+			deliveryPhone,
+		}
 
-			const orderData: Record<string, unknown> = {
-				items: items.map(item => ({
-					productId: item.productId,
-					variationId: item.variationId,
-					size: item.size,
-					quantity: item.quantity,
-					addedToppingIds: item.addedToppingIds,
-					removedToppingIds: item.removedToppingIds,
-					halfProductId: item.halfProductId,
-				})),
-				paymentMethod,
-				deliveryType: method,
-				deliveryAddress: effectiveAddress,
-				deliveryPhone,
-			}
-
-			if (user) {
-				orderData.userId = user.uid
-				orderData.email = email || user.email
-				orderData.name = user.displayName || 'User'
-			} else {
+		if (user) {
+			orderData.userId = user.id
+			orderData.email = email || user.email
+			orderData.name = user.user_metadata?.name || user.user_metadata?.full_name || 'User'
+		} else {
 				orderData.name = guestName
 				orderData.email = email
 				orderData.customerName = guestName
