@@ -1,6 +1,6 @@
 /**
- * Supabase ID dan Database user ni resolve qilish
- * authenticateFirebaseToken / authenticateToken dan keyin ishlatiladi
+ * Supabase ID dan Database user ni resolve qilish.
+ * authenticateToken dan keyin ishlatiladi.
  * req.userId (supabase uid) → req.user (db user: id, role)
  */
 import { NextFunction, Request, Response } from 'express'

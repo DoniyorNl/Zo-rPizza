@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import { validatePromoCode } from '../../src/controllers/promos.controller'
 import { prismaMock, generateMockUser } from '../setup'
-import type { AuthRequest } from '../../src/middleware/firebase-auth.middleware'
+import type { AuthRequest } from '../../src/middleware/auth.middleware'
 
 const mockReq = (body: { code?: string; orderTotal?: number }, userId?: string): Partial<AuthRequest> =>
 	({ body, userId } as Partial<AuthRequest>)

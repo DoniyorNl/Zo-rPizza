@@ -42,8 +42,7 @@ import toppingsRoutes from './routes/toppings.routes'
 import trackingRoutes from './routes/tracking.routes'
 import usersRoutes from './routes/users.routes'
 
-// 🆕 AUTH ROUTES (Supabase)
-import firebaseAuthRoutes from './routes/firebase-auth.routes'
+import authRoutes from './routes/auth.routes'
 
 export const app: Express = express()
 const PORT = process.env.PORT || 5001
@@ -116,7 +115,7 @@ const analyticsLimiter = rateLimit({
 	legacyHeaders: false,
 })
 
-// Auth limiter (Firebase auth endpoints uchun)
+// Auth limiter
 const authLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
 	max: isDevelopment ? 500 : 100,
@@ -195,7 +194,7 @@ app.get('/api', (_req: Request, res: Response) => {
 			{
 				method: 'GET',
 				path: '/api/auth/verify-token',
-				description: 'Verify Firebase token',
+				description: 'Verify token',
 				protected: true,
 			},
 			{
@@ -235,8 +234,7 @@ app.get('/favicon.ico', (_req: Request, res: Response) => {
 // API ROUTES
 // ============================================
 
-// 🆕 Supabase Authentication Routes (Auth limiter bilan)
-app.use('/api/auth', authLimiter, firebaseAuthRoutes)
+app.use('/api/auth', authLimiter, authRoutes)
 
 // Dashboard & Analytics
 app.use('/api/dashboard', dashboardLimiter, dashboardRoutes)

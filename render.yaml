@@ -1,32 +1,22 @@
 # =============================================================================
 # Zo-rPizza - Render Blueprint
 # =============================================================================
-# Bu fayl Render'da avtomatik deploy uchun ishlatiladi.
-# Dashboard: https://dashboard.render.com
-#
-# Qanday ishlatish:
-# 1. render.com ga kiring
-# 2. New > Blueprint
-# 3. GitHub reponi ulang
-# 4. render.yaml avtomatik topiladi
-# =============================================================================
 
 services:
   # ---------------------------------------------------------------------------
   # BACKEND (Express + Prisma)
+  # rootDir: backend — barcha commandlar backend/ papkasidan ishlaydi
   # ---------------------------------------------------------------------------
   - type: web
     name: zo-rpizza-backend
     plan: free
     runtime: node
-
-    # Monorepo: faqat backend papkasida o'zgarish bo'lsa deploy
     rootDir: backend
     buildFilter:
       paths:
         - backend/**
 
-    buildCommand: pnpm install --filter zor-pizza-backend && pnpm --filter zor-pizza-backend run prisma:migrate
+    buildCommand: pnpm install
     startCommand: pnpm start
 
     envVars:
@@ -34,36 +24,9 @@ services:
         value: production
       - key: PORT
         generateValue: true
-      # Quyidagilarni Render Dashboard > Environment da qo'lda qo'shing:
-      # - DATABASE_URL, DIRECT_URL (PostgreSQL)
-      # - FRONTEND_URL yoki FRONTEND_URLS (frontend URL)
-      # - SUPABASE_URL (Supabase project URL)
-      # - SUPABASE_SERVICE_ROLE_KEY (Supabase service role key)
-      # - SUPABASE_JWT_SECRET (Supabase JWT secret)
-
-  # ---------------------------------------------------------------------------
-  # FRONTEND (Next.js)
-  # ---------------------------------------------------------------------------
-  - type: web
-    name: zo-rpizza-frontend
-    plan: free
-    runtime: node
-
-    # Monorepo: faqat frontend papkasida o'zgarish bo'lsa deploy
-    rootDir: frontend
-    buildFilter:
-      paths:
-        - frontend/**
-
-    buildCommand: pnpm install && pnpm build
-    startCommand: pnpm start
-
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        generateValue: true
-      # Quyidagilarni Render Dashboard da qo'shing:
-      # - NEXT_PUBLIC_API_URL (backend URL, masalan https://zo-rpizza-backend.onrender.com)
-      # - NEXT_PUBLIC_SUPABASE_URL (Supabase project URL)
-      # - NEXT_PUBLIC_SUPABASE_ANON_KEY (Supabase anon/public key)
+      # Render Dashboard > Environment da qo'shing:
+      # DATABASE_URL   — Supabase Transaction pooler (port 6543)
+      # DIRECT_URL     — Supabase Direct (port 5432)
+      # FRONTEND_URLS  — https://zo-r-pizza.vercel.app
+      # SUPABASE_URL   — https://pzvzksrphyjsxlfkebic.supabase.co
+      # SUPABASE_SERVICE_ROLE_KEY — sb_secret_...

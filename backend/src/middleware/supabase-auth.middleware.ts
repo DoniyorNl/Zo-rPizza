@@ -1,6 +1,3 @@
-// backend/src/middleware/firebase-auth.middleware.ts
-// Supabase Auth middleware — verifies JWTs via Supabase Admin API
-// Works with both old (HS256) and new (asymmetric) Supabase projects
 import { Request, Response, NextFunction } from 'express'
 import { supabaseAdmin } from '../config/supabase'
 
@@ -10,14 +7,10 @@ export interface AuthRequest extends Request {
   userRole?: string
 }
 
-// Simple in-memory cache to avoid hitting Supabase on every request.
-// Token cache keyed by token → { userId, email, expiresAt }
 const tokenCache = new Map<string, { userId: string; email: string; expiresAt: number }>()
-const CACHE_TTL_MS = 60 * 1000 // 1 minute
+const CACHE_TTL_MS = 60 * 1000
 
-const verifySupabaseToken = async (
-  token: string,
-): Promise<{ sub: string; email?: string } | null> => {
+const verifyToken = async (token: string): Promise<{ sub: string; email?: string } | null> => {
   const cached = tokenCache.get(token)
   if (cached && cached.expiresAt > Date.now()) {
     return { sub: cached.userId, email: cached.email }
@@ -33,7 +26,6 @@ const verifySupabaseToken = async (
       expiresAt: Date.now() + CACHE_TTL_MS,
     })
 
-    // Clean up old cache entries (every 100 requests)
     if (tokenCache.size > 500) {
       const now = Date.now()
       for (const [key, value] of tokenCache.entries()) {
@@ -47,7 +39,7 @@ const verifySupabaseToken = async (
   }
 }
 
-export const authenticateFirebaseToken = async (
+export const authenticateSupabaseToken = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction,
@@ -62,7 +54,7 @@ export const authenticateFirebaseToken = async (
     })
   }
 
-  const decoded = await verifySupabaseToken(token)
+  const decoded = await verifyToken(token)
   if (!decoded) {
     return res.status(401).json({
       success: false,
@@ -81,7 +73,7 @@ export const optionalAuth = async (req: AuthRequest, res: Response, next: NextFu
   const token = authHeader?.startsWith('Bearer ') ? authHeader.split('Bearer ')[1] : null
 
   if (token) {
-    const decoded = await verifySupabaseToken(token)
+    const decoded = await verifyToken(token)
     if (decoded) {
       req.userId = decoded.sub
       req.userEmail = decoded.email

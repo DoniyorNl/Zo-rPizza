@@ -86,8 +86,7 @@ export const adminOnly = async (req: Request, res: Response, next: NextFunction)
 			})
 		}
 
-		// 2. Firebase UID olish - token middleware'dan yoki header'dan
-		// Supports both: req.userId (from authenticateToken) or req.headers['x-user-id']
+		// 2. User ID — from token middleware or header
 		const userIdFromToken = (req as any).userId
 		const userIdFromHeader = req.headers['x-user-id'] as string
 		const userId = userIdFromToken || userIdFromHeader
@@ -115,7 +114,7 @@ export const adminOnly = async (req: Request, res: Response, next: NextFunction)
 			},
 		})
 
-		// 4. User mavjudligini tekshirish (id = Firebase UID bo'lishi kerak)
+		// 4. User mavjudligini tekshirish
 		if (!user) {
 			console.warn(`[ADMIN_MIDDLEWARE] User not found: ${userId} from IP: ${ip}`)
 			return res.status(401).json({

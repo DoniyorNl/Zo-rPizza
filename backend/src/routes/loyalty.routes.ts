@@ -1,15 +1,14 @@
-// backend/src/routes/loyalty.routes.ts
 import { Router } from 'express'
 import {
 	getBalance,
 	getRedeemOptions,
 	getTransactions,
 } from '../controllers/loyalty.controller'
-import { authenticateFirebaseToken } from '../middleware/firebase-auth.middleware'
+import { authenticateToken } from '../middleware/auth.middleware'
 
 const router = Router()
 
-router.use(authenticateFirebaseToken)
+router.use(authenticateToken)
 
 router.get('/balance', getBalance)
 router.get('/redeem-options', getRedeemOptions)

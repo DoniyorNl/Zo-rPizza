@@ -1,11 +1,9 @@
-// backend/src/routes/promos.routes.ts
 import { Router } from 'express'
 import { validatePromoCode } from '../controllers/promos.controller'
-import { authenticateFirebaseToken } from '../middleware/firebase-auth.middleware'
+import { authenticateToken } from '../middleware/auth.middleware'
 
 const router = Router()
 
-// Optional auth: for per-user limit check
-router.post('/validate', authenticateFirebaseToken, validatePromoCode)
+router.post('/validate', authenticateToken, validatePromoCode)
 
 export default router

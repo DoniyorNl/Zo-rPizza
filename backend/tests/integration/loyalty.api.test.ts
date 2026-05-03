@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import { getBalance, getRedeemOptions, getTransactions } from '../../src/controllers/loyalty.controller'
 import { prismaMock, generateMockUser } from '../setup'
-import type { AuthRequest } from '../../src/middleware/firebase-auth.middleware'
+import type { AuthRequest } from '../../src/middleware/auth.middleware'
 
 const mockReq = (userId?: string): Partial<AuthRequest> =>
 	({ userId: userId ?? 'firebase-uid-1' } as Partial<AuthRequest>)

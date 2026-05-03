@@ -1,14 +1,20 @@
-// backend/src/routes/auth.routes.ts
 import { Router } from 'express'
-import { authController } from '../controllers/auth.controller'
-import { authenticateToken, requireAdmin } from '../middleware/auth.middleware'
+import { supabaseAuthController } from '../controllers/supabase-auth.controller'
+import { adminOnly } from '../middleware/admin.middleware'
+import { authenticateToken } from '../middleware/auth.middleware'
 
 const router = Router()
 
-// Hozirgi foydalanuvchi ma'lumotlarini olish (himoyalangan)
-router.get('/me', authenticateToken, authController.getCurrentUser)
+router.get('/status', (_req, res) => {
+  res.status(200).json({ success: true, message: 'Auth is ready', timestamp: new Date().toISOString() })
+})
 
-// Admin rolini berish (faqat admin)
-router.post('/set-admin', authenticateToken, requireAdmin, authController.setAdminRole)
+router.get('/verify-token', authenticateToken, supabaseAuthController.verifyToken)
+router.get('/me', authenticateToken, supabaseAuthController.getCurrentUser)
+router.post('/sync', authenticateToken, supabaseAuthController.syncUser)
+
+router.post('/set-admin', authenticateToken, adminOnly, supabaseAuthController.setAdminRole)
+router.post('/remove-admin', authenticateToken, adminOnly, supabaseAuthController.removeAdminRole)
+router.get('/users', authenticateToken, adminOnly, supabaseAuthController.getAllUsers)
 
 export default router
