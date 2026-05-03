@@ -127,10 +127,7 @@ export default function CheckoutForm() {
 				orderData.branchId = selectedBranch.id
 			}
 
-			const headers: Record<string, string> = {}
-			if (token) headers.Authorization = `Bearer ${token}`
-
-			const response = await api.post('/api/orders', orderData, { headers })
+		const response = await api.post('/api/orders', orderData)
 			const order = response.data?.data
 			const id = order?.id
 			const orderNumber = order?.orderNumber ?? ''
