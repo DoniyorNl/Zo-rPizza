@@ -143,7 +143,7 @@ export default function CheckoutForm() {
 					throw new Error('Stripe sozlanmagan. NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY tekshiring.')
 				}
 				setPreparingCardPayment(true)
-				const intentRes = await api.post('/api/payment/create-intent', { orderId: id }, { headers })
+				const intentRes = await api.post('/api/payment/create-intent', { orderId: id })
 				const clientSecret = intentRes.data?.data?.clientSecret
 				if (!clientSecret) {
 					throw new Error("Karta to'lovi uchun clientSecret olinmadi")
