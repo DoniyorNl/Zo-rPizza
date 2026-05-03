@@ -50,44 +50,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 	const [dbUser, setDbUser] = useState<DbUser | null>(null)
 	const [loading, setLoading] = useState(true)
 
-	// Prevent concurrent syncs — use a promise so concurrent callers share the same result
-	const syncPromise = useRef<Promise<void> | null>(null)
-	// Track last synced user to avoid re-syncing the same user
+	// Refs so that syncWithBackend never changes identity (prevents useEffect re-runs)
+	const syncInFlight = useRef(false)
 	const lastSyncedUserId = useRef<string | null>(null)
 
+	// STABLE function — no state in deps, only refs and setters
 	const syncWithBackend = useCallback(async (currentSession: Session) => {
 		const userId = currentSession.user.id
 
-		// Already syncing or already synced this user
-		if (syncPromise.current) return syncPromise.current
-		if (lastSyncedUserId.current === userId && dbUser) return
+		// Already synced this user and there's a dbUser loaded — skip
+		if (lastSyncedUserId.current === userId) return
+		// Another sync is already running — skip (it will set dbUser when done)
+		if (syncInFlight.current) return
 
-		syncPromise.current = (async () => {
-			try {
-				const response = await api.post(
-					'/api/auth/sync',
-					{},
-					{
-						headers: { Authorization: `Bearer ${currentSession.access_token}` },
-						// Prevent the global 401 interceptor from redirecting during sync
-						_skipAuthRedirect: true,
-					} as never,
-				)
-				if (response.data?.data) {
-					setDbUser(response.data.data)
-					lastSyncedUserId.current = userId
-				}
-			} catch (error) {
-				// Sync failure is non-fatal — user is still authenticated via Supabase.
-				// Don't reset dbUser or redirect; just log and continue.
-				console.warn('[AuthContext] Backend sync failed (non-fatal):', error)
-			} finally {
-				syncPromise.current = null
+		syncInFlight.current = true
+		try {
+			const response = await api.post(
+				'/api/auth/sync',
+				{},
+				{ headers: { Authorization: `Bearer ${currentSession.access_token}` } },
+			)
+			if (response.data?.data) {
+				setDbUser(response.data.data)
+				lastSyncedUserId.current = userId
 			}
-		})()
-
-		return syncPromise.current
-	}, [dbUser])
+		} catch (error) {
+			// Non-fatal: user is still authenticated via Supabase session
+			console.warn('[AuthContext] Backend sync failed (non-fatal):', error)
+		} finally {
+			syncInFlight.current = false
+		}
+	}, []) // <-- EMPTY deps: function never recreated → useEffect runs only once
 
 	const getAccessToken = useCallback(async (): Promise<string | null> => {
 		const { data } = await supabase.auth.getSession()
@@ -103,17 +96,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 	}, [])
 
 	const refreshUser = useCallback(async () => {
+		lastSyncedUserId.current = null // Force re-sync next time
 		const { data } = await supabase.auth.getSession()
 		if (data.session) {
-			lastSyncedUserId.current = null // Force re-sync
 			await syncWithBackend(data.session)
 		}
 	}, [syncWithBackend])
 
 	useEffect(() => {
-		// Use onAuthStateChange as the single source of truth.
+		// onAuthStateChange is the single source of truth.
 		// INITIAL_SESSION fires immediately with the persisted session (or null).
-		// No need for a separate getSession() call — that creates race conditions.
 		const {
 			data: { subscription },
 		} = supabase.auth.onAuthStateChange(async (event, newSession) => {
@@ -121,19 +113,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 			setUser(newSession?.user ?? null)
 
 			if (newSession && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED')) {
-				// Sync with backend — failure is non-fatal
 				await syncWithBackend(newSession)
 			} else if (event === 'SIGNED_OUT') {
 				setDbUser(null)
 				lastSyncedUserId.current = null
 			}
 
-			// Mark loading done after the first event (INITIAL_SESSION)
 			setLoading(false)
 		})
 
 		return () => subscription.unsubscribe()
-	}, [syncWithBackend])
+	}, [syncWithBackend]) // syncWithBackend is stable → this effect runs exactly once
 
 	const isAdmin = dbUser?.role === 'ADMIN'
 	const isDriver = dbUser?.role === 'DELIVERY'
