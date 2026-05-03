@@ -13,7 +13,7 @@ export async function GET() {
         })
     } catch (error) {
         return NextResponse.json(
-            { status: 'error', message: 'DB unreachable' },
+            { status: error, message: 'DB unreachable' },
             { status: 500 }
         )
     }

@@ -41,7 +41,7 @@ import pushRoutes from './routes/push.routes'
 import toppingsRoutes from './routes/toppings.routes'
 import trackingRoutes from './routes/tracking.routes'
 import usersRoutes from './routes/users.routes'
-
+import healthRoutes from './routes/health.routes'
 import authRoutes from './routes/auth.routes'
 
 export const app: Express = express()
@@ -148,14 +148,7 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }))
 // ============================================
 
 // Health check
-app.get('/health', (_req: Request, res: Response) => {
-	res.status(200).json({
-		success: true,
-		status: 'up',
-		uptime: process.uptime(),
-		timestamp: new Date().toISOString(),
-	})
-})
+app.use('/health', healthRoutes)
 
 // Root endpoint
 app.get('/', (_req: Request, res: Response) => {
