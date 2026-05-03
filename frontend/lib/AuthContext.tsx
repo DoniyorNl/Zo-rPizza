@@ -18,7 +18,11 @@ function scheduleAuthInit(task: () => void) {
 		pathname.startsWith('/admin') ||
 		pathname === '/login' ||
 		pathname === '/register' ||
-		pathname === '/profile'
+		pathname === '/profile' ||
+		pathname.startsWith('/orders') ||
+		pathname.startsWith('/cart') ||
+		pathname.startsWith('/checkout') ||
+		pathname.startsWith('/tracking')
 
 	if (needsAuthNow) {
 		task()

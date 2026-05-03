@@ -132,20 +132,20 @@ export function UnifiedHeader({ variant = 'user' }: UnifiedHeaderProps) {
 				</div>
 
 				{/* Right Side - Actions */}
-				<div className='flex items-center gap-3 sm:gap-4'>
+				<div className='flex items-center gap-2 sm:gap-3'>
 					{/* Contact phone - Faqat user uchun */}
 					{!isAdmin && (
 						<a
 							href='tel:+998901234567'
-							className='flex items-center justify-center w-10 h-10 rounded-full
+							className='hidden md:flex items-center justify-center w-10 h-10 rounded-full
 							bg-white/20 hover:bg-white/30
 							transition-all duration-200
 							hover:scale-105 active:scale-95 cursor-pointer
-							sm:w-auto sm:px-4 sm:gap-2'
+							md:w-auto md:px-4 md:gap-2'
 							title='Aloqa: +998 90 123 45 67'
 						>
 							<Phone className='w-5 h-5' />
-							<span className='hidden sm:inline text-sm font-medium'>+998 90 123 45 67</span>
+							<span className='hidden md:inline text-sm font-medium'>+998 90 123 45 67</span>
 						</a>
 					)}
 
@@ -155,14 +155,14 @@ export function UnifiedHeader({ variant = 'user' }: UnifiedHeaderProps) {
 							data-testid="cart-button"
 							onClick={() => router.push('/cart')}
 							aria-label='Savatcha'
-							className='relative flex items-center justify-center w-10 h-10 rounded-full
+							className='relative flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full
 							bg-orange-800 hover:bg-orange-900
 							transition-all duration-200
 							hover:shadow-lg active:scale-95 cursor-pointer'
 						>
-							<ShoppingCart className='w-5 h-5' />
+							<ShoppingCart className='w-4 h-4 sm:w-5 sm:h-5' />
 							{totalItems > 0 && (
-								<Badge data-testid="cart-count" className='absolute -top-1.5 -right-1.5 bg-orange-900 text-white px-1.5 py-0.5 text-xs shadow'>
+								<Badge data-testid="cart-count" className='absolute -top-1.5 -right-1.5 bg-orange-900 text-white px-1 py-0 text-[10px] sm:px-1.5 sm:py-0.5 sm:text-xs shadow'>
 									{totalItems}
 								</Badge>
 							)}
@@ -174,7 +174,7 @@ export function UnifiedHeader({ variant = 'user' }: UnifiedHeaderProps) {
 						<button
 							onClick={() => router.push(`/tracking/${activeOrderId}`)}
 							className='
-								group relative flex items-center gap-2 pl-3 pr-4 py-2 rounded-full
+								group relative flex items-center gap-1.5 pl-2 pr-3 py-1.5 sm:pl-3 sm:pr-4 sm:py-2 rounded-full
 								bg-gradient-to-r from-green-500 to-emerald-600 text-white
 								shadow-lg shadow-green-500/30
 								hover:from-green-600 hover:to-emerald-700
@@ -185,17 +185,17 @@ export function UnifiedHeader({ variant = 'user' }: UnifiedHeaderProps) {
 							'
 							title="Buyurtmani kuzatish"
 						>
-							<span className="relative flex h-8 w-8 items-center justify-center">
+							<span className="relative flex h-6 w-6 sm:h-8 sm:w-8 items-center justify-center">
 								<span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white/40 opacity-75" />
-								<Truck className="relative h-5 w-5" />
+								<Truck className="relative h-4 w-4 sm:h-5 sm:w-5" />
 							</span>
-							<span className="hidden sm:inline font-semibold text-sm whitespace-nowrap">
+							<span className="hidden sm:inline font-semibold text-xs sm:text-sm whitespace-nowrap">
 								Yo&apos;lda
 							</span>
-							<Navigation className="h-4 w-4 opacity-90 group-hover:translate-x-0.5 transition-transform hidden xs:block" />
-							<span className="absolute -top-0.5 -right-0.5 flex h-4 w-4">
+							<Navigation className="h-3 w-3 sm:h-4 sm:w-4 opacity-90 group-hover:translate-x-0.5 transition-transform hidden sm:block" />
+							<span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 sm:h-4 sm:w-4">
 								<span className="absolute inline-flex h-full w-full rounded-full bg-green-400 animate-ping opacity-80" />
-								<span className="relative inline-flex h-4 w-4 rounded-full bg-green-300 border-2 border-white" />
+								<span className="relative inline-flex h-3.5 w-3.5 sm:h-4 sm:w-4 rounded-full bg-green-300 border-2 border-white" />
 							</span>
 						</button>
 					)}
@@ -215,21 +215,21 @@ export function UnifiedHeader({ variant = 'user' }: UnifiedHeaderProps) {
 					) : (
 						// Login/Register buttons - Faqat user uchun
 						!isAdmin && (
-							<>
+							<div className='flex items-center gap-1.5 sm:gap-2'>
 								<Button
 									variant='outline'
 									onClick={() => router.push('/login')}
-									className='bg-white text-orange-600 border-white/60 hover:bg-orange-50 hover:shadow-md active:scale-95 transition-all'
+									className='bg-white text-orange-600 border-white/60 hover:bg-orange-50 hover:shadow-md active:scale-95 transition-all h-8 px-3 text-sm sm:h-9 sm:px-4'
 								>
 									Kirish
 								</Button>
 								<Button
 									onClick={() => router.push('/register')}
-									className='bg-orange-700 hover:bg-orange-800 hover:shadow-lg active:scale-95 transition-all'
+									className='hidden sm:flex bg-orange-700 hover:bg-orange-800 hover:shadow-lg active:scale-95 transition-all h-8 px-3 text-sm sm:h-9 sm:px-4'
 								>
 									Ro&apos;yxatdan o&apos;tish
 								</Button>
-							</>
+							</div>
 						)
 					)}
 				</div>

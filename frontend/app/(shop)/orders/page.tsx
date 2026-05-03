@@ -184,7 +184,10 @@ export default function OrdersPage() {
 	const handleDownloadInvoice = async (e: React.MouseEvent, orderId: string) => {
 		e.stopPropagation()
 		try {
-			const response = await api.get(`/api/orders/${orderId}`)
+			const token = user ? await user.getIdToken() : null
+			const response = await api.get(`/api/orders/${orderId}`, {
+				headers: token ? { Authorization: `Bearer ${token}` } : {},
+			})
 			const order = response.data.data
 			if (!order || !user) return
 
